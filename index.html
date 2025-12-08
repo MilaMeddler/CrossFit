@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrossFit Tournament System</title>
+    <!-- Version: 2024-12-08-22:27 -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
@@ -185,55 +186,82 @@
     }
 
     async function loadData() {
-        try {
-            showError('Début du chargement...');
-            
-            const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes');
-            showError('Athletes: status ' + athletesRes.status);
-            
-            if (!athletesRes.ok) throw new Error('Athletes fetch failed: ' + athletesRes.status);
-            
-            const wodsRes = await fetch(SCRIPT_URL + '?action=getWods');
-            showError('WODs: status ' + wodsRes.status);
-            
-            if (!wodsRes.ok) throw new Error('WODs fetch failed: ' + wodsRes.status);
-            
-            const resultsRes = await fetch(SCRIPT_URL + '?action=getResults');
-            showError('Results: status ' + resultsRes.status);
-            
-            if (!resultsRes.ok) throw new Error('Results fetch failed: ' + resultsRes.status);
+        const maxRetries = 3;
+        let attempt = 0;
+        
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                showError(`Tentative ${attempt}/${maxRetries}...`);
+                
+                await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+                
+                const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes', {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (!athletesRes.ok) {
+                    throw new Error(`Athletes: HTTP ${athletesRes.status}`);
+                }
+                
+                const wodsRes = await fetch(SCRIPT_URL + '?action=getWods', {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (!wodsRes.ok) {
+                    throw new Error(`WODs: HTTP ${wodsRes.status}`);
+                }
+                
+                const resultsRes = await fetch(SCRIPT_URL + '?action=getResults', {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (!resultsRes.ok) {
+                    throw new Error(`Results: HTTP ${resultsRes.status}`);
+                }
 
-            const athletesData = await athletesRes.json();
-            const wodsData = await wodsRes.json();
-            const resultsData = await resultsRes.json();
+                const athletesData = await athletesRes.json();
+                const wodsData = await wodsRes.json();
+                const resultsData = await resultsRes.json();
 
-            athletes = athletesData.slice(1).map(row => ({
-                id: parseInt(row[0]) || 0,
-                name: row[1] || '',
-                category: row[2] || 'RX',
-                gender: row[3] || 'M'
-            })).filter(a => a.id > 0);
+                athletes = athletesData.slice(1).map(row => ({
+                    id: parseInt(row[0]) || 0,
+                    name: row[1] || '',
+                    category: row[2] || 'RX',
+                    gender: row[3] || 'M'
+                })).filter(a => a.id > 0);
 
-            wods = wodsData.slice(1).map(row => ({
-                id: parseInt(row[0]) || 0,
-                name: row[1] || '',
-                type: row[2] || 'Time',
-                description: row[3] || ''
-            })).filter(w => w.id > 0);
+                wods = wodsData.slice(1).map(row => ({
+                    id: parseInt(row[0]) || 0,
+                    name: row[1] || '',
+                    type: row[2] || 'Time',
+                    description: row[3] || ''
+                })).filter(w => w.id > 0);
 
-            results = resultsData.slice(1).map(row => ({
-                athleteId: parseInt(row[0]),
-                wodId: parseInt(row[1]),
-                value1: row[2] || '',
-                value2: row[3] || null,
-                display: row[4] || ''
-            })).filter(r => r.athleteId > 0 && r.wodId > 0);
+                results = resultsData.slice(1).map(row => ({
+                    athleteId: parseInt(row[0]),
+                    wodId: parseInt(row[1]),
+                    value1: row[2] || '',
+                    value2: row[3] || null,
+                    display: row[4] || ''
+                })).filter(r => r.athleteId > 0 && r.wodId > 0);
 
-            renderCurrentPage();
-            document.getElementById('error-container').classList.add('hidden');
-            showSuccess('Données chargées avec succès!');
-        } catch (err) {
-            showError('ERREUR: ' + err.message + '<br><br>Details: ' + err.toString());
+                renderCurrentPage();
+                document.getElementById('error-container').classList.add('hidden');
+                showSuccess('Données chargées avec succès!');
+                return;
+                
+            } catch (err) {
+                if (attempt >= maxRetries) {
+                    showError(`ERREUR après ${maxRetries} tentatives:<br>${err.message}<br><br>Vérifiez votre connexion internet et réessayez.`);
+                }
+            }
         }
     }
 
