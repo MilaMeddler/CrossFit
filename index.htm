@@ -185,15 +185,26 @@
 
     async function loadData() {
         try {
-            const [athletesRes, wodsRes, resultsRes] = await Promise.all([
-                fetch(SCRIPT_URL + '?action=getAthletes'),
-                fetch(SCRIPT_URL + '?action=getWods'),
-                fetch(SCRIPT_URL + '?action=getResults')
-            ]);
+            console.log('Loading data from:', SCRIPT_URL);
+            
+            const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes');
+            console.log('Athletes response status:', athletesRes.status);
+            if (!athletesRes.ok) throw new Error('Athletes fetch failed: ' + athletesRes.status);
+            
+            const wodsRes = await fetch(SCRIPT_URL + '?action=getWods');
+            console.log('WODs response status:', wodsRes.status);
+            if (!wodsRes.ok) throw new Error('WODs fetch failed: ' + wodsRes.status);
+            
+            const resultsRes = await fetch(SCRIPT_URL + '?action=getResults');
+            console.log('Results response status:', resultsRes.status);
+            if (!resultsRes.ok) throw new Error('Results fetch failed: ' + resultsRes.status);
 
             const athletesData = await athletesRes.json();
+            console.log('Athletes data:', athletesData);
             const wodsData = await wodsRes.json();
+            console.log('WODs data:', wodsData);
             const resultsData = await resultsRes.json();
+            console.log('Results data:', resultsData);
 
             athletes = athletesData.slice(1).map(row => ({
                 id: parseInt(row[0]) || 0,
