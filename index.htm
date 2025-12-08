@@ -8,14 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <!-- ⚠️ CONFIGURATION: Remplacez ces valeurs -->
     <script>
-        const SHEET_ID = '15gA3eMH1J09drFv3UsqH3yxtVPumPgrVR0Cji8nhIH0';
-        const API_KEY = 'AIzaSyBK5_zxWs8WWEh03YQI40kKLW15WfqcC6M'; // ← Remplacez par votre API key
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby81dMSYB5LxLZCe1PQQiGCffTK_vcTM4INQt1jp2VDRjCwdCXAzbZ0qoltHiEHSVvH/exec';
     </script>
 
 ```
-<!-- Navigation -->
 <nav class="bg-gray-900 text-white p-4 shadow-lg">
     <div class="max-w-7xl mx-auto flex gap-4">
         <button onclick="showPage('leaderboard')" class="px-4 py-2 rounded hover:bg-gray-700" id="btn-leaderboard">Classement</button>
@@ -24,7 +21,6 @@
     </div>
 </nav>
 
-<!-- Error Display -->
 <div id="error-container" class="max-w-7xl mx-auto mt-4 px-6 hidden">
     <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
         <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,11 +35,19 @@
     </div>
 </div>
 
-<!-- Admin Page -->
+<div id="success-container" class="max-w-7xl mx-auto mt-4 px-6 hidden">
+    <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-2">
+        <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7"></path>
+        </svg>
+        <p class="text-green-700 font-semibold" id="success-message"></p>
+    </div>
+</div>
+
 <div id="page-admin" class="max-w-6xl mx-auto p-6 hidden">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold">👥 Panneau Administrateur</h1>
-        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔄 Actualiser</button>
+        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" id="refresh-admin">🔄 Actualiser</button>
     </div>
 
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -62,7 +66,7 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead><tr class="border-b"><th class="text-left py-2">Nom</th><th class="text-left py-2">Catégorie</th><th class="text-left py-2">Sexe</th></tr></thead>
+                <thead><tr class="border-b"><th class="text-left py-2">ID</th><th class="text-left py-2">Nom</th><th class="text-left py-2">Catégorie</th><th class="text-left py-2">Sexe</th></tr></thead>
                 <tbody id="athletes-table"></tbody>
             </table>
         </div>
@@ -85,14 +89,13 @@
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead><tr class="border-b"><th class="text-left py-2">Nom</th><th class="text-left py-2">Type</th><th class="text-left py-2">Description</th></tr></thead>
+                <thead><tr class="border-b"><th class="text-left py-2">ID</th><th class="text-left py-2">Nom</th><th class="text-left py-2">Type</th><th class="text-left py-2">Description</th></tr></thead>
                 <tbody id="wods-table"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Judge Page -->
 <div id="page-judge" class="max-w-4xl mx-auto p-6 hidden">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold">🏆 Panneau Juge</h1>
@@ -130,7 +133,6 @@
     </div>
 </div>
 
-<!-- Leaderboard Page -->
 <div id="page-leaderboard" class="max-w-7xl mx-auto p-6">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-4xl font-bold">🏆 Classement</h1>
@@ -167,109 +169,113 @@
     let currentPage = 'leaderboard';
     let currentCategory = 'RX-M';
 
-    const SHEETS_BASE = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
-
     function showError(msg) {
-        document.getElementById('error-container').classList.remove('hidden');
+        const container = document.getElementById('error-container');
         document.getElementById('error-message').textContent = msg;
-        setTimeout(() => document.getElementById('error-container').classList.add('hidden'), 5000);
+        container.classList.remove('hidden');
+        setTimeout(() => container.classList.add('hidden'), 5000);
+    }
+
+    function showSuccess(msg) {
+        const container = document.getElementById('success-container');
+        document.getElementById('success-message').textContent = msg;
+        container.classList.remove('hidden');
+        setTimeout(() => container.classList.add('hidden'), 3000);
     }
 
     async function loadData() {
         try {
-            if (API_KEY === 'VOTRE_API_KEY_ICI') {
-                throw new Error('Veuillez configurer votre API_KEY dans le code HTML!');
-            }
+            const [athletesRes, wodsRes, resultsRes] = await Promise.all([
+                fetch(SCRIPT_URL + '?action=getAthletes'),
+                fetch(SCRIPT_URL + '?action=getWods'),
+                fetch(SCRIPT_URL + '?action=getResults')
+            ]);
 
-            const ranges = ['Athletes!A:D', 'WODs!A:D', 'Results!A:E'];
-            const response = await fetch(`${SHEETS_BASE}/values:batchGet?ranges=${ranges.join('&ranges=')}&key=${API_KEY}`);
-            
-            if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
-            
-            const data = await response.json();
-            
-            athletes = (data.valueRanges[0].values || []).slice(1).map(row => ({
-                id: parseInt(row[0]) || Date.now(),
+            const athletesData = await athletesRes.json();
+            const wodsData = await wodsRes.json();
+            const resultsData = await resultsRes.json();
+
+            athletes = athletesData.slice(1).map(row => ({
+                id: parseInt(row[0]) || 0,
                 name: row[1] || '',
                 category: row[2] || 'RX',
                 gender: row[3] || 'M'
-            }));
+            })).filter(a => a.id > 0);
 
-            wods = (data.valueRanges[1].values || []).slice(1).map(row => ({
-                id: parseInt(row[0]) || Date.now(),
+            wods = wodsData.slice(1).map(row => ({
+                id: parseInt(row[0]) || 0,
                 name: row[1] || '',
                 type: row[2] || 'Time',
                 description: row[3] || ''
-            }));
+            })).filter(w => w.id > 0);
 
-            results = (data.valueRanges[2].values || []).slice(1).map(row => ({
+            results = resultsData.slice(1).map(row => ({
                 athleteId: parseInt(row[0]),
                 wodId: parseInt(row[1]),
                 value1: row[2] || '',
                 value2: row[3] || null,
                 display: row[4] || ''
-            }));
+            })).filter(r => r.athleteId > 0 && r.wodId > 0);
 
             renderCurrentPage();
         } catch (err) {
-            showError(err.message);
+            showError('Erreur de chargement: ' + err.message);
         }
     }
 
-    async function saveToSheets(sheetName, data) {
+    async function saveData(action, data) {
         try {
-            const response = await fetch(`${SHEETS_BASE}/values/${sheetName}!A2:Z?valueInputOption=RAW&key=${API_KEY}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ values: data })
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action, data })
             });
-            if (!response.ok) throw new Error('Erreur sauvegarde');
-            return true;
+            const result = await response.json();
+            return result.success;
         } catch (err) {
-            showError(err.message);
+            showError('Erreur de sauvegarde: ' + err.message);
             return false;
         }
     }
 
     async function addAthlete() {
-        const name = document.getElementById('athlete-name').value;
+        const name = document.getElementById('athlete-name').value.trim();
         if (!name) return;
         
         const id = athletes.length > 0 ? Math.max(...athletes.map(a => a.id)) + 1 : 1;
-        const athlete = {
+        athletes.push({
             id,
             name,
             category: document.getElementById('athlete-category').value,
             gender: document.getElementById('athlete-gender').value
-        };
+        });
         
-        athletes.push(athlete);
-        const success = await saveToSheets('Athletes', athletes.map(a => [a.id, a.name, a.category, a.gender]));
+        const success = await saveData('saveAthletes', athletes.map(a => [a.id, a.name, a.category, a.gender]));
         
         if (success) {
             document.getElementById('athlete-name').value = '';
+            showSuccess('Athlète ajouté!');
             renderAdmin();
         }
     }
 
     async function addWod() {
-        const name = document.getElementById('wod-name').value;
+        const name = document.getElementById('wod-name').value.trim();
         if (!name) return;
         
         const id = wods.length > 0 ? Math.max(...wods.map(w => w.id)) + 1 : 1;
-        const wod = {
+        wods.push({
             id,
             name,
             type: document.getElementById('wod-type').value,
             description: document.getElementById('wod-description').value
-        };
+        });
         
-        wods.push(wod);
-        const success = await saveToSheets('WODs', wods.map(w => [w.id, w.name, w.type, w.description]));
+        const success = await saveData('saveWods', wods.map(w => [w.id, w.name, w.type, w.description]));
         
         if (success) {
             document.getElementById('wod-name').value = '';
             document.getElementById('wod-description').value = '';
+            showSuccess('WOD ajouté!');
             renderAdmin();
         }
     }
@@ -304,7 +310,10 @@
         const wodId = parseInt(document.getElementById('result-wod').value);
         const value1 = document.getElementById('result-value1')?.value;
         
-        if (!athleteId || !wodId || !value1) return;
+        if (!athleteId || !wodId || !value1) {
+            showError('Veuillez remplir tous les champs');
+            return;
+        }
         
         const wod = wods.find(w => w.id === wodId);
         let v1 = value1;
@@ -320,12 +329,12 @@
         results = results.filter(r => !(r.athleteId === athleteId && r.wodId === wodId));
         results.push({ athleteId, wodId, value1: v1, value2, display });
         
-        const success = await saveToSheets('Results', results.map(r => [r.athleteId, r.wodId, r.value1, r.value2 || '', r.display]));
+        const success = await saveData('saveResults', results.map(r => [r.athleteId, r.wodId, r.value1, r.value2 || '', r.display]));
         
         if (success) {
             document.getElementById('result-value1').value = '';
             if (document.getElementById('result-value2')) document.getElementById('result-value2').value = '';
-            alert('Résultat enregistré!');
+            showSuccess('Résultat enregistré!');
             renderJudge();
         }
     }
@@ -357,7 +366,7 @@
                                 const diff = wod.type.startsWith('Time') || wod.type.startsWith('Reps') 
                                     ? (wod.type.startsWith('Time') ? parseFloat(a.value1) - parseFloat(b.value1) : parseFloat(b.value1) - parseFloat(a.value1))
                                     : 0;
-                                return diff !== 0 ? diff : parseFloat(b.value2) - parseFloat(a.value2);
+                                return diff !== 0 ? diff : parseFloat(b.value2 || 0) - parseFloat(a.value2 || 0);
                             });
                         }
                         
@@ -385,11 +394,11 @@
 
     function renderAdmin() {
         document.getElementById('athletes-table').innerHTML = athletes.map(a => 
-            `<tr class="border-b"><td class="py-2">${a.name}</td><td class="py-2">${a.category}</td><td class="py-2">${a.gender === 'M' ? 'Homme' : 'Femme'}</td></tr>`
+            `<tr class="border-b"><td class="py-2 text-gray-500">${a.id}</td><td class="py-2">${a.name}</td><td class="py-2">${a.category}</td><td class="py-2">${a.gender === 'M' ? 'Homme' : 'Femme'}</td></tr>`
         ).join('');
         
         document.getElementById('wods-table').innerHTML = wods.map(w => 
-            `<tr class="border-b"><td class="py-2 font-semibold">${w.name}</td><td class="py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${w.type}</span></td><td class="py-2 text-sm text-gray-600">${w.description}</td></tr>`
+            `<tr class="border-b"><td class="py-2 text-gray-500">${w.id}</td><td class="py-2 font-semibold">${w.name}</td><td class="py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${w.type}</span></td><td class="py-2 text-sm text-gray-600">${w.description}</td></tr>`
         ).join('');
     }
 
@@ -403,7 +412,7 @@
         document.getElementById('recent-results').innerHTML = results.slice(-10).reverse().map(r => {
             const athlete = athletes.find(a => a.id === r.athleteId);
             const wod = wods.find(w => w.id === r.wodId);
-            return `<tr class="border-b"><td class="py-2">${athlete?.name}</td><td class="py-2">${wod?.name}</td><td class="py-2 font-semibold">${r.display}</td></tr>`;
+            return `<tr class="border-b"><td class="py-2">${athlete?.name || 'N/A'}</td><td class="py-2">${wod?.name || 'N/A'}</td><td class="py-2 font-semibold">${r.display}</td></tr>`;
         }).join('');
     }
 
@@ -418,7 +427,7 @@
         
         document.getElementById('leaderboard-body').innerHTML = data.map((entry, i) => 
             `<tr class="border-b ${i < 3 ? 'bg-yellow-50' : ''}">
-                <td class="px-4 py-3 font-bold">${i + 1}</td>
+                <td class="px-4 py-3 font-bold">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''} ${i + 1}</td>
                 <td class="px-4 py-3 font-semibold">${entry.athlete.name}</td>
                 ${entry.wodScores.map(s => `<td class="px-4 py-3 text-center">${s}</td>`).join('')}
                 <td class="px-4 py-3 text-center font-bold text-lg text-blue-600">${entry.totalPoints}</td>
@@ -461,7 +470,6 @@
         else if (currentPage === 'leaderboard') renderLeaderboard();
     }
 
-    // Load data on page load
     window.onload = () => {
         loadData();
         showPage('leaderboard');
