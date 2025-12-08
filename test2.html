@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test 2</title></head>
+<body>
+<h1>Test direct script load...</h1>
+<div id="result">Загрузка...</div>
+<script>
+async function test() {
+  try {
+    const url = 'https://script.google.com/macros/s/AKfycby81dMSYB5LxLZCe1PQQiGCffTK_vcTM4INQt1jp2VDRjCwdCXAzbZ0qoltHiEHSVvH/exec?action=getAthletes';
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'no-cors'
+    });
+    
+    document.getElementById('result').textContent = 'Status: ' + response.status + ' Type: ' + response.type;
+    
+  } catch(e) {
+    document.getElementById('result').textContent = 'Error: ' + e.message;
+  }
+}
+test();
+</script>
+</body>
+</html>
