@@ -171,9 +171,10 @@
 
     function showError(msg) {
         const container = document.getElementById('error-container');
-        document.getElementById('error-message').textContent = msg;
+        const messageEl = document.getElementById('error-message');
+        messageEl.innerHTML = msg; // Changed to innerHTML to show formatted errors
         container.classList.remove('hidden');
-        setTimeout(() => container.classList.add('hidden'), 5000);
+        // Don't auto-hide for debugging
     }
 
     function showSuccess(msg) {
@@ -185,26 +186,26 @@
 
     async function loadData() {
         try {
-            console.log('Loading data from:', SCRIPT_URL);
+            showError('Début du chargement...');
             
             const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes');
-            console.log('Athletes response status:', athletesRes.status);
+            showError('Athletes: status ' + athletesRes.status);
+            
             if (!athletesRes.ok) throw new Error('Athletes fetch failed: ' + athletesRes.status);
             
             const wodsRes = await fetch(SCRIPT_URL + '?action=getWods');
-            console.log('WODs response status:', wodsRes.status);
+            showError('WODs: status ' + wodsRes.status);
+            
             if (!wodsRes.ok) throw new Error('WODs fetch failed: ' + wodsRes.status);
             
             const resultsRes = await fetch(SCRIPT_URL + '?action=getResults');
-            console.log('Results response status:', resultsRes.status);
+            showError('Results: status ' + resultsRes.status);
+            
             if (!resultsRes.ok) throw new Error('Results fetch failed: ' + resultsRes.status);
 
             const athletesData = await athletesRes.json();
-            console.log('Athletes data:', athletesData);
             const wodsData = await wodsRes.json();
-            console.log('WODs data:', wodsData);
             const resultsData = await resultsRes.json();
-            console.log('Results data:', resultsData);
 
             athletes = athletesData.slice(1).map(row => ({
                 id: parseInt(row[0]) || 0,
@@ -229,8 +230,10 @@
             })).filter(r => r.athleteId > 0 && r.wodId > 0);
 
             renderCurrentPage();
+            document.getElementById('error-container').classList.add('hidden');
+            showSuccess('Données chargées avec succès!');
         } catch (err) {
-            showError('Erreur de chargement: ' + err.message);
+            showError('ERREUR: ' + err.message + '<br><br>Details: ' + err.toString());
         }
     }
 
