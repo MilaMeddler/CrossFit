@@ -171,9 +171,10 @@
 
     function showError(msg) {
         const container = document.getElementById('error-container');
-        document.getElementById('error-message').textContent = msg;
+        const messageEl = document.getElementById('error-message');
+        messageEl.innerHTML = msg; // Changed to innerHTML to show formatted errors
         container.classList.remove('hidden');
-        setTimeout(() => container.classList.add('hidden'), 5000);
+        // Don't auto-hide for debugging
     }
 
     function showSuccess(msg) {
@@ -185,11 +186,22 @@
 
     async function loadData() {
         try {
-            const [athletesRes, wodsRes, resultsRes] = await Promise.all([
-                fetch(SCRIPT_URL + '?action=getAthletes'),
-                fetch(SCRIPT_URL + '?action=getWods'),
-                fetch(SCRIPT_URL + '?action=getResults')
-            ]);
+            showError('Début du chargement...');
+            
+            const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes');
+            showError('Athletes: status ' + athletesRes.status);
+            
+            if (!athletesRes.ok) throw new Error('Athletes fetch failed: ' + athletesRes.status);
+            
+            const wodsRes = await fetch(SCRIPT_URL + '?action=getWods');
+            showError('WODs: status ' + wodsRes.status);
+            
+            if (!wodsRes.ok) throw new Error('WODs fetch failed: ' + wodsRes.status);
+            
+            const resultsRes = await fetch(SCRIPT_URL + '?action=getResults');
+            showError('Results: status ' + resultsRes.status);
+            
+            if (!resultsRes.ok) throw new Error('Results fetch failed: ' + resultsRes.status);
 
             const athletesData = await athletesRes.json();
             const wodsData = await wodsRes.json();
@@ -218,8 +230,10 @@
             })).filter(r => r.athleteId > 0 && r.wodId > 0);
 
             renderCurrentPage();
+            document.getElementById('error-container').classList.add('hidden');
+            showSuccess('Données chargées avec succès!');
         } catch (err) {
-            showError('Erreur de chargement: ' + err.message);
+            showError('ERREUR: ' + err.message + '<br><br>Details: ' + err.toString());
         }
     }
 
