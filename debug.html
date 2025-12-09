@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug</title>
+</head>
+<body>
+<h1>Debug Console</h1>
+<div id="log" style="background: black; color: lime; padding: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby81dMSYB5LxLZCe1PQQiGCffTK_vcTM4INQt1jp2VDRjCwdCXAzbZ0qoltHiEHSVvH/exec';
+
+const log = document.getElementById('log');
+function showLog(msg) {
+    log.textContent += msg + '\n';
+}
+
+window.onerror = function(msg, url, line) {
+    showLog('ERROR: ' + msg + ' at line ' + line);
+};
+
+showLog('Starting test...');
+
+function loadWithJSONP(action) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'jsonpCallback_' + Date.now();
+        const script = document.createElement('script');
+        
+        showLog('Creating JSONP for: ' + action);
+        
+        window[callbackName] = function(data) {
+            showLog('Success! Got data for: ' + action);
+            delete window[callbackName];
+            document.body.removeChild(script);
+            resolve(data);
+        };
+        
+        script.onerror = () => {
+            showLog('JSONP failed for: ' + action);
