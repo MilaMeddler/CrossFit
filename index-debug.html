@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossFit - Debug</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    
+<div id="debug-log" style="position:fixed; top:0; right:0; width:300px; max-height:400px; overflow:auto; background:black; color:lime; padding:10px; font-size:10px; z-index:9999;"></div>
+
+<script>
+function log(msg) {
+    const d = document.getElementById('debug-log');
+    if (d) d.innerHTML += msg + '<br>';
+    console.log(msg);
+}
+
+window.onerror = function(msg, url, line, col, error) {
+    log('ERROR: ' + msg + ' at ' + line + ':' + col);
+    return true;
+};
+
+log('Script started...');
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby81dMSYB5LxLZCe1PQQiGCffTK_vcTM4INQt1jp2VDRjCwdCXAzbZ0qoltHiEHSVvH/exec';
+
+log('SCRIPT_URL defined');
+
+function testButton() {
+    log('Button clicked!');
+    alert('Test button works!');
+}
+
+log('Function defined');
+
+window.onload = function() {
+    log('Page loaded!');
+};
+</script>
+
+<nav class="bg-gray-900 text-white p-3">
+    <button onclick="testButton()" class="px-4 py-2 bg-blue-600 rounded">TEST BUTTON</button>
+</nav>
+
+<div class="p-4">
+    <h1 class="text-2xl">Debug Version</h1>
+    <p>Check the black box in top-right corner for logs</p>
+</div>
+
+</body>
+</html>
