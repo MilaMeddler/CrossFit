@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossFit - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-8">👥 Administration CrossFit</h1>
+
+```
+<!-- Athletes Section -->
+<div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <h2 class="text-2xl font-semibold mb-4">Athlètes</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <input type="text" id="athlete-name" placeholder="Nom de l'athlète" 
+               class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+        
+        <select id="athlete-category" class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+            <option value="RX">RX</option>
+            <option value="Intermediate">Intermédiaire</option>
+        </select>
+        
+        <select id="athlete-gender" class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+            <option value="M">Homme</option>
+            <option value="F">Femme</option>
+        </select>
+        
+        <button id="btn-add-athlete" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-4 py-2">
+            ➕ Ajouter
+        </button>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b-2 border-gray-300">
+                    <th class="text-left py-3 px-2">Nom</th>
+                    <th class="text-left py-3 px-2">Catégorie</th>
+                    <th class="text-left py-3 px-2">Sexe</th>
+                    <th class="text-left py-3 px-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="athletes-list">
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-500">Aucun athlète</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- WODs Section -->
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <h2 class="text-2xl font-semibold mb-4">WODs</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <input type="text" id="wod-name" placeholder="Nom du WOD" 
+               class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+        
+        <select id="wod-type" class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+            <option value="Time">Time</option>
+            <option value="Reps">Reps</option>
+            <option value="Weight">Weight</option>
+            <option value="Time+Reps">Time + Reps</option>
+            <option value="Time+Weight">Time + Weight</option>
+            <option value="Reps+Weight">Reps + Weight</option>
+        </select>
+        
+        <input type="text" id="wod-description" placeholder="Description" 
+               class="border-2 rounded px-4 py-2 focus:border-blue-500 focus:outline-none">
+        
+        <button id="btn-add-wod" 
+                class="bg-green-600 hover:bg-green-700 text-white font-bold rounded px-4 py-2">
+            ➕ Ajouter
+        </button>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b-2 border-gray-300">
+                    <th class="text-left py-3 px-2">Nom</th>
+                    <th class="text-left py-3 px-2">Type</th>
+                    <th class="text-left py-3 px-2">Description</th>
+                    <th class="text-left py-3 px-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="wods-list">
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-500">Aucun WOD</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Status Messages -->
+<div id="status-message" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg hidden"></div>
+```
+
+</div>
+
+<script>
+// Simple data storage (in memory for now)
+var athletes = [];
+var wods = [];
+
+// Get button elements
+var btnAddAthlete = document.getElementById('btn-add-athlete');
+var btnAddWod = document.getElementById('btn-add-wod');
+
+// Add athlete
+btnAddAthlete.addEventListener('click', function() {
+    var name = document.getElementById('athlete-name').value.trim();
+    var category = document.getElementById('athlete-category').value;
+    var gender = document.getElementById('athlete-gender').value;
+    
+    if (!name) {
+        showMessage('Veuillez entrer un nom', 'error');
+        return;
+    }
+    
+    var athlete = {
+        id: Date.now(),
+        name: name,
+        category: category,
+        gender: gender
+    };
+    
+    athletes.push(athlete);
+    document.getElementById('athlete-name').value = '';
+    
+    showMessage('Athlète ajouté!', 'success');
+    renderAthletes();
+});
+
+// Add WOD
+btnAddWod.addEventListener('click', function() {
+    var name = document.getElementById('wod-name').value.trim();
+    var type = document.getElementById('wod-type').value;
+    var description = document.getElementById('wod-description').value.trim();
+    
+    if (!name) {
+        showMessage('Veuillez entrer un nom de WOD', 'error');
+        return;
+    }
+    
+    var wod = {
+        id: Date.now(),
+        name: name,
+        type: type,
+        description: description
+    };
+    
+    wods.push(wod);
+    document.getElementById('wod-name').value = '';
+    document.getElementById('wod-description').value = '';
+    
+    showMessage('WOD ajouté!', 'success');
+    renderWods();
+});
+
+// Render athletes list
+function renderAthletes() {
+    var tbody = document.getElementById('athletes-list');
+    
+    if (athletes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Aucun athlète</td></tr>';
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < athletes.length; i++) {
+        var a = athletes[i];
+        html += '<tr class="border-b hover:bg-gray-50">';
+        html += '<td class="py-3 px-2">' + a.name + '</td>';
+        html += '<td class="py-3 px-2">' + a.category + '</td>';
+        html += '<td class="py-3 px-2">' + (a.gender === 'M' ? 'Homme' : 'Femme') + '</td>';
+        html += '<td class="py-3 px-2">';
+        html += '<button onclick="deleteAthlete(' + a.id + ')" class="text-red-600 hover:text-red-800 font-bold">🗑️ Supprimer</button>';
+        html += '</td>';
+        html += '</tr>';
+    }
+    
+    tbody.innerHTML = html;
+}
+
+// Render WODs list
+function renderWods() {
+    var tbody = document.getElementById('wods-list');
+    
+    if (wods.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Aucun WOD</td></tr>';
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < wods.length; i++) {
+        var w = wods[i];
+        html += '<tr class="border-b hover:bg-gray-50">';
+        html += '<td class="py-3 px-2 font-semibold">' + w.name + '</td>';
+        html += '<td class="py-3 px-2"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm">' + w.type + '</span></td>';
+        html += '<td class="py-3 px-2 text-sm">' + w.description + '</td>';
+        html += '<td class="py-3 px-2">';
+        html += '<button onclick="deleteWod(' + w.id + ')" class="text-red-600 hover:text-red-800 font-bold">🗑️ Supprimer</button>';
+        html += '</td>';
+        html += '</tr>';
+    }
+    
+    tbody.innerHTML = html;
+}
+
+// Delete athlete
+function deleteAthlete(id) {
+    if (!confirm('Supprimer cet athlète?')) return;
+    
+    athletes = athletes.filter(function(a) {
+        return a.id !== id;
+    });
+    
+    showMessage('Athlète supprimé!', 'success');
+    renderAthletes();
+}
+
+// Delete WOD
+function deleteWod(id) {
+    if (!confirm('Supprimer ce WOD?')) return;
+    
+    wods = wods.filter(function(w) {
+        return w.id !== id;
+    });
+    
+    showMessage('WOD supprimé!', 'success');
+    renderWods();
+}
+
+// Show status message
+function showMessage(text, type) {
+    var msg = document.getElementById('status-message');
+    msg.textContent = text;
+    msg.className = 'fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg font-bold ';
+    
+    if (type === 'success') {
+        msg.className += 'bg-green-500 text-white';
+    } else {
+        msg.className += 'bg-red-500 text-white';
+    }
+    
+    msg.classList.remove('hidden');
+    
+    setTimeout(function() {
+        msg.classList.add('hidden');
+    }, 3000);
+}
+
+// Initial render
+renderAthletes();
+renderWods();
+
+console.log('Admin page loaded successfully!');
+</script>
+
+</body>
+</html>
