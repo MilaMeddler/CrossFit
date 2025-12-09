@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Juge - CrossFit Tournament</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="max-w-4xl mx-auto p-4 md:p-6 pb-24">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl md:text-4xl font-bold">⚖️ Interface Juge</h1>
+        <a href="leaderboard.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-3 py-2 text-sm">
+            📊 Tableau
+        </a>
+    </div>
+
+    <!-- Judge Name -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+        <label class="block font-semibold mb-2">Nom du Juge</label>
+        <input type="text" id="judge-name" placeholder="Votre nom" 
+               class="w-full border-2 rounded px-4 py-3 focus:border-blue-500 focus:outline-none">
+    </div>
+
+    <!-- Result Entry -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Enregistrer un Résultat</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block font-semibold mb-2">Athlète</label>
+                <select id="result-athlete" class="w-full border-2 rounded px-4 py-3">
+                    <option value="">Sélectionner...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold mb-2">WOD</label>
+                <select id="result-wod" onchange="updateFields()" class="w-full border-2 rounded px-4 py-3">
+                    <option value="">Sélectionner...</option>
+                </select>
+            </div>
+
+            <div id="result-fields" class="hidden space-y-4">
+                <div id="field-value1">
+                    <label class="block font-semibold mb-2" id="label-value1">Résultat</label>
+                    <input type="number" id="result-value1" placeholder="Valeur" 
+                           class="w-full border-2 rounded px-4 py-3">
+                    <p class="text-sm text-gray-500 mt-1" id="help-value1"></p>
+                </div>
+
+                <div id="field-value2" class="hidden">
+                    <label class="block font-semibold mb-2" id="label-value2">Résultat 2</label>
+                    <input type="number" id="result-value2" placeholder="Valeur 2" 
+                           class="w-full border-2 rounded px-4 py-3">
+                    <p class="text-sm text-gray-500 mt-1" id="help-value2"></p>
+                </div>
+
+                <button onclick="submitResult()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded px-6 py-4 text-lg">
+                    ✅ Enregistrer le Résultat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Results -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6">
+        <h2 class="text-xl font-semibold mb-4">Résultats Récents</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b-2 bg-gray-50">
+                        <th class="text-left py-2 px-2">Athlète</th>
+                        <th class="text-left py-2 px-2">WOD</th>
+                        <th class="text-left py-2 px-2 hide-mobile">Résultat</th>
+                        <th class="text-left py-2 px-2">Points</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-results"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-nav md:hidden">
+    <a href="index.html"><span>🏠</span>Accueil</a>
+    <a href="admin.html"><span>👥</span>Admin</a>
+    <a href="judge.html" class="active"><span>⚖️</span>Juge</a>
+    <a href="leaderboard.html"><span>🏆</span>Tableau</a>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div></div>
+<div id="status-message" class="hidden"></div>
+
+<script src="config.js"></script>
+<script src="js/api.js"></script>
+<script>
+let data = { athletes: [], wods: [], results: [], settings: {} };
+
+async function init() {
+    initAPI();
+    await loadData();
+    
+    const savedJudge = localStorage.getItem('judge_name');
+    if (savedJudge) {
+        document.getElementById('judge-name').value = savedJudge;
+    }
+}
+
+async function loadData() {
+    try {
+        showLoading(true);
+        const result = await api.getAllData();
+        data = result;
+        populateAthletes();
+        populateWODs();
+        renderRecentResults();
+        showLoading(false);
+    } catch (error) {
+        showLoading(false);
+        showMessage('Erreur: ' + error.message, 'error');
+    }
+}
+
+function populateAthletes() {
+    const select = document.getElementById('result-athlete');
+    select.innerHTML = '<option value="">Sélectionner...</option>';
+    
+    const activeAthletes = data.athletes.filter(a => a.active === 'TRUE');
+    activeAthletes.forEach(athlete => {
+        const option = document.createElement('option');
+        option.value = athlete.id;
+        option.textContent = `${athlete.name} (${athlete.category} - ${athlete.gender})`;
+        select.appendChild(option);
+    });
+}
+
+function populateWODs() {
+    const select = document.getElementById('result-wod');
+    select.innerHTML = '<option value="">Sélectionner...</option>';
+    
+    data.wods.forEach(wod => {
+        const option = document.createElement('option');
+        option.value = wod.id;
+        option.textContent = `${wod.name} (${wod.type})`;
+        option.dataset.type = wod.type;
+        select.appendChild(option);
+    });
+}
+
+function updateFields() {
+    const select = document.getElementById('result-wod');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (!selectedOption.value) {
+        document.getElementById('result-fields').classList.add('hidden');
+        return;
+    }
+    
+    const wodType = selectedOption.dataset.type;
+    document.getElementById('result-fields').classList.remove('hidden');
+    
+    const label1 = document.getElementById('label-value1');
+    const help1 = document.getElementById('help-value1');
+    const field2 = document.getElementById('field-value2');
+    const label2 = document.getElementById('label-value2');
+    const help2 = document.getElementById('help-value2');
+    
+    document.getElementById('result-value1').value = '';
+    document.getElementById('result-value2').value = '';
+    
+    if (wodType === 'Time') {
+        label1.textContent = 'Temps (secondes)';
+        help1.textContent = 'Ex: 305 pour 5:05';
+        field2.classList.add('hidden');
+    } else if (wodType === 'Reps') {
+        label1.textContent = 'Répétitions';
+        help1.textContent = 'Nombre total';
+        field2.classList.add('hidden');
+    } else if (wodType === 'Weight') {
+        label1.textContent = 'Poids (kg)';
+        help1.textContent = 'Poids max';
+        field2.classList.add('hidden');
+    } else if (wodType === 'Time+Reps') {
+        label1.textContent = 'Temps (secondes)';
+        help1.textContent = 'Ex: 305 pour 5:05';
+        field2.classList.remove('hidden');
+        label2.textContent = 'Répétitions';
+        help2.textContent = 'Reps supplémentaires';
+    } else if (wodType === 'Time+Weight') {
+        label1.textContent = 'Temps (secondes)';
+        help1.textContent = 'Ex: 305 pour 5:05';
+        field2.classList.remove('hidden');
+        label2.textContent = 'Poids (kg)';
+        help2.textContent = 'Poids utilisé';
+    } else if (wodType === 'Reps+Weight') {
+        label1.textContent = 'Répétitions';
+        help1.textContent = 'Nombre total';
+        field2.classList.remove('hidden');
+        label2.textContent = 'Poids (kg)';
+        help2.textContent = 'Poids utilisé';
+    }
+}
+
+async function submitResult() {
+    const judgeName = document.getElementById('judge-name').value.trim();
+    const athleteID = parseInt(document.getElementById('result-athlete').value);
+    const wodID = parseInt(document.getElementById('result-wod').value);
+    const value1 = parseFloat(document.getElementById('result-value1').value);
+    const value2Input = document.getElementById('result-value2').value;
+    const value2 = value2Input ? parseFloat(value2Input) : null;
+    
+    if (!judgeName) {
+        showMessage('Entrez votre nom', 'error');
+        return;
+    }
+    
+    if (!athleteID || !wodID) {
+        showMessage('Sélectionnez athlète et WOD', 'error');
+        return;
+    }
+    
+    if (!value1 && value1 !== 0) {
+        showMessage('Entrez un résultat', 'error');
+        return;
+    }
+    
+    const existing = data.results.find(r => r.athleteID === athleteID && r.wodID === wodID);
+    if (existing) {
+        showMessage('Résultat déjà existant! Seul l\'admin peut le modifier.', 'error');
+        return;
+    }
+    
+    localStorage.setItem('judge_name', judgeName);
+    
+    try {
+        showLoading(true);
+        await api.addResult({
+            athleteID,
+            wodID,
+            value1,
+            value2,
+            judgeName
+        });
+        
+        document.getElementById('result-athlete').value = '';
+        document.getElementById('result-wod').value = '';
+        document.getElementById('result-value1').value = '';
+        document.getElementById('result-value2').value = '';
+        document.getElementById('result-fields').classList.add('hidden');
+        
+        await loadData();
+        showMessage('Résultat enregistré!', 'success');
+    } catch (error) {
+        showLoading(false);
+        showMessage('Erreur: ' + error.message, 'error');
+    }
+}
+
+function renderRecentResults() {
+    const tbody = document.getElementById('recent-results');
+    
+    if (!data.results || data.results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Aucun résultat</td></tr>';
+        return;
+    }
+    
+    const recent = [...data.results].reverse().slice(0, 20);
+    
+    let html = '';
+    recent.forEach(r => {
+        const athlete = data.athletes.find(a => a.id === r.athleteID);
+        const wod = data.wods.find(w => w.id === r.wodID);
+        
+        let displayValue = r.value1;
+        if (r.value2) displayValue += ' + ' + r.value2;
+        
+        html += `<tr class="border-b hover:bg-gray-50">
+            <td class="py-2 px-2 font-medium">${athlete ? athlete.name : 'N/A'}</td>
+            <td class="py-2 px-2">${wod ? wod.name : 'N/A'}</td>
+            <td class="py-2 px-2 hide-mobile font-mono">${displayValue}</td>
+            <td class="py-2 px-2 font-bold text-blue-600">${r.points}</td>
+        </tr>`;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+init();
+</script>
+
+</body>
+</html>
