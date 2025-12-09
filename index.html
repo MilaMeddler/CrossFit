@@ -5,177 +5,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrossFit Tournament System</title>
-    <!-- Version: 2024-12-08-22:27 -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby81dMSYB5LxLZCe1PQQiGCffTK_vcTM4INQt1jp2VDRjCwdCXAzbZ0qoltHiEHSVvH/exec';
-    </script>
+        const ADMIN_PASSWORD = 'BMCmeddler'; // Измените на свой пароль!
 
 ```
-<nav class="bg-gray-900 text-white p-4 shadow-lg">
-    <div class="max-w-7xl mx-auto flex gap-4">
-        <button onclick="showPage('leaderboard')" class="px-4 py-2 rounded hover:bg-gray-700" id="btn-leaderboard">Classement</button>
-        <button onclick="showPage('judge')" class="px-4 py-2 rounded hover:bg-gray-700" id="btn-judge">Juge</button>
-        <button onclick="showPage('admin')" class="px-4 py-2 rounded hover:bg-gray-700" id="btn-admin">Admin</button>
-    </div>
-</nav>
-
-<div id="error-container" class="max-w-7xl mx-auto mt-4 px-6 hidden">
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
-        <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <div>
-            <p class="font-semibold text-red-800">Erreur</p>
-            <p class="text-red-700 text-sm" id="error-message"></p>
-        </div>
-    </div>
-</div>
-
-<div id="success-container" class="max-w-7xl mx-auto mt-4 px-6 hidden">
-    <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-2">
-        <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path d="M5 13l4 4L19 7"></path>
-        </svg>
-        <p class="text-green-700 font-semibold" id="success-message"></p>
-    </div>
-</div>
-
-<div id="page-admin" class="max-w-6xl mx-auto p-6 hidden">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold">👥 Panneau Administrateur</h1>
-        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" id="refresh-admin">🔄 Actualiser</button>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-2xl font-semibold mb-4">Athlètes</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-            <input type="text" id="athlete-name" placeholder="Nom" class="border rounded px-3 py-2">
-            <select id="athlete-category" class="border rounded px-3 py-2">
-                <option value="RX">RX</option>
-                <option value="Intermediate">Intermédiaire</option>
-            </select>
-            <select id="athlete-gender" class="border rounded px-3 py-2">
-                <option value="M">Homme</option>
-                <option value="F">Femme</option>
-            </select>
-            <button onclick="addAthlete()" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">+ Ajouter</button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead><tr class="border-b"><th class="text-left py-2">ID</th><th class="text-left py-2">Nom</th><th class="text-left py-2">Catégorie</th><th class="text-left py-2">Sexe</th></tr></thead>
-                <tbody id="athletes-table"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-semibold mb-4">WODs</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-            <input type="text" id="wod-name" placeholder="Nom du WOD" class="border rounded px-3 py-2">
-            <select id="wod-type" class="border rounded px-3 py-2">
-                <option value="Time">Time</option>
-                <option value="Reps">Reps</option>
-                <option value="Weight">Weight</option>
-                <option value="Time+Reps">Time + Reps</option>
-                <option value="Time+Weight">Time + Weight</option>
-                <option value="Reps+Weight">Reps + Weight</option>
-            </select>
-            <input type="text" id="wod-description" placeholder="Description" class="border rounded px-3 py-2">
-            <button onclick="addWod()" class="bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700">+ Ajouter</button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead><tr class="border-b"><th class="text-left py-2">ID</th><th class="text-left py-2">Nom</th><th class="text-left py-2">Type</th><th class="text-left py-2">Description</th></tr></thead>
-                <tbody id="wods-table"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="page-judge" class="max-w-4xl mx-auto p-6 hidden">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold">🏆 Panneau Juge</h1>
-        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔄 Actualiser</button>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-semibold mb-6">Enregistrer un résultat</h2>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium mb-2">Athlète</label>
-                <select id="result-athlete" class="w-full border rounded px-3 py-2">
-                    <option value="">Sélectionner un athlète</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">WOD</label>
-                <select id="result-wod" onchange="updateResultFields()" class="w-full border rounded px-3 py-2">
-                    <option value="">Sélectionner un WOD</option>
-                </select>
-            </div>
-            <div id="result-fields"></div>
-            <button onclick="submitResult()" class="w-full bg-blue-600 text-white rounded px-4 py-3 hover:bg-blue-700 font-semibold">💾 Enregistrer le résultat</button>
-        </div>
-
-        <div class="mt-8">
-            <h3 class="text-xl font-semibold mb-4">Résultats récents</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead><tr class="border-b"><th class="text-left py-2">Athlète</th><th class="text-left py-2">WOD</th><th class="text-left py-2">Résultat</th></tr></thead>
-                    <tbody id="recent-results"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="page-leaderboard" class="max-w-7xl mx-auto p-6">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold">🏆 Classement</h1>
-        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">🔄 Actualiser</button>
-    </div>
-
-    <div class="flex gap-2 mb-6 flex-wrap">
-        <button onclick="showCategory('RX-M')" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" id="cat-RX-M">RX Hommes</button>
-        <button onclick="showCategory('RX-F')" class="px-4 py-2 rounded font-semibold bg-gray-200" id="cat-RX-F">RX Femmes</button>
-        <button onclick="showCategory('Intermediate-M')" class="px-4 py-2 rounded font-semibold bg-gray-200" id="cat-Intermediate-M">Intermédiaire Hommes</button>
-        <button onclick="showCategory('Intermediate-F')" class="px-4 py-2 rounded font-semibold bg-gray-200" id="cat-Intermediate-F">Intermédiaire Femmes</button>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-800 text-white">
-                    <tr id="leaderboard-header">
-                        <th class="px-4 py-3 text-left">Place</th>
-                        <th class="px-4 py-3 text-left">Athlète</th>
-                        <th class="px-4 py-3 text-center">TOTAL</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
     let athletes = [];
     let wods = [];
     let results = [];
     let currentPage = 'leaderboard';
     let currentCategory = 'RX-M';
+    let isAdminAuthorized = false;
+    
+    // JSONP loader
+    function loadWithJSONP(action) {
+        return new Promise((resolve, reject) => {
+            const callbackName = 'jsonpCallback_' + Date.now();
+            const script = document.createElement('script');
+            
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                resolve(data);
+            };
+            
+            script.onerror = () => {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                reject(new Error('JSONP load failed'));
+            };
+            
+            script.src = `${SCRIPT_URL}?action=${action}&callback=${callbackName}`;
+            document.body.appendChild(script);
+        });
+    }
 
     function showError(msg) {
         const container = document.getElementById('error-container');
         const messageEl = document.getElementById('error-message');
-        messageEl.innerHTML = msg; // Changed to innerHTML to show formatted errors
+        messageEl.innerHTML = msg;
         container.classList.remove('hidden');
-        // Don't auto-hide for debugging
     }
 
     function showSuccess(msg) {
@@ -186,82 +58,40 @@
     }
 
     async function loadData() {
-        const maxRetries = 3;
-        let attempt = 0;
-        
-        while (attempt < maxRetries) {
-            try {
-                attempt++;
-                showError(`Tentative ${attempt}/${maxRetries}...`);
-                
-                await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-                
-                const athletesRes = await fetch(SCRIPT_URL + '?action=getAthletes', {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                
-                if (!athletesRes.ok) {
-                    throw new Error(`Athletes: HTTP ${athletesRes.status}`);
-                }
-                
-                const wodsRes = await fetch(SCRIPT_URL + '?action=getWods', {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                
-                if (!wodsRes.ok) {
-                    throw new Error(`WODs: HTTP ${wodsRes.status}`);
-                }
-                
-                const resultsRes = await fetch(SCRIPT_URL + '?action=getResults', {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                
-                if (!resultsRes.ok) {
-                    throw new Error(`Results: HTTP ${resultsRes.status}`);
-                }
+        try {
+            const [athletesData, wodsData, resultsData] = await Promise.all([
+                loadWithJSONP('getAthletes'),
+                loadWithJSONP('getWods'),
+                loadWithJSONP('getResults')
+            ]);
 
-                const athletesData = await athletesRes.json();
-                const wodsData = await wodsRes.json();
-                const resultsData = await resultsRes.json();
+            athletes = athletesData.slice(1).map(row => ({
+                id: parseInt(row[0]) || 0,
+                name: row[1] || '',
+                category: row[2] || 'RX',
+                gender: row[3] || 'M'
+            })).filter(a => a.id > 0);
 
-                athletes = athletesData.slice(1).map(row => ({
-                    id: parseInt(row[0]) || 0,
-                    name: row[1] || '',
-                    category: row[2] || 'RX',
-                    gender: row[3] || 'M'
-                })).filter(a => a.id > 0);
+            wods = wodsData.slice(1).map(row => ({
+                id: parseInt(row[0]) || 0,
+                name: row[1] || '',
+                type: row[2] || 'Time',
+                description: row[3] || ''
+            })).filter(w => w.id > 0);
 
-                wods = wodsData.slice(1).map(row => ({
-                    id: parseInt(row[0]) || 0,
-                    name: row[1] || '',
-                    type: row[2] || 'Time',
-                    description: row[3] || ''
-                })).filter(w => w.id > 0);
+            results = resultsData.slice(1).map(row => ({
+                athleteId: parseInt(row[0]),
+                wodId: parseInt(row[1]),
+                value1: row[2] || '',
+                value2: row[3] || null,
+                display: row[4] || ''
+            })).filter(r => r.athleteId > 0 && r.wodId > 0);
 
-                results = resultsData.slice(1).map(row => ({
-                    athleteId: parseInt(row[0]),
-                    wodId: parseInt(row[1]),
-                    value1: row[2] || '',
-                    value2: row[3] || null,
-                    display: row[4] || ''
-                })).filter(r => r.athleteId > 0 && r.wodId > 0);
-
-                renderCurrentPage();
-                document.getElementById('error-container').classList.add('hidden');
-                showSuccess('Données chargées avec succès!');
-                return;
-                
-            } catch (err) {
-                if (attempt >= maxRetries) {
-                    showError(`ERREUR après ${maxRetries} tentatives:<br>${err.message}<br><br>Vérifiez votre connexion internet et réessayez.`);
-                }
-            }
+            renderCurrentPage();
+            document.getElementById('error-container').classList.add('hidden');
+            showSuccess('Données chargées!');
+        } catch (err) {
+            showError('Erreur: ' + err.message);
         }
     }
 
@@ -274,110 +104,8 @@
             const result = await response.json();
             return result.success;
         } catch (err) {
-            showError('Erreur de sauvegarde: ' + err.message);
+            showError('Erreur sauvegarde: ' + err.message);
             return false;
-        }
-    }
-
-    async function addAthlete() {
-        const name = document.getElementById('athlete-name').value.trim();
-        if (!name) return;
-        
-        const id = athletes.length > 0 ? Math.max(...athletes.map(a => a.id)) + 1 : 1;
-        athletes.push({
-            id,
-            name,
-            category: document.getElementById('athlete-category').value,
-            gender: document.getElementById('athlete-gender').value
-        });
-        
-        const success = await saveData('saveAthletes', athletes.map(a => [a.id, a.name, a.category, a.gender]));
-        
-        if (success) {
-            document.getElementById('athlete-name').value = '';
-            showSuccess('Athlète ajouté!');
-            renderAdmin();
-        }
-    }
-
-    async function addWod() {
-        const name = document.getElementById('wod-name').value.trim();
-        if (!name) return;
-        
-        const id = wods.length > 0 ? Math.max(...wods.map(w => w.id)) + 1 : 1;
-        wods.push({
-            id,
-            name,
-            type: document.getElementById('wod-type').value,
-            description: document.getElementById('wod-description').value
-        });
-        
-        const success = await saveData('saveWods', wods.map(w => [w.id, w.name, w.type, w.description]));
-        
-        if (success) {
-            document.getElementById('wod-name').value = '';
-            document.getElementById('wod-description').value = '';
-            showSuccess('WOD ajouté!');
-            renderAdmin();
-        }
-    }
-
-    function updateResultFields() {
-        const wodId = parseInt(document.getElementById('result-wod').value);
-        const wod = wods.find(w => w.id === wodId);
-        const container = document.getElementById('result-fields');
-        
-        if (!wod) {
-            container.innerHTML = '';
-            return;
-        }
-
-        const isCombo = wod.type.includes('+');
-        const label1 = wod.type.startsWith('Time') ? 'Temps (mm:ss)' : wod.type.startsWith('Reps') ? 'Répétitions' : 'Poids (kg)';
-        const placeholder1 = wod.type.startsWith('Time') ? '5:30' : '100';
-        
-        let html = `<div><label class="block text-sm font-medium mb-2">${label1}</label><input type="text" id="result-value1" class="w-full border rounded px-3 py-2" placeholder="${placeholder1}"></div>`;
-        
-        if (isCombo) {
-            const parts = wod.type.split('+');
-            const label2 = parts[1] === 'Weight' ? 'Poids (kg)' : 'Répétitions';
-            html += `<div><label class="block text-sm font-medium mb-2">${label2}</label><input type="text" id="result-value2" class="w-full border rounded px-3 py-2" placeholder="100"></div>`;
-        }
-        
-        container.innerHTML = html;
-    }
-
-    async function submitResult() {
-        const athleteId = parseInt(document.getElementById('result-athlete').value);
-        const wodId = parseInt(document.getElementById('result-wod').value);
-        const value1 = document.getElementById('result-value1')?.value;
-        
-        if (!athleteId || !wodId || !value1) {
-            showError('Veuillez remplir tous les champs');
-            return;
-        }
-        
-        const wod = wods.find(w => w.id === wodId);
-        let v1 = value1;
-        
-        if (wod.type.startsWith('Time') && value1.includes(':')) {
-            const [m, s] = value1.split(':');
-            v1 = (parseInt(m) * 60 + parseInt(s)).toString();
-        }
-
-        const value2 = document.getElementById('result-value2')?.value || null;
-        const display = value2 ? `${value1} + ${value2}` : value1;
-        
-        results = results.filter(r => !(r.athleteId === athleteId && r.wodId === wodId));
-        results.push({ athleteId, wodId, value1: v1, value2, display });
-        
-        const success = await saveData('saveResults', results.map(r => [r.athleteId, r.wodId, r.value1, r.value2 || '', r.display]));
-        
-        if (success) {
-            document.getElementById('result-value1').value = '';
-            if (document.getElementById('result-value2')) document.getElementById('result-value2').value = '';
-            showSuccess('Résultat enregistré!');
-            renderJudge();
         }
     }
 
@@ -387,9 +115,11 @@
 
         categories.forEach(cat => {
             const [category, gender] = cat.split('-');
-            const catAthletes = athletes.filter(a => a.category === category && a.gender === gender);
+            const catAthletes = athletes.filter(
+                a => a.category === category && a.gender === gender
+            );
 
-            const scores = catAthletes.map(athlete => {
+            const athleteScores = catAthletes.map(athlete => {
                 let totalPoints = 0;
                 
                 wods.forEach(wod => {
@@ -427,21 +157,192 @@
                 };
             });
 
-            scores.sort((a, b) => b.totalPoints - a.totalPoints);
-            rankings[cat] = scores;
+            athleteScores.sort((a, b) => b.totalPoints - a.totalPoints);
+            rankings[cat] = athleteScores;
         });
 
         return rankings;
     }
 
+    function AdminPage() {
+        const checkPassword = () => {
+            const pwd = prompt('Mot de passe administrateur:');
+            if (pwd === ADMIN_PASSWORD) {
+                isAdminAuthorized = true;
+                renderAdmin();
+            } else {
+                alert('Mot de passe incorrect!');
+                showPage('leaderboard');
+            }
+        };
+
+        if (!isAdminAuthorized) {
+            checkPassword();
+            return;
+        }
+
+        renderAdmin();
+    }
+
+    async function addAthlete() {
+        const name = document.getElementById('athlete-name').value.trim();
+        if (!name) return;
+        
+        const id = athletes.length > 0 ? Math.max(...athletes.map(a => a.id)) + 1 : 1;
+        athletes.push({
+            id,
+            name,
+            category: document.getElementById('athlete-category').value,
+            gender: document.getElementById('athlete-gender').value
+        });
+        
+        const success = await saveData('saveAthletes', athletes.map(a => 
+            [a.id, a.name, a.category, a.gender]
+        ));
+        
+        if (success) {
+            document.getElementById('athlete-name').value = '';
+            showSuccess('Athlète ajouté!');
+            renderAdmin();
+        }
+    }
+
+    async function deleteAthlete(id) {
+        if (!confirm('Supprimer cet athlète?')) return;
+        
+        athletes = athletes.filter(a => a.id !== id);
+        const success = await saveData('saveAthletes', athletes.map(a => 
+            [a.id, a.name, a.category, a.gender]
+        ));
+        
+        if (success) {
+            showSuccess('Athlète supprimé!');
+            renderAdmin();
+        }
+    }
+
+    async function addWod() {
+        const name = document.getElementById('wod-name').value.trim();
+        if (!name) return;
+        
+        const id = wods.length > 0 ? Math.max(...wods.map(w => w.id)) + 1 : 1;
+        wods.push({
+            id,
+            name,
+            type: document.getElementById('wod-type').value,
+            description: document.getElementById('wod-description').value
+        });
+        
+        const success = await saveData('saveWods', wods.map(w => 
+            [w.id, w.name, w.type, w.description]
+        ));
+        
+        if (success) {
+            document.getElementById('wod-name').value = '';
+            document.getElementById('wod-description').value = '';
+            showSuccess('WOD ajouté!');
+            renderAdmin();
+        }
+    }
+
+    async function deleteWod(id) {
+        if (!confirm('Supprimer ce WOD?')) return;
+        
+        wods = wods.filter(w => w.id !== id);
+        const success = await saveData('saveWods', wods.map(w => 
+            [w.id, w.name, w.type, w.description]
+        ));
+        
+        if (success) {
+            showSuccess('WOD supprimé!');
+            renderAdmin();
+        }
+    }
+
     function renderAdmin() {
         document.getElementById('athletes-table').innerHTML = athletes.map(a => 
-            `<tr class="border-b"><td class="py-2 text-gray-500">${a.id}</td><td class="py-2">${a.name}</td><td class="py-2">${a.category}</td><td class="py-2">${a.gender === 'M' ? 'Homme' : 'Femme'}</td></tr>`
+            `<tr class="border-b">
+                <td class="py-2">${a.name}</td>
+                <td class="py-2">${a.category}</td>
+                <td class="py-2">${a.gender === 'M' ? 'H' : 'F'}</td>
+                <td class="py-2">
+                    <button onclick="deleteAthlete(${a.id})" class="text-red-600 hover:text-red-800">
+                        🗑️
+                    </button>
+                </td>
+            </tr>`
         ).join('');
         
         document.getElementById('wods-table').innerHTML = wods.map(w => 
-            `<tr class="border-b"><td class="py-2 text-gray-500">${w.id}</td><td class="py-2 font-semibold">${w.name}</td><td class="py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${w.type}</span></td><td class="py-2 text-sm text-gray-600">${w.description}</td></tr>`
+            `<tr class="border-b">
+                <td class="py-2 font-semibold">${w.name}</td>
+                <td class="py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${w.type}</span></td>
+                <td class="py-2 text-sm text-gray-600">${w.description}</td>
+                <td class="py-2">
+                    <button onclick="deleteWod(${w.id})" class="text-red-600 hover:text-red-800">
+                        🗑️
+                    </button>
+                </td>
+            </tr>`
         ).join('');
+    }
+
+    function updateResultFields() {
+        const wodId = parseInt(document.getElementById('result-wod').value);
+        const wod = wods.find(w => w.id === wodId);
+        const container = document.getElementById('result-fields');
+        
+        if (!wod) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const isCombo = wod.type.includes('+');
+        const label1 = wod.type.startsWith('Time') ? 'Temps (mm:ss)' : wod.type.startsWith('Reps') ? 'Répétitions' : 'Poids (kg)';
+        const placeholder1 = wod.type.startsWith('Time') ? '5:30' : '100';
+        
+        let html = `<div><label class="block text-sm font-medium mb-2">${label1}</label><input type="text" id="result-value1" class="w-full border rounded px-3 py-2" placeholder="${placeholder1}"></div>`;
+        
+        if (isCombo) {
+            const parts = wod.type.split('+');
+            const label2 = parts[1] === 'Weight' ? 'Poids (kg)' : 'Répétitions';
+            html += `<div><label class="block text-sm font-medium mb-2">${label2}</label><input type="text" id="result-value2" class="w-full border rounded px-3 py-2" placeholder="100"></div>`;
+        }
+        
+        container.innerHTML = html;
+    }
+
+    async function submitResult() {
+        const athleteId = parseInt(document.getElementById('result-athlete').value);
+        const wodId = parseInt(document.getElementById('result-wod').value);
+        const value1 = document.getElementById('result-value1')?.value;
+        
+        if (!athleteId || !wodId || !value1) return;
+        
+        const wod = wods.find(w => w.id === wodId);
+        let v1 = value1;
+        
+        if (wod.type.startsWith('Time') && value1.includes(':')) {
+            const [m, s] = value1.split(':');
+            v1 = (parseInt(m) * 60 + parseInt(s)).toString();
+        }
+
+        const value2 = document.getElementById('result-value2')?.value || null;
+        const display = value2 ? `${value1} + ${value2}` : value1;
+        
+        results = results.filter(r => !(r.athleteId === athleteId && r.wodId === wodId));
+        results.push({ athleteId, wodId, value1: v1, value2, display });
+        
+        const success = await saveData('saveResults', results.map(r => 
+            [r.athleteId, r.wodId, r.value1, r.value2 || '', r.display]
+        ));
+        
+        if (success) {
+            document.getElementById('result-value1').value = '';
+            if (document.getElementById('result-value2')) document.getElementById('result-value2').value = '';
+            showSuccess('Résultat enregistré!');
+            renderJudge();
+        }
     }
 
     function renderJudge() {
@@ -487,10 +388,15 @@
         document.getElementById('btn-judge').classList.remove('bg-blue-600');
         document.getElementById('btn-leaderboard').classList.remove('bg-blue-600');
         
-        document.getElementById(`page-${page}`).classList.remove('hidden');
-        document.getElementById(`btn-${page}`).classList.add('bg-blue-600');
-        
-        renderCurrentPage();
+        if (page === 'admin') {
+            document.getElementById('page-admin').classList.remove('hidden');
+            document.getElementById('btn-admin').classList.add('bg-blue-600');
+            AdminPage();
+        } else {
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            document.getElementById(`btn-${page}`).classList.add('bg-blue-600');
+            renderCurrentPage();
+        }
     }
 
     function showCategory(cat) {
@@ -517,6 +423,128 @@
         showPage('leaderboard');
     };
 </script>
+
+<nav class="bg-gray-900 text-white p-4 shadow-lg">
+    <div class="max-w-7xl mx-auto flex gap-2">
+        <button onclick="showPage('leaderboard')" class="px-3 py-2 rounded hover:bg-gray-700 text-sm md:text-base" id="btn-leaderboard">Classement</button>
+        <button onclick="showPage('judge')" class="px-3 py-2 rounded hover:bg-gray-700 text-sm md:text-base" id="btn-judge">Juge</button>
+        <button onclick="showPage('admin')" class="px-3 py-2 rounded hover:bg-gray-700 text-sm md:text-base" id="btn-admin">Admin</button>
+    </div>
+</nav>
+
+<div id="error-container" class="max-w-7xl mx-auto mt-4 px-4 hidden">
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p class="text-red-700 text-sm" id="error-message"></p>
+    </div>
+</div>
+
+<div id="success-container" class="max-w-7xl mx-auto mt-4 px-4 hidden">
+    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <p class="text-green-700 font-semibold" id="success-message"></p>
+    </div>
+</div>
+
+<div id="page-admin" class="max-w-6xl mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">👥 Admin</h1>
+        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded">🔄</button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+        <h2 class="text-xl font-semibold mb-4">Athlètes</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <input type="text" id="athlete-name" placeholder="Nom" class="border rounded px-3 py-2">
+            <select id="athlete-category" class="border rounded px-3 py-2">
+                <option value="RX">RX</option>
+                <option value="Intermediate">Inter</option>
+            </select>
+            <select id="athlete-gender" class="border rounded px-3 py-2">
+                <option value="M">H</option>
+                <option value="F">F</option>
+            </select>
+            <button onclick="addAthlete()" class="bg-blue-600 text-white rounded px-4 py-2">+</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead><tr class="border-b"><th class="text-left py-2">Nom</th><th class="text-left py-2">Cat</th><th class="text-left py-2">Sexe</th><th class="text-left py-2"></th></tr></thead>
+                <tbody id="athletes-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-xl font-semibold mb-4">WODs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+            <input type="text" id="wod-name" placeholder="Nom" class="border rounded px-3 py-2">
+            <select id="wod-type" class="border rounded px-3 py-2">
+                <option value="Time">Time</option>
+                <option value="Reps">Reps</option>
+                <option value="Weight">Weight</option>
+                <option value="Time+Reps">Time + Reps</option>
+                <option value="Time+Weight">Time + Weight</option>
+                <option value="Reps+Weight">Reps + Weight</option>
+            </select>
+            <input type="text" id="wod-description" placeholder="Description" class="border rounded px-3 py-2">
+            <button onclick="addWod()" class="bg-green-600 text-white rounded px-4 py-2">+</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead><tr class="border-b"><th class="text-left py-2">Nom</th><th class="text-left py-2">Type</th><th class="text-left py-2">Description</th><th class="text-left py-2"></th></tr></thead>
+                <tbody id="wods-table"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="page-judge" class="max-w-4xl mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">🏆 Juge</h1>
+        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded">🔄</button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-xl font-semibold mb-4">Résultat</h2>
+        <div class="space-y-3">
+            <select id="result-athlete" class="w-full border rounded px-3 py-2"></select>
+            <select id="result-wod" onchange="updateResultFields()" class="w-full border rounded px-3 py-2"></select>
+            <div id="result-fields"></div>
+            <button onclick="submitResult()" class="w-full bg-blue-600 text-white rounded px-4 py-3">💾 Enregistrer</button>
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold mb-3">Récents</h3>
+            <table class="w-full text-sm">
+                <thead><tr class="border-b"><th class="text-left py-2">Athlète</th><th class="text-left py-2">WOD</th><th class="text-left py-2">Résultat</th></tr></thead>
+                <tbody id="recent-results"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="page-leaderboard" class="max-w-7xl mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">🏆 Classement</h1>
+        <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded">🔄</button>
+    </div>
+
+    <div class="flex gap-2 mb-6 flex-wrap">
+        <button onclick="showCategory('RX-M')" class="px-3 py-2 rounded font-semibold bg-blue-600 text-white text-sm" id="cat-RX-M">RX H</button>
+        <button onclick="showCategory('RX-F')" class="px-3 py-2 rounded font-semibold bg-gray-200 text-sm" id="cat-RX-F">RX F</button>
+        <button onclick="showCategory('Intermediate-M')" class="px-3 py-2 rounded font-semibold bg-gray-200 text-sm" id="cat-Intermediate-M">Inter H</button>
+        <button onclick="showCategory('Intermediate-F')" class="px-3 py-2 rounded font-semibold bg-gray-200 text-sm" id="cat-Intermediate-F">Inter F</button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-800 text-white">
+                    <tr id="leaderboard-header"></tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 ```
 
 </body>
