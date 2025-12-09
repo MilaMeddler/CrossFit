@@ -10,7 +10,7 @@
 
 const CONFIG = {
     // URL вашего Google Apps Script Web App
-    WEB_APP_URL: 'ВСТАВЬТЕ_ВАШ_URL_ЗДЕСЬ',
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyFOgJv2noeP3rXVLB4v52fRa2OehH7ynjklGaHSm5_n5ZLtuOGMAN6yXuWZ4Q23JS4/exec',
     
     // Время автообновления для leaderboard (миллисекунды)
     AUTO_REFRESH_INTERVAL: 10000, // 10 секунд
