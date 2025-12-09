@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+<h1>Minimal Test</h1>
+<button onclick="testClick()" style="padding:20px; font-size:20px;">Нажми меня!</button>
+<p id="result"></p>
+
+<script>
+function testClick() {
+    document.getElementById('result').textContent = 'Кнопка работает! ' + new Date().toLocaleTimeString();
+}
+
+window.onerror = function(msg, url, line) {
+    document.getElementById('result').textContent = 'ERROR: ' + msg + ' at line ' + line;
+    return true;
+};
+
+window.onload = function() {
+    document.getElementById('result').textContent = 'JavaScript загружен!';
+};
+</script>
+</body>
+</html>
