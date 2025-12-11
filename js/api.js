@@ -3,10 +3,11 @@
 // ====================================
 
 // Создаём клиент Supabase
-const supabase = window.supabase.createClient(
+const supabase = window.Supabase.createClient(
     window.CONFIG.SUPABASE_URL,
     window.CONFIG.SUPABASE_ANON_KEY
 );
+
 
 // Единый класс API (аналог старого JSONP)
 class CrossFitAPI {
