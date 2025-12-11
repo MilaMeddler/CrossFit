@@ -331,11 +331,11 @@ document.getElementById('btn-add-wod').addEventListener('click', async () => {
 
 function renderWODs(list) {
     const tbody = document.getElementById('wods-list');
-    if (!list || list.length.length === 0) {
+    if (!list || list.length === 0) {
         tbody.innerHTML = '<tr><td class="p-2" colspan="4">Aucun WOD</td></tr>';
         return;
     }
-    tbody.innerHTML = (list || []).map(w => {
+    tbody.innerHTML = list.map(w => {
         return `<tr class="border-t">
             <td class="p-2">${w.wod_number}</td>
             <td class="p-2">${w.wod_type}</td>
@@ -344,6 +344,7 @@ function renderWODs(list) {
         </tr>`;
     }).join('');
 }
+
 
 async function deleteWOD(id) {
     if (!confirm('Supprimer ce WOD ?')) return;
