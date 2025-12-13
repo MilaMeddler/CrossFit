@@ -1,27 +1,54 @@
 // api/scores.js
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 export const ScoresAPI = {
+    // Get all scores with related data
+    async getAll() {
+        const { data, error } = await supabase
+            .from("scores")
+            .select(`
+                *,
+                athletes(id, first_name, last_name, gender, level),
+                workouts(id, wod_number, wod_type, tournament_id),
+                judges(id, name)
+            `)
+            .order("id");
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Get scores for specific tournament
     async getByTournament(tournament_id) {
         const { data, error } = await supabase
             .from("scores")
             .select(`
-                id,
-                athlete_id,
-                workout_id,
-                judge_id,
-                value_int,
-                value_time,
-                value_decimal,
-                notes,
-                submitted_at,
-                workouts:tournament_id
-            `);
+                *,
+                athletes(id, first_name, last_name, gender, level),
+                workouts!inner(id, wod_number, wod_type, tournament_id),
+                judges(id, name)
+            `)
+            .eq("workouts.tournament_id", tournament_id)
+            .order("id");
 
         if (error) throw error;
+        return data;
+    },
 
-        // Фильтр на клиенте — безопасно и быстро
-        return data.filter(s => s.workouts?.tournament_id === tournament_id);
+    // Get scores for specific workout
+    async getByWorkout(workout_id) {
+        const { data, error } = await supabase
+            .from("scores")
+            .select(`
+                *,
+                athletes(id, first_name, last_name, gender, level),
+                judges(id, name)
+            `)
+            .eq("workout_id", workout_id)
+            .order("value_time");
+
+        if (error) throw error;
+        return data;
     },
 
     async create(score) {
@@ -35,10 +62,10 @@ export const ScoresAPI = {
         return data;
     },
 
-    async update(id, updateData) {
+    async update(id, dataUpdate) {
         const { data, error } = await supabase
             .from("scores")
-            .update(updateData)
+            .update(dataUpdate)
             .eq("id", id)
             .select()
             .single();
@@ -46,14 +73,3 @@ export const ScoresAPI = {
         if (error) throw error;
         return data;
     },
-
-    async delete(id) {
-        const { error } = await supabase
-            .from("scores")
-            .delete()
-            .eq("id", id);
-
-        if (error) throw error;
-        return true;
-    }
-};
