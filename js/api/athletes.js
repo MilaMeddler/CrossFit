@@ -1,5 +1,5 @@
 // api/athletes.js
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 export const AthletesAPI = {
     async getAll() {
