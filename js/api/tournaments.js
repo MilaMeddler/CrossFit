@@ -1,21 +1,32 @@
 // api/tournaments.js
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 export const TournamentsAPI = {
     async getAll() {
         const { data, error } = await supabase
             .from("tournaments")
             .select("*")
-            .order("id");
+            .order("date_start", { ascending: false });
 
         if (error) throw error;
         return data;
     },
 
-    async create(t) {
+    async getById(id) {
         const { data, error } = await supabase
             .from("tournaments")
-            .insert(t)
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async create(tournament) {
+        const { data, error } = await supabase
+            .from("tournaments")
+            .insert(tournament)
             .select()
             .single();
 
@@ -23,10 +34,10 @@ export const TournamentsAPI = {
         return data;
     },
 
-    async update(id, updateData) {
+    async update(id, dataUpdate) {
         const { data, error } = await supabase
             .from("tournaments")
-            .update(updateData)
+            .update(dataUpdate)
             .eq("id", id)
             .select()
             .single();
