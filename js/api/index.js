@@ -12,3 +12,6 @@ export const api = {
     scores: ScoresAPI,
     judges: JudgesAPI
 };
+
+// Also export individually for convenience
+export { AthletesAPI, TournamentsAPI, WodsAPI, ScoresAPI, JudgesAPI };
