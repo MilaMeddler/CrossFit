@@ -1,5 +1,5 @@
 // api/judges.js
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 export const JudgesAPI = {
     async getAll() {
@@ -12,10 +12,22 @@ export const JudgesAPI = {
         return data;
     },
 
-    async create(j) {
+    async create(judge) {
         const { data, error } = await supabase
             .from("judges")
-            .insert(j)
+            .insert(judge)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async update(id, dataUpdate) {
+        const { data, error } = await supabase
+            .from("judges")
+            .update(dataUpdate)
+            .eq("id", id)
             .select()
             .single();
 
@@ -33,3 +45,4 @@ export const JudgesAPI = {
         return true;
     }
 };
+
