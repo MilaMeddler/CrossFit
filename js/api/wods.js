@@ -1,7 +1,19 @@
 // api/wods.js
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 export const WodsAPI = {
+    // Get all WODs
+    async getAll() {
+        const { data, error } = await supabase
+            .from("workouts")
+            .select("*")
+            .order("wod_number");
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Get WODs for specific tournament
     async getByTournament(tournament_id) {
         const { data, error } = await supabase
             .from("workouts")
@@ -24,10 +36,10 @@ export const WodsAPI = {
         return data;
     },
 
-    async update(id, updateData) {
+    async update(id, dataUpdate) {
         const { data, error } = await supabase
             .from("workouts")
-            .update(updateData)
+            .update(dataUpdate)
             .eq("id", id)
             .select()
             .single();
