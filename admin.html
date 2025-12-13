@@ -394,6 +394,16 @@ let tournaments = [];
 let wods = [];
 let scores = [];
 
+// ==================== DATE FORMATTING ====================
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
 // ==================== ATHLETES ====================
 async function loadAthletes() {
     try {
@@ -438,7 +448,7 @@ function renderAthletes() {
                 </span>
             </td>
             <td class="px-4 py-3">${athlete.gender === 'M' ? '👨 Homme' : '👩 Femme'}</td>
-            <td class="px-4 py-3">${athlete.birthdate ? new Date(athlete.birthdate).toLocaleDateString('fr-FR') : '-'}</td>
+            <td class="px-4 py-3">${formatDate(athlete.birthdate)}</td>
             <td class="px-4 py-3">${athlete.team || '-'}</td>
             <td class="px-4 py-3 text-center">
                 <button 
@@ -548,7 +558,7 @@ function renderTournamentSelect() {
     }
     
     select.innerHTML = tournaments.map(t => 
-        `<option value="${t.id}">${t.name} (${t.date_start ? new Date(t.date_start).toLocaleDateString('fr-FR') : 'Date non définie'})</option>`
+        `<option value="${t.id}">${t.name} (${formatDate(t.date_start) || 'Date non définie'})</option>`
     ).join('');
 }
 
