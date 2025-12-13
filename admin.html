@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - CrossFit Competition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50">
 
@@ -30,7 +31,7 @@
         </button>
         
         <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Mot de passe incorrect</p>
-        <!-- <p class="text-xs text-gray-400 mt-4">Par défaut: admin123</p> -->
+        <p class="text-xs text-gray-400 mt-4">Pароль: admin123</p>
     </div>
 </div>
 
@@ -44,12 +45,20 @@
                 <h1 class="text-2xl font-bold text-gray-900">🏋️ Administration</h1>
                 <p class="text-sm text-gray-500">Gestion des tournois CrossFit</p>
             </div>
-            <button 
-                id="logout-btn"
-                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-            >
-                Déconnexion
-            </button>
+            <div class="flex gap-3">
+                <a 
+                    href="index.html"
+                    class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                >
+                    🏠 Accueil
+                </a>
+                <button 
+                    id="logout-btn"
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                >
+                    Déconnexion
+                </button>
+            </div>
         </div>
     </header>
 
@@ -295,13 +304,17 @@
     <span id="status-text"></span>
 </div>
 
-<!-- SCRIPTS -->
-<script type="module">
-import { supabase } from './js/supabase.js';
-import { api } from './js/api/index.js';
+<script>
+// ==================== SUPABASE INIT ====================
+const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+console.log('✅ Supabase initialized');
 
 // ==================== PASSWORD PROTECTION ====================
-const ADMIN_PASSWORD = 'admin123'; // Change this!
+const ADMIN_PASSWORD = 'admin123';
 let isLoggedIn = false;
 
 const passwordModal = document.getElementById('password-modal');
@@ -312,13 +325,18 @@ const mainContent = document.getElementById('main-content');
 const logoutBtn = document.getElementById('logout-btn');
 
 function checkLogin() {
-    const password = passwordInput.value;
+    const password = passwordInput.value.trim();
+    console.log('Checking password:', password); // Debug
+    
     if (password === ADMIN_PASSWORD) {
+        console.log('✅ Password correct!');
         isLoggedIn = true;
         passwordModal.classList.add('hidden');
         mainContent.classList.remove('hidden');
+        errorMsg.classList.add('hidden');
         init();
     } else {
+        console.log('❌ Password incorrect');
         errorMsg.classList.remove('hidden');
         passwordInput.value = '';
         passwordInput.focus();
@@ -379,7 +397,14 @@ let scores = [];
 // ==================== ATHLETES ====================
 async function loadAthletes() {
     try {
-        athletes = await api.athletes.getAll();
+        const { data, error } = await supabase
+            .from('athletes')
+            .select('*')
+            .order('last_name');
+        
+        if (error) throw error;
+        
+        athletes = data;
         renderAthletes();
     } catch (error) {
         console.error('Error loading athletes:', error);
@@ -441,14 +466,20 @@ document.getElementById('add-athlete-btn').addEventListener('click', async () =>
     }
     
     try {
-        await api.athletes.create({
-            first_name: firstname,
-            last_name: lastname,
-            gender,
-            birthdate: birthdate || null,
-            level,
-            team: team || null
-        });
+        const { data, error } = await supabase
+            .from('athletes')
+            .insert({
+                first_name: firstname,
+                last_name: lastname,
+                gender,
+                birthdate: birthdate || null,
+                level,
+                team: team || null
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
         
         showStatus('✅ Athlète ajouté avec succès');
         
@@ -465,23 +496,36 @@ document.getElementById('add-athlete-btn').addEventListener('click', async () =>
     }
 });
 
-window.deleteAthlete = async (id) => {
+async function deleteAthlete(id) {
     if (!confirm('Voulez-vous vraiment supprimer cet athlète ?')) return;
     
     try {
-        await api.athletes.delete(id);
+        const { error } = await supabase
+            .from('athletes')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showStatus('✅ Athlète supprimé');
         await loadAthletes();
     } catch (error) {
         console.error('Error deleting athlete:', error);
         showStatus('❌ Erreur lors de la suppression');
     }
-};
+}
 
 // ==================== TOURNAMENTS ====================
 async function loadTournaments() {
     try {
-        tournaments = await api.tournaments.getAll();
+        const { data, error } = await supabase
+            .from('tournaments')
+            .select('*')
+            .order('date_start', { ascending: false });
+        
+        if (error) throw error;
+        
+        tournaments = data;
         renderTournamentSelect();
         
         if (tournaments.length > 0 && !currentTournamentId) {
@@ -522,17 +566,23 @@ document.getElementById('new-tournament-btn').addEventListener('click', async ()
     const location = prompt('Lieu:');
     
     try {
-        const newTournament = await api.tournaments.create({
-            name,
-            date_start: dateStart || null,
-            date_end: dateEnd || null,
-            location: location || null
-        });
+        const { data, error } = await supabase
+            .from('tournaments')
+            .insert({
+                name,
+                date_start: dateStart || null,
+                date_end: dateEnd || null,
+                location: location || null
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
         
         showStatus('✅ Tournoi créé');
         await loadTournaments();
         
-        currentTournamentId = newTournament.id;
+        currentTournamentId = data.id;
         document.getElementById('tournament-select').value = currentTournamentId;
         await loadTournamentData();
     } catch (error) {
@@ -558,8 +608,30 @@ async function loadTournamentData() {
     }
     
     try {
-        wods = await api.wods.getByTournament(currentTournamentId);
-        scores = await api.scores.getByTournament(currentTournamentId);
+        // Load WODs
+        const { data: wodsData, error: wodsError } = await supabase
+            .from('workouts')
+            .select('*')
+            .eq('tournament_id', currentTournamentId)
+            .order('wod_number');
+        
+        if (wodsError) throw wodsError;
+        wods = wodsData;
+        
+        // Load Scores
+        const { data: scoresData, error: scoresError } = await supabase
+            .from('scores')
+            .select(`
+                *,
+                athletes(id, first_name, last_name, gender, level),
+                workouts!inner(id, wod_number, wod_type, tournament_id),
+                judges(id, name)
+            `)
+            .eq('workouts.tournament_id', currentTournamentId)
+            .order('id');
+        
+        if (scoresError) throw scoresError;
+        scores = scoresData;
         
         renderWods();
         renderScores();
@@ -623,12 +695,18 @@ document.getElementById('add-wod-btn').addEventListener('click', async () => {
     }
     
     try {
-        await api.wods.create({
-            tournament_id: currentTournamentId,
-            wod_number: wodNumber,
-            wod_type: wodType,
-            description: description || null
-        });
+        const { data, error } = await supabase
+            .from('workouts')
+            .insert({
+                tournament_id: currentTournamentId,
+                wod_number: wodNumber,
+                wod_type: wodType,
+                description: description || null
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
         
         showStatus('✅ WOD ajouté');
         
@@ -643,18 +721,24 @@ document.getElementById('add-wod-btn').addEventListener('click', async () => {
     }
 });
 
-window.deleteWod = async (id) => {
+async function deleteWod(id) {
     if (!confirm('Voulez-vous vraiment supprimer ce WOD ?')) return;
     
     try {
-        await api.wods.delete(id);
+        const { error } = await supabase
+            .from('workouts')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showStatus('✅ WOD supprimé');
         await loadTournamentData();
     } catch (error) {
         console.error('Error deleting WOD:', error);
         showStatus('❌ Erreur lors de la suppression');
     }
-};
+}
 
 // ==================== SCORES ====================
 function renderScores() {
@@ -677,7 +761,6 @@ function renderScores() {
     tbody.innerHTML = recentScores.map(score => {
         const athlete = score.athletes;
         const workout = score.workouts;
-        const judge = score.judges;
         
         const athleteName = athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Inconnu';
         const wodName = workout ? `WOD ${workout.wod_number}` : 'Inconnu';
@@ -701,18 +784,24 @@ function renderScores() {
     }).join('');
 }
 
-window.deleteScore = async (id) => {
+async function deleteScore(id) {
     if (!confirm('Voulez-vous vraiment supprimer ce résultat ?')) return;
     
     try {
-        await api.scores.delete(id);
+        const { error } = await supabase
+            .from('scores')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
         showStatus('✅ Résultat supprimé');
         await loadTournamentData();
     } catch (error) {
         console.error('Error deleting score:', error);
         showStatus('❌ Erreur lors de la suppression');
     }
-};
+}
 
 // ==================== INITIALIZATION ====================
 async function init() {
