@@ -459,7 +459,6 @@ document.getElementById('add-athlete-btn').addEventListener('click', async () =>
     const firstname = document.getElementById('athlete-firstname').value.trim();
     const lastname = document.getElementById('athlete-lastname').value.trim();
     const gender = document.getElementById('athlete-gender').value;
-    const birthdate = document.getElementById('athlete-birthdate').value;
     const level = document.getElementById('athlete-level').value;
     const team = document.getElementById('athlete-team').value.trim();
     
@@ -475,7 +474,6 @@ document.getElementById('add-athlete-btn').addEventListener('click', async () =>
                 first_name: firstname,
                 last_name: lastname,
                 gender,
-                birthdate: birthdate || null,
                 level,
                 team: team || null
             })
@@ -489,7 +487,6 @@ document.getElementById('add-athlete-btn').addEventListener('click', async () =>
         // Clear form
         document.getElementById('athlete-firstname').value = '';
         document.getElementById('athlete-lastname').value = '';
-        document.getElementById('athlete-birthdate').value = '';
         document.getElementById('athlete-team').value = '';
         
         await loadAthletes();
