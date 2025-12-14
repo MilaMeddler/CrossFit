@@ -119,11 +119,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input 
-                        type="date" 
-                        id="athlete-birthdate" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
                     <select 
                         id="athlete-level" 
                         class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
@@ -159,7 +154,6 @@
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Nom complet</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Niveau</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Genre</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Date de naissance</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Équipe</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Actions</th>
                             </tr>
@@ -448,7 +442,6 @@ function renderAthletes() {
                 </span>
             </td>
             <td class="px-4 py-3">${athlete.gender === 'M' ? '👨 Homme' : '👩 Femme'}</td>
-            <td class="px-4 py-3">${formatDate(athlete.birthdate)}</td>
             <td class="px-4 py-3">${athlete.team || '-'}</td>
             <td class="px-4 py-3 text-center">
                 <button 
