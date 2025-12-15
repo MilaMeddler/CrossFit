@@ -339,8 +339,9 @@ window.deleteAthlete = async (id) => {
 };
 
 // TOURNAMENTS
+
 async function loadTournaments() {
-    const {data} = await supabase.from('tournaments').select('*').order('date_start',{ascending:false});
+    const {data} = await supabase.from('tournaments').select('*').order('id',{ascending:false});  // ✅ Сортировка по ID
     tournaments = data || [];
     renderTournamentSelect();
     renderResultTournamentSelect();
