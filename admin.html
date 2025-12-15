@@ -13,813 +13,700 @@
 <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">🔒 Accès Administrateur</h2>
-        <p class="text-gray-600 mb-4">Entrez le mot de passe pour accéder à l'administration.</p>
-        
-        <input 
-            type="password" 
-            id="password-input" 
-            class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4 focus:border-blue-500 focus:outline-none"
-            placeholder="Mot de passe"
-            autocomplete="off"
-        >
-        
-        <button 
-            id="login-btn"
-            class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-        >
-            Connexion
-        </button>
-        
+        <p class="text-gray-600 mb-4">Entrez le mot de passe</p>
+        <input type="password" id="password-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4" placeholder="Mot de passe" autocomplete="off">
+        <button id="login-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">Connexion</button>
         <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Mot de passe incorrect</p>
-        <p class="text-xs text-gray-400 mt-4">Pароль: admin123</p>
+        <p class="text-xs text-gray-400 mt-4">admin123</p>
     </div>
 </div>
 
-<!-- MAIN CONTENT (hidden until logged in) -->
+<!-- MAIN CONTENT -->
 <div id="main-content" class="hidden">
-    
-    <!-- HEADER -->
     <header class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">🏋️ Administration</h1>
+                <h1 class="text-2xl font-bold">🏋️ Administration</h1>
                 <p class="text-sm text-gray-500">Gestion des tournois CrossFit</p>
             </div>
             <div class="flex gap-3">
-                <a 
-                    href="index.html"
-                    class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-                >
-                    🏠 Accueil
-                </a>
-                <button 
-                    id="logout-btn"
-                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-                >
-                    Déconnexion
-                </button>
+                <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">🏠</a>
+                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Déconnexion</button>
             </div>
         </div>
     </header>
 
-    <!-- TABS NAVIGATION -->
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex space-x-8">
-                <button 
-                    class="tab-btn px-3 py-4 border-b-2 border-blue-600 font-medium text-blue-600"
-                    data-tab="athletes"
-                >
-                    👥 Athlètes
-                </button>
-                <button 
-                    class="tab-btn px-3 py-4 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    data-tab="tournaments"
-                >
-                    🏆 Tournois
-                </button>
-            </div>
+    <nav class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-8">
+            <button class="tab-btn px-3 py-4 border-b-2 border-blue-600 font-medium text-blue-600" data-tab="athletes">👥 Athlètes</button>
+            <button class="tab-btn px-3 py-4 border-b-2 border-transparent font-medium text-gray-500" data-tab="tournaments">🏆 Tournois</button>
+            <button class="tab-btn px-3 py-4 border-b-2 border-transparent font-medium text-gray-500" data-tab="results">📊 Résultats</button>
         </div>
     </nav>
 
-    <!-- TAB CONTENT -->
     <main class="max-w-7xl mx-auto px-4 py-8">
         
         <!-- ATHLETES TAB -->
         <div id="tab-athletes" class="tab-content">
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Athlètes Globaux</h2>
-                <p class="text-sm text-gray-600">Les athlètes sont partagés entre tous les tournois</p>
-            </div>
-
-            <!-- ADD ATHLETE FORM -->
+            <h2 class="text-xl font-bold mb-4">Athlètes Globaux</h2>
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h3 class="text-lg font-semibold mb-4">➕ Ajouter un athlète</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input 
-                        type="text" 
-                        id="athlete-firstname" 
-                        placeholder="Prénom" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
-                    <input 
-                        type="text" 
-                        id="athlete-lastname" 
-                        placeholder="Nom" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
-                    <select 
-                        id="athlete-gender" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
+                <h3 class="text-lg font-semibold mb-4" id="athlete-form-title">➕ Ajouter un athlète</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="athlete-firstname" placeholder="Prénom" class="border rounded-lg px-4 py-2">
+                    <input type="text" id="athlete-lastname" placeholder="Nom" class="border rounded-lg px-4 py-2">
+                    <select id="athlete-gender" class="border rounded-lg px-4 py-2">
                         <option value="M">Homme</option>
                         <option value="F">Femme</option>
                     </select>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <select 
-                        id="athlete-level" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
+                    <select id="athlete-level" class="border rounded-lg px-4 py-2">
                         <option value="RX">RX</option>
                         <option value="INTER">INTER</option>
                         <option value="SCALE">SCALE</option>
                     </select>
-                    <input 
-                        type="text" 
-                        id="athlete-team" 
-                        placeholder="Équipe (optionnel)" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
                 </div>
-
-                <button 
-                    id="add-athlete-btn"
-                    class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
-                >
-                    Ajouter l'athlète
-                </button>
+                <div class="flex gap-3">
+                    <button id="save-athlete-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Ajouter</button>
+                    <button id="cancel-athlete-btn" class="bg-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 hidden">Annuler</button>
+                </div>
             </div>
-
-            <!-- ATHLETES LIST -->
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <h3 class="text-lg font-semibold mb-4">📋 Liste des athlètes</h3>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Nom complet</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Niveau</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Genre</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Équipe</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="athletes-tbody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
-                                    Chargement...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Niveau</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Genre</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="athletes-tbody" class="divide-y"></tbody>
+                </table>
             </div>
         </div>
 
         <!-- TOURNAMENTS TAB -->
         <div id="tab-tournaments" class="tab-content hidden">
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Gestion des Tournois</h2>
-                <p class="text-sm text-gray-600">Créez et gérez les tournois et leurs WODs</p>
-            </div>
-
-            <!-- TOURNAMENT SELECTOR -->
+            <h2 class="text-xl font-bold mb-4">Gestion des Tournois</h2>
+            
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div class="flex flex-col md:flex-row gap-4">
-                    <select 
-                        id="tournament-select" 
-                        class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
-                        <option value="">Chargement...</option>
-                    </select>
-                    <button 
-                        id="new-tournament-btn"
-                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold whitespace-nowrap"
-                    >
-                        ➕ Nouveau tournoi
-                    </button>
-                    <button 
-                        id="refresh-btn"
-                        class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
-                    >
-                        🔄 Actualiser
-                    </button>
+                    <select id="tournament-select" class="flex-1 border rounded-lg px-4 py-2"></select>
+                    <button id="new-tournament-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">➕ Nouveau</button>
+                    <button id="refresh-tournaments-btn" class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300">🔄</button>
+                </div>
+                <div id="tournament-type-badge" class="mt-3 hidden">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"></span>
                 </div>
             </div>
 
-            <!-- ADD WOD FORM -->
+            <!-- TEAMS SECTION (only for team tournaments) -->
+            <div id="teams-section" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">👥 Gestion des équipes</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <select id="team-athlete1" class="border rounded-lg px-4 py-2">
+                        <option value="">Athlète 1</option>
+                    </select>
+                    <select id="team-athlete2" class="border rounded-lg px-4 py-2">
+                        <option value="">Athlète 2</option>
+                    </select>
+                    <input type="text" id="team-name" placeholder="Nom (optionnel)" class="border rounded-lg px-4 py-2">
+                </div>
+                <button id="create-team-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Créer l'équipe</button>
+                
+                <div class="mt-6">
+                    <h4 class="font-semibold mb-3">📋 Équipes du tournoi</h4>
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Membres</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teams-tbody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- WODS -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h3 class="text-lg font-semibold mb-4">➕ Ajouter un WOD</h3>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <input 
-                        type="number" 
-                        id="wod-number" 
-                        min="1"
-                        placeholder="Numéro du WOD (1, 2, 3...)" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
-                    <select 
-                        id="wod-type" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                    >
+                    <input type="number" id="wod-number" min="1" placeholder="Numéro" class="border rounded-lg px-4 py-2">
+                    <select id="wod-type" class="border rounded-lg px-4 py-2">
                         <option value="time">⏱️ For Time</option>
                         <option value="reps">🔁 AMRAP</option>
                         <option value="weight">🏋️ Weight</option>
                         <option value="complex">🔥 Complex</option>
                     </select>
                 </div>
-
-                <textarea 
-                    id="wod-description" 
-                    rows="3"
-                    placeholder="Description du WOD (ex: 21-15-9 Thrusters & Pull-ups)" 
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:border-blue-500 focus:outline-none"
-                ></textarea>
-
-                <button 
-                    id="add-wod-btn"
-                    class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
-                >
-                    Ajouter le WOD
-                </button>
+                <textarea id="wod-description" rows="3" placeholder="Description" class="w-full border rounded-lg px-4 py-2 mb-4"></textarea>
+                <button id="add-wod-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Ajouter</button>
             </div>
 
-            <!-- WODS LIST -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h3 class="text-lg font-semibold mb-4">📋 WODs du tournoi</h3>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">N°</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Description</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wods-tbody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-gray-400">
-                                    Sélectionnez un tournoi
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- RESULTS -->
             <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold mb-4">📊 Résultats récents</h3>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Athlète</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">WOD</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Résultat</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-tbody" class="divide-y divide-gray-200">
-                            <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-gray-400">
-                                    Aucun résultat
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <h3 class="text-lg font-semibold mb-4">📋 WODs</h3>
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">N°</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Description</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wods-tbody" class="divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RESULTS TAB -->
+        <div id="tab-results" class="tab-content hidden">
+            <h2 class="text-xl font-bold mb-4">Saisie des Résultats</h2>
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4" id="result-form-title">➕ Ajouter un résultat</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <select id="result-tournament" class="border rounded-lg px-4 py-2">
+                        <option value="">Tournoi</option>
+                    </select>
+                    <select id="result-wod" class="border rounded-lg px-4 py-2">
+                        <option value="">WOD</option>
+                    </select>
+                    <select id="result-participant" class="border rounded-lg px-4 py-2">
+                        <option value="">Athlète/Équipe</option>
+                    </select>
+                    <select id="result-judge" class="border rounded-lg px-4 py-2">
+                        <option value="">Juge</option>
+                    </select>
+                    <input type="text" id="result-value" placeholder="Résultat" class="border rounded-lg px-4 py-2 md:col-span-2">
+                    <textarea id="result-notes" rows="2" placeholder="Notes" class="border rounded-lg px-4 py-2 md:col-span-2"></textarea>
                 </div>
+                <div class="flex gap-3">
+                    <button id="save-result-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Enregistrer</button>
+                    <button id="cancel-result-btn" class="bg-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 hidden">Annuler</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold mb-4">📋 Résultats récents</h3>
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Participant</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">WOD</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Résultat</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody" class="divide-y"></tbody>
+                </table>
             </div>
         </div>
 
     </main>
 </div>
 
-<!-- STATUS TOAST -->
-<div id="status-toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-opacity">
+<div id="status-toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg hidden">
     <span id="status-text"></span>
 </div>
 
 <script>
-// ==================== SUPABASE INIT ====================
 const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
-
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-console.log('✅ Supabase initialized');
-
-// ==================== PASSWORD PROTECTION ====================
-const ADMIN_PASSWORD = 'admin123';
-let isLoggedIn = false;
-
-const passwordModal = document.getElementById('password-modal');
-const passwordInput = document.getElementById('password-input');
-const loginBtn = document.getElementById('login-btn');
-const errorMsg = document.getElementById('error-msg');
-const mainContent = document.getElementById('main-content');
-const logoutBtn = document.getElementById('logout-btn');
-
-function checkLogin() {
-    const password = passwordInput.value.trim();
-    console.log('Checking password:', password); // Debug
-    
-    if (password === ADMIN_PASSWORD) {
-        console.log('✅ Password correct!');
-        isLoggedIn = true;
-        passwordModal.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-        errorMsg.classList.add('hidden');
+// PASSWORD
+document.getElementById('login-btn').addEventListener('click', () => {
+    if (document.getElementById('password-input').value.trim() === 'admin123') {
+        document.getElementById('password-modal').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
         init();
     } else {
-        console.log('❌ Password incorrect');
-        errorMsg.classList.remove('hidden');
-        passwordInput.value = '';
-        passwordInput.focus();
+        document.getElementById('error-msg').classList.remove('hidden');
     }
-}
-
-loginBtn.addEventListener('click', checkLogin);
-passwordInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkLogin();
 });
+document.getElementById('password-input').addEventListener('keypress', (e) => e.key === 'Enter' && document.getElementById('login-btn').click());
+document.getElementById('logout-btn').addEventListener('click', () => location.reload());
 
-logoutBtn.addEventListener('click', () => {
-    isLoggedIn = false;
-    passwordModal.classList.remove('hidden');
-    mainContent.classList.add('hidden');
-    passwordInput.value = '';
-    errorMsg.classList.add('hidden');
-});
+// UTILS
+const showStatus = (msg, ms = 2500) => {
+    const t = document.getElementById('status-toast');
+    document.getElementById('status-text').textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), ms);
+};
 
-// ==================== UTILITY FUNCTIONS ====================
-function showStatus(message, duration = 2500) {
-    const toast = document.getElementById('status-toast');
-    const text = document.getElementById('status-text');
-    text.textContent = message;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), duration);
-}
+const formatDate = (d) => {
+    if (!d) return '-';
+    const dt = new Date(d);
+    return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+};
 
-// ==================== TAB SWITCHING ====================
-const tabBtns = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-
-tabBtns.forEach(btn => {
+// TABS
+document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        const targetTab = btn.dataset.tab;
-        
-        // Update button styles
-        tabBtns.forEach(b => {
-            b.classList.remove('border-blue-600', 'text-blue-600');
-            b.classList.add('border-transparent', 'text-gray-500');
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('border-blue-600','text-blue-600');
+            b.classList.add('border-transparent','text-gray-500');
         });
-        btn.classList.remove('border-transparent', 'text-gray-500');
-        btn.classList.add('border-blue-600', 'text-blue-600');
-        
-        // Update tab content
-        tabContents.forEach(content => content.classList.add('hidden'));
-        document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+        btn.classList.add('border-blue-600','text-blue-600');
+        btn.classList.remove('border-transparent','text-gray-500');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
     });
 });
 
-// ==================== GLOBAL STATE ====================
-let currentTournamentId = null;
-let athletes = [];
-let tournaments = [];
-let wods = [];
-let scores = [];
+// STATE
+let athletes=[], tournaments=[], wods=[], teams=[], scores=[], judges=[];
+let editingAthleteId=null, editingResultId=null, currentTournamentId=null, currentTournament=null;
 
-// ==================== DATE FORMATTING ====================
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-}
-
-// ==================== ATHLETES ====================
+// ATHLETES
 async function loadAthletes() {
-    try {
-        const { data, error } = await supabase
-            .from('athletes')
-            .select('*')
-            .order('last_name');
-        
-        if (error) throw error;
-        
-        athletes = data;
-        renderAthletes();
-    } catch (error) {
-        console.error('Error loading athletes:', error);
-        showStatus('❌ Erreur de chargement des athlètes');
-    }
+    const {data} = await supabase.from('athletes').select('*').order('last_name');
+    athletes = data || [];
+    renderAthletes();
+    updateTeamSelects();
 }
 
 function renderAthletes() {
     const tbody = document.getElementById('athletes-tbody');
-    
     if (!athletes.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
-                    Aucun athlète. Ajoutez-en un ci-dessus!
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun athlète</td></tr>';
         return;
     }
-    
-    tbody.innerHTML = athletes.map(athlete => `
+    tbody.innerHTML = athletes.map(a => `
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3">${athlete.first_name} ${athlete.last_name}</td>
-            <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                    ${athlete.level === 'RX' ? 'bg-purple-100 text-purple-800' : 
-                      athlete.level === 'INTER' ? 'bg-blue-100 text-blue-800' : 
-                      'bg-green-100 text-green-800'}">
-                    ${athlete.level}
-                </span>
-            </td>
-            <td class="px-4 py-3">${athlete.gender === 'M' ? '👨 Homme' : '👩 Femme'}</td>
-            <td class="px-4 py-3">${athlete.team || '-'}</td>
+            <td class="px-4 py-3">${a.first_name} ${a.last_name}</td>
+            <td class="px-4 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${a.level==='RX'?'bg-purple-100 text-purple-800':a.level==='INTER'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${a.level}</span></td>
+            <td class="px-4 py-3">${a.gender==='M'?'👨':'👩'}</td>
             <td class="px-4 py-3 text-center">
-                <button 
-                    onclick="deleteAthlete(${athlete.id})"
-                    class="text-red-600 hover:text-red-800 font-medium"
-                >
-                    🗑️ Supprimer
-                </button>
+                <button onclick="editAthlete(${a.id})" class="text-blue-600 hover:text-blue-800 mr-3">✏️</button>
+                <button onclick="deleteAthlete(${a.id})" class="text-red-600 hover:text-red-800">🗑️</button>
             </td>
         </tr>
     `).join('');
 }
 
-document.getElementById('add-athlete-btn').addEventListener('click', async () => {
-    const firstname = document.getElementById('athlete-firstname').value.trim();
-    const lastname = document.getElementById('athlete-lastname').value.trim();
-    const gender = document.getElementById('athlete-gender').value;
-    const level = document.getElementById('athlete-level').value;
-    const team = document.getElementById('athlete-team').value.trim();
-    
-    if (!firstname || !lastname) {
-        alert('⚠️ Le prénom et le nom sont obligatoires');
-        return;
-    }
-    
-    try {
-        const { data, error } = await supabase
-            .from('athletes')
-            .insert({
-                first_name: firstname,
-                last_name: lastname,
-                gender,
-                level,
-                team: team || null
-            })
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        showStatus('✅ Athlète ajouté avec succès');
-        
-        // Clear form
-        document.getElementById('athlete-firstname').value = '';
-        document.getElementById('athlete-lastname').value = '';
-        document.getElementById('athlete-team').value = '';
-        
-        await loadAthletes();
-    } catch (error) {
-        console.error('Error adding athlete:', error);
-        showStatus('❌ Erreur lors de l\'ajout');
-    }
-});
-
-async function deleteAthlete(id) {
-    if (!confirm('Voulez-vous vraiment supprimer cet athlète ?')) return;
-    
-    try {
-        const { error } = await supabase
-            .from('athletes')
-            .delete()
-            .eq('id', id);
-        
-        if (error) throw error;
-        
-        showStatus('✅ Athlète supprimé');
-        await loadAthletes();
-    } catch (error) {
-        console.error('Error deleting athlete:', error);
-        showStatus('❌ Erreur lors de la suppression');
-    }
+function clearAthleteForm() {
+    ['athlete-firstname','athlete-lastname'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('athlete-gender').value='M';
+    document.getElementById('athlete-level').value='RX';
+    editingAthleteId=null;
+    document.getElementById('athlete-form-title').textContent='➕ Ajouter un athlète';
+    document.getElementById('save-athlete-btn').textContent='Ajouter';
+    document.getElementById('cancel-athlete-btn').classList.add('hidden');
 }
 
-// ==================== TOURNAMENTS ====================
+window.editAthlete = (id) => {
+    const a = athletes.find(x=>x.id===id);
+    if(!a) return;
+    document.getElementById('athlete-firstname').value=a.first_name;
+    document.getElementById('athlete-lastname').value=a.last_name;
+    document.getElementById('athlete-gender').value=a.gender;
+    document.getElementById('athlete-level').value=a.level;
+    editingAthleteId=id;
+    document.getElementById('athlete-form-title').textContent='✏️ Modifier';
+    document.getElementById('save-athlete-btn').textContent='Enregistrer';
+    document.getElementById('cancel-athlete-btn').classList.remove('hidden');
+};
+
+document.getElementById('cancel-athlete-btn').addEventListener('click', clearAthleteForm);
+
+document.getElementById('save-athlete-btn').addEventListener('click', async () => {
+    const data = {
+        first_name: document.getElementById('athlete-firstname').value.trim(),
+        last_name: document.getElementById('athlete-lastname').value.trim(),
+        gender: document.getElementById('athlete-gender').value,
+        level: document.getElementById('athlete-level').value
+    };
+    if(!data.first_name || !data.last_name) return alert('⚠️ Prénom et nom requis');
+    if(editingAthleteId) {
+        await supabase.from('athletes').update(data).eq('id',editingAthleteId);
+        showStatus('✅ Modifié');
+    } else {
+        await supabase.from('athletes').insert(data);
+        showStatus('✅ Ajouté');
+    }
+    clearAthleteForm();
+    loadAthletes();
+});
+
+window.deleteAthlete = async (id) => {
+    if(!confirm('Supprimer?')) return;
+    await supabase.from('athletes').delete().eq('id',id);
+    showStatus('✅ Supprimé');
+    loadAthletes();
+};
+
+// TOURNAMENTS
 async function loadTournaments() {
-    try {
-        const { data, error } = await supabase
-            .from('tournaments')
-            .select('*')
-            .order('date_start', { ascending: false });
-        
-        if (error) throw error;
-        
-        tournaments = data;
-        renderTournamentSelect();
-        
-        if (tournaments.length > 0 && !currentTournamentId) {
-            currentTournamentId = tournaments[0].id;
-            document.getElementById('tournament-select').value = currentTournamentId;
-            await loadTournamentData();
-        }
-    } catch (error) {
-        console.error('Error loading tournaments:', error);
-        showStatus('❌ Erreur de chargement des tournois');
+    const {data} = await supabase.from('tournaments').select('*').order('date_start',{ascending:false});
+    tournaments = data || [];
+    renderTournamentSelect();
+    renderResultTournamentSelect();
+    if(tournaments.length && !currentTournamentId) {
+        currentTournamentId=tournaments[0].id;
+        currentTournament=tournaments[0];
+        document.getElementById('tournament-select').value=currentTournamentId;
+        await onTournamentChange();
     }
 }
 
 function renderTournamentSelect() {
-    const select = document.getElementById('tournament-select');
-    
-    if (!tournaments.length) {
-        select.innerHTML = '<option value="">Aucun tournoi - créez-en un</option>';
-        return;
-    }
-    
-    select.innerHTML = tournaments.map(t => 
-        `<option value="${t.id}">${t.name} (${formatDate(t.date_start) || 'Date non définie'})</option>`
-    ).join('');
+    const sel = document.getElementById('tournament-select');
+    sel.innerHTML = tournaments.length ? tournaments.map(t=>`<option value="${t.id}">${t.name} (${formatDate(t.date_start)}) - ${t.competition_type==='team'?'🏅 Équipes':'👤 Individuel'}</option>`).join('') : '<option value="">Aucun</option>';
+}
+
+function renderResultTournamentSelect() {
+    const sel = document.getElementById('result-tournament');
+    sel.innerHTML = '<option value="">Tournoi</option>' + tournaments.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
 }
 
 document.getElementById('tournament-select').addEventListener('change', async (e) => {
     currentTournamentId = parseInt(e.target.value);
-    await loadTournamentData();
+    currentTournament = tournaments.find(t=>t.id===currentTournamentId);
+    await onTournamentChange();
 });
+
+async function onTournamentChange() {
+    if(!currentTournament) return;
+    
+    // Show badge
+    const badge = document.getElementById('tournament-type-badge');
+    const span = badge.querySelector('span');
+    if(currentTournament.competition_type === 'team') {
+        span.textContent = '🏅 Tournoi par équipes';
+        span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
+        document.getElementById('teams-section').classList.remove('hidden');
+    } else {
+        span.textContent = '👤 Tournoi individuel';
+        span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+        document.getElementById('teams-section').classList.add('hidden');
+    }
+    badge.classList.remove('hidden');
+    
+    await loadWods();
+    if(currentTournament.competition_type === 'team') {
+        await loadTeams();
+    }
+}
 
 document.getElementById('new-tournament-btn').addEventListener('click', async () => {
     const name = prompt('Nom du tournoi:');
-    if (!name) return;
-    
-    const dateStart = prompt('Date de début (YYYY-MM-DD):');
-    const dateEnd = prompt('Date de fin (YYYY-MM-DD):');
-    const location = prompt('Lieu:');
-    
-    try {
-        const { data, error } = await supabase
-            .from('tournaments')
-            .insert({
-                name,
-                date_start: dateStart || null,
-                date_end: dateEnd || null,
-                location: location || null
-            })
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        showStatus('✅ Tournoi créé');
-        await loadTournaments();
-        
-        currentTournamentId = data.id;
-        document.getElementById('tournament-select').value = currentTournamentId;
-        await loadTournamentData();
-    } catch (error) {
-        console.error('Error creating tournament:', error);
-        showStatus('❌ Erreur lors de la création');
-    }
+    if(!name) return;
+    const dateStart = prompt('Date début (YYYY-MM-DD):');
+    const isTeam = confirm('Type:\nOK = Équipes\nAnnuler = Individuel');
+    await supabase.from('tournaments').insert({
+        name,
+        date_start: dateStart || null,
+        competition_type: isTeam ? 'team' : 'individual'
+    });
+    showStatus('✅ Créé');
+    loadTournaments();
 });
 
-document.getElementById('refresh-btn').addEventListener('click', async () => {
-    showStatus('🔄 Actualisation...');
-    await loadTournamentData();
-    showStatus('✅ Actualisé');
-});
+document.getElementById('refresh-tournaments-btn').addEventListener('click', loadTournaments);
 
-// ==================== WODS ====================
-async function loadTournamentData() {
-    if (!currentTournamentId) {
-        wods = [];
-        scores = [];
-        renderWods();
-        renderScores();
-        return;
-    }
-    
-    try {
-        // Load WODs
-        const { data: wodsData, error: wodsError } = await supabase
-            .from('workouts')
-            .select('*')
-            .eq('tournament_id', currentTournamentId)
-            .order('wod_number');
-        
-        if (wodsError) throw wodsError;
-        wods = wodsData;
-        
-        // Load Scores
-        const { data: scoresData, error: scoresError } = await supabase
-            .from('scores')
-            .select(`
-                *,
-                athletes(id, first_name, last_name, gender, level),
-                workouts!inner(id, wod_number, wod_type, tournament_id),
-                judges(id, name)
-            `)
-            .eq('workouts.tournament_id', currentTournamentId)
-            .order('id');
-        
-        if (scoresError) throw scoresError;
-        scores = scoresData;
-        
-        renderWods();
-        renderScores();
-    } catch (error) {
-        console.error('Error loading tournament data:', error);
-        showStatus('❌ Erreur de chargement des données');
-    }
+// TEAMS
+async function loadTeams() {
+    if(!currentTournamentId) return;
+    const {data} = await supabase.from('teams').select(`
+        *,
+        athlete1:athletes!teams_athlete1_id_fkey(id,first_name,last_name),
+        athlete2:athletes!teams_athlete2_id_fkey(id,first_name,last_name)
+    `).eq('tournament_id', currentTournamentId);
+    teams = data || [];
+    renderTeams();
 }
 
-function renderWods() {
-    const tbody = document.getElementById('wods-tbody');
-    
-    if (!wods.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-4 py-8 text-center text-gray-400">
-                    Aucun WOD. Ajoutez-en un ci-dessus!
-                </td>
-            </tr>
-        `;
+function renderTeams() {
+    const tbody = document.getElementById('teams-tbody');
+    if(!teams.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">Aucune équipe</td></tr>';
         return;
     }
-    
-    const typeEmojis = {
-        'time': '⏱️ For Time',
-        'reps': '🔁 AMRAP',
-        'weight': '🏋️ Weight',
-        'complex': '🔥 Complex'
-    };
-    
-    tbody.innerHTML = wods.map(wod => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-semibold">WOD ${wod.wod_number}</td>
-            <td class="px-4 py-3">${typeEmojis[wod.wod_type] || wod.wod_type}</td>
-            <td class="px-4 py-3">${wod.description || '-'}</td>
-            <td class="px-4 py-3 text-center">
-                <button 
-                    onclick="deleteWod(${wod.id})"
-                    class="text-red-600 hover:text-red-800 font-medium"
-                >
-                    🗑️ Supprimer
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-document.getElementById('add-wod-btn').addEventListener('click', async () => {
-    if (!currentTournamentId) {
-        alert('⚠️ Veuillez d\'abord sélectionner un tournoi');
-        return;
-    }
-    
-    const wodNumber = parseInt(document.getElementById('wod-number').value);
-    const wodType = document.getElementById('wod-type').value;
-    const description = document.getElementById('wod-description').value.trim();
-    
-    if (!wodNumber) {
-        alert('⚠️ Le numéro du WOD est obligatoire');
-        return;
-    }
-    
-    try {
-        const { data, error } = await supabase
-            .from('workouts')
-            .insert({
-                tournament_id: currentTournamentId,
-                wod_number: wodNumber,
-                wod_type: wodType,
-                description: description || null
-            })
-            .select()
-            .single();
-        
-        if (error) throw error;
-        
-        showStatus('✅ WOD ajouté');
-        
-        // Clear form
-        document.getElementById('wod-number').value = '';
-        document.getElementById('wod-description').value = '';
-        
-        await loadTournamentData();
-    } catch (error) {
-        console.error('Error adding WOD:', error);
-        showStatus('❌ Erreur lors de l\'ajout');
-    }
-});
-
-async function deleteWod(id) {
-    if (!confirm('Voulez-vous vraiment supprimer ce WOD ?')) return;
-    
-    try {
-        const { error } = await supabase
-            .from('workouts')
-            .delete()
-            .eq('id', id);
-        
-        if (error) throw error;
-        
-        showStatus('✅ WOD supprimé');
-        await loadTournamentData();
-    } catch (error) {
-        console.error('Error deleting WOD:', error);
-        showStatus('❌ Erreur lors de la suppression');
-    }
-}
-
-// ==================== SCORES ====================
-function renderScores() {
-    const tbody = document.getElementById('results-tbody');
-    
-    if (!scores.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-4 py-8 text-center text-gray-400">
-                    Aucun résultat pour ce tournoi
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Show last 50 results
-    const recentScores = scores.slice(-50).reverse();
-    
-    tbody.innerHTML = recentScores.map(score => {
-        const athlete = score.athletes;
-        const workout = score.workouts;
-        
-        const athleteName = athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Inconnu';
-        const wodName = workout ? `WOD ${workout.wod_number}` : 'Inconnu';
-        const resultValue = score.value_time || score.value_int || score.value_decimal || score.notes || '-';
-        
+    tbody.innerHTML = teams.map(t => {
+        const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
+        const members = `${t.athlete1.first_name} ${t.athlete1.last_name}, ${t.athlete2.first_name} ${t.athlete2.last_name}`;
         return `
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3">${athleteName}</td>
-            <td class="px-4 py-3">${wodName}</td>
-            <td class="px-4 py-3 font-semibold">${resultValue}</td>
+            <td class="px-4 py-3 font-semibold">${name}</td>
+            <td class="px-4 py-3">${members}</td>
             <td class="px-4 py-3 text-center">
-                <button 
-                    onclick="deleteScore(${score.id})"
-                    class="text-red-600 hover:text-red-800 font-medium"
-                >
-                    🗑️ Supprimer
-                </button>
+                <button onclick="deleteTeam(${t.id})" class="text-red-600 hover:text-red-800">🗑️</button>
             </td>
         </tr>
         `;
     }).join('');
 }
 
-async function deleteScore(id) {
-    if (!confirm('Voulez-vous vraiment supprimer ce résultat ?')) return;
-    
-    try {
-        const { error } = await supabase
-            .from('scores')
-            .delete()
-            .eq('id', id);
-        
-        if (error) throw error;
-        
-        showStatus('✅ Résultat supprimé');
-        await loadTournamentData();
-    } catch (error) {
-        console.error('Error deleting score:', error);
-        showStatus('❌ Erreur lors de la suppression');
-    }
+function updateTeamSelects() {
+    ['team-athlete1','team-athlete2'].forEach(id => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = `<option value="">Athlète ${id.slice(-1)}</option>` + athletes.map(a=>`<option value="${a.id}">${a.first_name} ${a.last_name}</option>`).join('');
+    });
 }
 
-// ==================== INITIALIZATION ====================
+document.getElementById('create-team-btn').addEventListener('click', async () => {
+    const a1 = parseInt(document.getElementById('team-athlete1').value);
+    const a2 = parseInt(document.getElementById('team-athlete2').value);
+    const name = document.getElementById('team-name').value.trim() || null;
+    
+    if(!a1 || !a2) return alert('⚠️ Sélectionnez 2 athlètes');
+    if(a1===a2) return alert('⚠️ Choisissez des athlètes différents');
+    
+    const {error} = await supabase.from('teams').insert({
+        tournament_id: currentTournamentId,
+        athlete1_id: a1,
+        athlete2_id: a2,
+        team_name: name
+    });
+    
+    if(error) {
+        if(error.message.includes('unique')) {
+            alert('⚠️ Un des athlètes est déjà dans une équipe pour ce tournoi');
+        } else {
+            alert('❌ Erreur: ' + error.message);
+        }
+        return;
+    }
+    
+    showStatus('✅ Équipe créée');
+    document.getElementById('team-name').value='';
+    loadTeams();
+});
+
+window.deleteTeam = async (id) => {
+    if(!confirm('Supprimer cette équipe?')) return;
+    await supabase.from('teams').delete().eq('id',id);
+    showStatus('✅ Supprimé');
+    loadTeams();
+};
+
+// WODS
+async function loadWods() {
+    if(!currentTournamentId) { wods=[]; renderWods(); return; }
+    const {data} = await supabase.from('workouts').select('*').eq('tournament_id',currentTournamentId).order('wod_number');
+    wods = data || [];
+    renderWods();
+}
+
+function renderWods() {
+    const tbody = document.getElementById('wods-tbody');
+    if(!wods.length) { tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun WOD</td></tr>'; return; }
+    const types = {time:'⏱️ For Time', reps:'🔁 AMRAP', weight:'🏋️ Weight', complex:'🔥 Complex'};
+    tbody.innerHTML = wods.map(w=>`
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-semibold">WOD ${w.wod_number}</td>
+            <td class="px-4 py-3">${types[w.wod_type]||w.wod_type}</td>
+            <td class="px-4 py-3">${w.description||'-'}</td>
+            <td class="px-4 py-3 text-center"><button onclick="deleteWod(${w.id})" class="text-red-600 hover:text-red-800">🗑️</button></td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('add-wod-btn').addEventListener('click', async () => {
+    if(!currentTournamentId) return alert('⚠️ Sélectionnez un tournoi');
+    const num = parseInt(document.getElementById('wod-number').value);
+    if(!num) return alert('⚠️ Numéro requis');
+    await supabase.from('workouts').insert({
+        tournament_id: currentTournamentId,
+        wod_number: num,
+        wod_type: document.getElementById('wod-type').value,
+        description: document.getElementById('wod-description').value.trim()||null
+    });
+    showStatus('✅ Ajouté');
+    document.getElementById('wod-number').value='';
+    document.getElementById('wod-description').value='';
+    loadWods();
+});
+
+window.deleteWod = async (id) => {
+    if(!confirm('Supprimer?')) return;
+    await supabase.from('workouts').delete().eq('id',id);
+    showStatus('✅ Supprimé');
+    loadWods();
+};
+
+// RESULTS
+async function loadResults() {
+    const {data} = await supabase.from('scores').select(`
+        *,
+        athletes(id,first_name,last_name),
+        teams(id,team_name,athlete1:athletes!teams_athlete1_id_fkey(first_name),athlete2:athletes!teams_athlete2_id_fkey(first_name)),
+        workouts(id,wod_number,tournament_id),
+        judges(id,name)
+    `).order('id',{ascending:false}).limit(100);
+    scores = data || [];
+    renderResults();
+}
+
+function renderResults() {
+    const tbody = document.getElementById('results-tbody');
+    if(!scores.length) { tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun</td></tr>'; return; }
+    tbody.innerHTML = scores.map(s => {
+        let participant;
+        if(s.athletes) {
+            participant = `${s.athletes.first_name} ${s.athletes.last_name}`;
+        } else if(s.teams) {
+            participant = s.teams.team_name || `${s.teams.athlete1.first_name} & ${s.teams.athlete2.first_name}`;
+        } else {
+            participant = 'Inconnu';
+        }
+        const wod = s.workouts ? `WOD ${s.workouts.wod_number}` : 'Inconnu';
+        const result = s.value_time || s.value_int || s.value_decimal || s.notes || '-';
+        return `
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3">${participant}</td>
+            <td class="px-4 py-3">${wod}</td>
+            <td class="px-4 py-3 font-semibold">${result}</td>
+            <td class="px-4 py-3 text-center">
+                <button onclick="editResult(${s.id})" class="text-blue-600 hover:text-blue-800 mr-3">✏️</button>
+                <button onclick="deleteResult(${s.id})" class="text-red-600 hover:text-red-800">🗑️</button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+async function loadJudges() {
+    const {data} = await supabase.from('judges').select('*').order('name');
+    judges = data || [];
+    const sel = document.getElementById('result-judge');
+    sel.innerHTML = '<option value="">Juge</option>' + judges.map(j=>`<option value="${j.id}">${j.name}</option>`).join('');
+}
+
+document.getElementById('result-tournament').addEventListener('change', async (e) => {
+    const tid = parseInt(e.target.value);
+    if(!tid) return;
+    const t = tournaments.find(x=>x.id===tid);
+    
+    // Load WODs
+    const {data:wodsData} = await supabase.from('workouts').select('*').eq('tournament_id',tid).order('wod_number');
+    wods = wodsData || [];
+    const wodSel = document.getElementById('result-wod');
+    wodSel.innerHTML = '<option value="">WOD</option>' + wods.map(w=>`<option value="${w.id}">WOD ${w.wod_number}</option>`).join('');
+    
+    // Load participants
+    const partSel = document.getElementById('result-participant');
+    if(t.competition_type === 'team') {
+        const {data:teamsData} = await supabase.from('teams').select(`
+            *,
+            athlete1:athletes!teams_athlete1_id_fkey(first_name),
+            athlete2:athletes!teams_athlete2_id_fkey(first_name)
+        `).eq('tournament_id',tid);
+        teams = teamsData || [];
+        partSel.innerHTML = '<option value="">Équipe</option>' + teams.map(t=>{
+            const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
+            return `<option value="team-${t.id}">${name}</option>`;
+        }).join('');
+    } else {
+        partSel.innerHTML = '<option value="">Athlète</option>' + athletes.map(a=>`<option value="athlete-${a.id}">${a.first_name} ${a.last_name}</option>`).join('');
+    }
+});
+
+function clearResultForm() {
+    ['result-tournament','result-wod','result-participant','result-judge','result-value','result-notes'].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = '';
+    });
+    editingResultId=null;
+    document.getElementById('result-form-title').textContent='➕ Ajouter un résultat';
+    document.getElementById('save-result-btn').textContent='Enregistrer';
+    document.getElementById('cancel-result-btn').classList.add('hidden');
+}
+
+window.editResult = async (id) => {
+    const s = scores.find(x=>x.id===id);
+    if(!s) return;
+    
+    // Load tournament data
+    if(s.workouts && s.workouts.tournament_id) {
+        document.getElementById('result-tournament').value = s.workouts.tournament_id;
+        await document.getElementById('result-tournament').dispatchEvent(new Event('change'));
+    }
+    
+    document.getElementById('result-wod').value = s.workout_id;
+    document.getElementById('result-judge').value = s.judge_id || '';
+    document.getElementById('result-value').value = s.value_time || s.value_int || s.value_decimal || '';
+    document.getElementById('result-notes').value = s.notes || '';
+    
+    // Set participant
+    if(s.athlete_id) {
+        document.getElementById('result-participant').value = `athlete-${s.athlete_id}`;
+    } else if(s.team_id) {
+        document.getElementById('result-participant').value = `team-${s.team_id}`;
+    }
+    
+    editingResultId = id;
+    document.getElementById('result-form-title').textContent = '✏️ Modifier';
+    document.getElementById('save-result-btn').textContent = 'Enregistrer';
+    document.getElementById('cancel-result-btn').classList.remove('hidden');
+    document.querySelector('[data-tab="results"]').click();
+};
+
+document.getElementById('cancel-result-btn').addEventListener('click', clearResultForm);
+
+document.getElementById('save-result-btn').addEventListener('click', async () => {
+    const wodId = parseInt(document.getElementById('result-wod').value);
+    const judgeId = parseInt(document.getElementById('result-judge').value) || null;
+    const participant = document.getElementById('result-participant').value;
+    const value = document.getElementById('result-value').value.trim();
+    const notes = document.getElementById('result-notes').value.trim() || null;
+    
+    if(!wodId || !participant) return alert('⚠️ WOD et participant requis');
+    
+    const [type, idStr] = participant.split('-');
+    const data = {
+        workout_id: wodId,
+        judge_id: judgeId,
+        athlete_id: type === 'athlete' ? parseInt(idStr) : null,
+        team_id: type === 'team' ? parseInt(idStr) : null,
+        value_int: null,
+        value_time: null,
+        value_decimal: null,
+        notes: notes
+    };
+    
+    // Parse value
+    if(value) {
+        if(value.includes(':')) {
+            const [m,s] = value.split(':');
+            data.value_time = parseInt(m)*60 + parseInt(s||0);
+        } else if(value.includes('.')) {
+            data.value_decimal = parseFloat(value);
+        } else {
+            data.value_int = parseInt(value);
+        }
+    }
+    
+    if(editingResultId) {
+        await supabase.from('scores').update(data).eq('id',editingResultId);
+        showStatus('✅ Modifié');
+    } else {
+        await supabase.from('scores').insert(data);
+        showStatus('✅ Ajouté');
+    }
+    
+    clearResultForm();
+    loadResults();
+});
+
+window.deleteResult = async (id) => {
+    if(!confirm('Supprimer?')) return;
+    await supabase.from('scores').delete().eq('id',id);
+    showStatus('✅ Supprimé');
+    loadResults();
+};
+
+// INIT
 async function init() {
     showStatus('🔄 Chargement...');
-    
-    try {
-        await loadAthletes();
-        await loadTournaments();
-        showStatus('✅ Prêt!', 1000);
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showStatus('❌ Erreur d\'initialisation');
-    }
+    await Promise.all([loadAthletes(), loadTournaments(), loadJudges(), loadResults()]);
+    showStatus('✅ Prêt!', 1000);
 }
 
-// Auto-focus password input
-passwordInput.focus();
+document.getElementById('password-input').focus();
 </script>
-
 </body>
 </html>
