@@ -13,11 +13,11 @@
 <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">🔒 Accès Administrateur</h2>
-        <p class="text-gray-600 mb-4">Entrez le mot de passe</p>
+        <p class="text-gray-600 mb-4">Authentification Supabase</p>
+        <input type="email" id="email-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4" placeholder="Email">
         <input type="password" id="password-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4" placeholder="Mot de passe">
         <button id="login-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">Connexion</button>
-        <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Mot de passe incorrect</p>
-        <p class="text-xs text-gray-400 mt-4">Par défaut: admin123</p>
+        <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Erreur d'authentification</p>
     </div>
 </div>
 
@@ -252,22 +252,104 @@
 <script>
 const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// PASSWORD
-document.getElementById('login-btn').addEventListener('click', () => {
-    if (document.getElementById('password-input').value.trim() === 'admin123') {
-        document.getElementById('password-modal').classList.add('hidden');
-        document.getElementById('main-content').classList.remove('hidden');
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✅ Supabase client created successfully');
+} catch (error) {
+    console.error('❌ Failed to create Supabase client:', error);
+    alert('⚠️ Ошибка подключения к базе данных. Возможно, проект Supabase приостановлен. Зайдите в панель Supabase и возобновите проект.');
+}
+
+// PASSWORD - Supabase Auth Integration
+console.log('✅ Script loaded, setting up Supabase authentication...');
+
+const loginBtn = document.getElementById('login-btn');
+const emailInput = document.getElementById('email-input');
+const passwordInput = document.getElementById('password-input');
+const errorMsg = document.getElementById('error-msg');
+const passwordModal = document.getElementById('password-modal');
+const mainContent = document.getElementById('main-content');
+
+// Check if user is already logged in
+async function checkSession() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            console.log('✅ User already authenticated:', session.user.email);
+            passwordModal.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            init();
+        } else {
+            console.log('ℹ️ No active session, showing login form');
+        }
+    } catch (error) {
+        console.error('❌ Session check error:', error);
+    }
+}
+
+// Login with email and password
+loginBtn.addEventListener('click', async () => {
+    console.log('🔘 Login button clicked');
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+        errorMsg.textContent = '❌ Veuillez remplir tous les champs';
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
+    console.log('🔑 Attempting login for:', email);
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Login successful:', data.user.email);
+        errorMsg.classList.add('hidden');
+        passwordModal.classList.add('hidden');
+        mainContent.classList.remove('hidden');
         init();
-    } else {
-        document.getElementById('error-msg').classList.remove('hidden');
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        errorMsg.textContent = '❌ Email ou mot de passe incorrect';
+        errorMsg.classList.remove('hidden');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Connexion';
     }
 });
-document.getElementById('password-input').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') document.getElementById('login-btn').click();
+
+// Enter key to login
+passwordInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+        console.log('⏎ Enter pressed');
+        loginBtn.click();
+    }
 });
-document.getElementById('logout-btn').addEventListener('click', () => location.reload());
+
+emailInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+        passwordInput.focus();
+    }
+});
+
+// Logout
+document.getElementById('logout-btn').addEventListener('click', async () => {
+    console.log('🚪 Logging out...');
+    await supabase.auth.signOut();
+    location.reload();
+});
+
+// Check session on page load
+checkSession();
 
 // UTILS
 const showStatus = (msg, ms = 2500) => {
@@ -275,6 +357,14 @@ const showStatus = (msg, ms = 2500) => {
     document.getElementById('status-text').textContent = msg;
     t.classList.remove('hidden');
     setTimeout(() => t.classList.add('hidden'), ms);
+};
+
+// XSS Protection: Escape HTML to prevent script injection
+const escapeHtml = (text) => {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 };
 
 // TABS
@@ -314,13 +404,13 @@ function renderAthletes() {
     }
     tbody.innerHTML = athletes.map(a => `
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3">${a.first_name} ${a.last_name}</td>
+            <td class="px-4 py-3">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</td>
             <td class="px-4 py-3">
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     a.level==='RX'?'bg-purple-100 text-purple-800':
                     a.level==='INTER'?'bg-blue-100 text-blue-800':
                     'bg-green-100 text-green-800'
-                }">${a.level}</span>
+                }">${escapeHtml(a.level)}</span>
             </td>
             <td class="px-4 py-3">${a.gender==='M'?'👨 Homme':'👩 Femme'}</td>
             <td class="px-4 py-3 text-center">
@@ -408,14 +498,14 @@ function renderTournamentSelect() {
         return;
     }
     sel.innerHTML = tournaments.map(t=>
-        `<option value="${t.id}">${t.name} - ${t.competition_type==='team'?'🏅 Équipes':'👤 Individuel'}</option>`
+        `<option value="${t.id}">${escapeHtml(t.name)} - ${t.competition_type==='team'?'🏅 Équipes':'👤 Individuel'}</option>`
     ).join('');
 }
 
 function renderResultTournamentSelect() {
     const sel = document.getElementById('result-tournament');
-    sel.innerHTML = '<option value="">Sélectionner un tournoi</option>' + 
-        tournaments.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    sel.innerHTML = '<option value="">Sélectionner un tournoi</option>' +
+        tournaments.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
 }
 
 document.getElementById('tournament-select').addEventListener('change', async (e) => {
@@ -529,11 +619,11 @@ function renderTeams() {
         return;
     }
     tbody.innerHTML = teams.map(t => {
-        const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
-        const members = `${t.athlete1.first_name} ${t.athlete1.last_name}, ${t.athlete2.first_name} ${t.athlete2.last_name}`;
+        const name = t.team_name || `${escapeHtml(t.athlete1.first_name)} & ${escapeHtml(t.athlete2.first_name)}`;
+        const members = `${escapeHtml(t.athlete1.first_name)} ${escapeHtml(t.athlete1.last_name)}, ${escapeHtml(t.athlete2.first_name)} ${escapeHtml(t.athlete2.last_name)}`;
         return `
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-semibold">${name}</td>
+            <td class="px-4 py-3 font-semibold">${t.team_name ? escapeHtml(t.team_name) : name}</td>
             <td class="px-4 py-3">${members}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="deleteTeam(${t.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
@@ -547,8 +637,8 @@ function updateTeamSelects() {
     ['team-athlete1','team-athlete2'].forEach(id => {
         const sel = document.getElementById(id);
         const num = id.slice(-1);
-        sel.innerHTML = `<option value="">Athlète ${num}</option>` + 
-            athletes.map(a=>`<option value="${a.id}">${a.first_name} ${a.last_name}</option>`).join('');
+        sel.innerHTML = `<option value="">Athlète ${num}</option>` +
+            athletes.map(a=>`<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
     });
 }
 
@@ -606,21 +696,21 @@ async function loadWods() {
 
 function renderWods() {
     const tbody = document.getElementById('wods-tbody');
-    if(!wods.length) { 
-        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun WOD pour ce tournoi</td></tr>'; 
-        return; 
+    if(!wods.length) {
+        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun WOD pour ce tournoi</td></tr>';
+        return;
     }
     const types = {
-        time:'⏱️ For Time', 
-        reps:'🔁 AMRAP', 
-        weight:'🏋️ Weight', 
+        time:'⏱️ For Time',
+        reps:'🔁 AMRAP',
+        weight:'🏋️ Weight',
         complex:'🔥 Complex'
     };
     tbody.innerHTML = wods.map(w=>`
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-semibold">WOD ${w.wod_number}</td>
-            <td class="px-4 py-3">${types[w.wod_type]||w.wod_type}</td>
-            <td class="px-4 py-3 text-sm">${w.description||'-'}</td>
+            <td class="px-4 py-3 font-semibold">WOD ${escapeHtml(String(w.wod_number))}</td>
+            <td class="px-4 py-3">${types[w.wod_type]||escapeHtml(w.wod_type)}</td>
+            <td class="px-4 py-3 text-sm">${escapeHtml(w.description)||'-'}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="editWod(${w.id})" class="text-blue-600 hover:text-blue-800 mr-3 text-xl">✏️</button>
                 <button onclick="deleteWod(${w.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
@@ -708,23 +798,25 @@ async function loadResults() {
 
 function renderResults() {
     const tbody = document.getElementById('results-tbody');
-    if(!scores.length) { 
-        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td></tr>'; 
-        return; 
+    if(!scores.length) {
+        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td></tr>';
+        return;
     }
     tbody.innerHTML = scores.map(s => {
         let participant;
         if(s.athletes) {
-            participant = `${s.athletes.first_name} ${s.athletes.last_name}`;
+            participant = `${escapeHtml(s.athletes.first_name)} ${escapeHtml(s.athletes.last_name)}`;
         } else if(s.teams) {
-            participant = s.teams.team_name || `${s.teams.athlete1.first_name} & ${s.teams.athlete2.first_name}`;
+            participant = s.teams.team_name
+                ? escapeHtml(s.teams.team_name)
+                : `${escapeHtml(s.teams.athlete1.first_name)} & ${escapeHtml(s.teams.athlete2.first_name)}`;
         } else {
             participant = 'Inconnu';
         }
-        
-        const wod = s.workouts ? `WOD ${s.workouts.wod_number}` : 'Inconnu';
-        const result = s.value_time || s.value_int || s.value_decimal || s.notes || '-';
-        
+
+        const wod = s.workouts ? `WOD ${escapeHtml(String(s.workouts.wod_number))}` : 'Inconnu';
+        const result = escapeHtml(String(s.value_time || s.value_int || s.value_decimal || s.notes || '-'));
+
         return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3">${participant}</td>
@@ -743,8 +835,8 @@ async function loadJudges() {
     const {data} = await supabase.from('judges').select('*').order('name');
     judges = data || [];
     const sel = document.getElementById('result-judge');
-    sel.innerHTML = '<option value="">Juge (optionnel)</option>' + 
-        judges.map(j=>`<option value="${j.id}">${j.name}</option>`).join('');
+    sel.innerHTML = '<option value="">Juge (optionnel)</option>' +
+        judges.map(j=>`<option value="${j.id}">${escapeHtml(j.name)}</option>`).join('');
 }
 
 document.getElementById('result-tournament').addEventListener('change', async (e) => {
@@ -754,15 +846,15 @@ document.getElementById('result-tournament').addEventListener('change', async (e
         document.getElementById('result-participant').innerHTML = '<option value="">Athlète/Équipe</option>';
         return;
     }
-    
+
     const t = tournaments.find(x=>x.id===tid);
-    
+
     // Load WODs
     const {data:wodsData} = await supabase.from('workouts').select('*').eq('tournament_id',tid).order('wod_number');
     const wodSel = document.getElementById('result-wod');
-    wodSel.innerHTML = '<option value="">Sélectionner un WOD</option>' + 
-        (wodsData||[]).map(w=>`<option value="${w.id}">WOD ${w.wod_number}</option>`).join('');
-    
+    wodSel.innerHTML = '<option value="">Sélectionner un WOD</option>' +
+        (wodsData||[]).map(w=>`<option value="${w.id}">WOD ${escapeHtml(String(w.wod_number))}</option>`).join('');
+
     // Load participants
     const partSel = document.getElementById('result-participant');
     if(t.competition_type === 'team') {
@@ -771,19 +863,21 @@ document.getElementById('result-tournament').addEventListener('change', async (e
             athlete1:athletes!teams_athlete1_id_fkey(first_name),
             athlete2:athletes!teams_athlete2_id_fkey(first_name)
         `).eq('tournament_id',tid);
-        
+
         if(!teamsData || teamsData.length === 0) {
             partSel.innerHTML = '<option value="">Aucune équipe créée</option>';
         } else {
-            partSel.innerHTML = '<option value="">Sélectionner une équipe</option>' + 
+            partSel.innerHTML = '<option value="">Sélectionner une équipe</option>' +
                 teamsData.map(t=>{
-                    const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
+                    const name = t.team_name
+                        ? escapeHtml(t.team_name)
+                        : `${escapeHtml(t.athlete1.first_name)} & ${escapeHtml(t.athlete2.first_name)}`;
                     return `<option value="team-${t.id}">${name}</option>`;
                 }).join('');
         }
     } else {
-        partSel.innerHTML = '<option value="">Sélectionner un athlète</option>' + 
-            athletes.map(a=>`<option value="athlete-${a.id}">${a.first_name} ${a.last_name}</option>`).join('');
+        partSel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
+            athletes.map(a=>`<option value="athlete-${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
     }
 });
 
@@ -920,7 +1014,8 @@ async function init() {
     showStatus('✅ Prêt!', 1500);
 }
 
-document.getElementById('password-input').focus();
+// Focus on email input when page loads
+emailInput.focus();
 </script>
 </body>
 </html>
