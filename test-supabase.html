@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Connection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-gray-800 rounded-lg p-8">
+        <h1 class="text-3xl font-bold mb-6">🔍 Diagnostic Supabase</h1>
+
+        <div id="results" class="space-y-4">
+            <div class="text-gray-400">Chargement...</div>
+        </div>
+
+        <div class="mt-8 p-4 bg-gray-700 rounded">
+            <h2 class="font-bold mb-2">Test de connexion:</h2>
+            <input type="email" id="test-email" placeholder="Email" class="w-full px-4 py-2 mb-2 rounded bg-gray-600 border border-gray-500">
+            <input type="password" id="test-password" placeholder="Mot de passe" class="w-full px-4 py-2 mb-2 rounded bg-gray-600 border border-gray-500">
+            <button id="test-login" class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold">Tester la connexion</button>
+            <div id="login-result" class="mt-4 text-sm"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
+
+        const results = document.getElementById('results');
+
+        function addResult(emoji, title, message, isError = false) {
+            const div = document.createElement('div');
+            div.className = `p-4 rounded ${isError ? 'bg-red-900/50' : 'bg-green-900/50'}`;
+            div.innerHTML = `
+                <div class="font-bold">${emoji} ${title}</div>
+                <div class="text-sm mt-1 text-gray-300">${message}</div>
+            `;
+            results.appendChild(div);
+        }
+
+        async function runDiagnostics() {
+            results.innerHTML = '';
+
+            // Test 1: Supabase library loaded
+            if (typeof window.supabase !== 'undefined') {
+                addResult('✅', 'Bibliothèque Supabase', 'Chargée avec succès');
+            } else {
+                addResult('❌', 'Bibliothèque Supabase', 'Non chargée!', true);
+                return;
+            }
+
+            // Test 2: Create client
+            let client;
+            try {
+                client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                addResult('✅', 'Client Supabase', 'Créé avec succès');
+            } catch (error) {
+                addResult('❌', 'Client Supabase', `Erreur: ${error.message}`, true);
+                return;
+            }
+
+            // Test 3: Test connection by fetching athletes
+            try {
+                const { data, error } = await client.from('athletes').select('count').limit(1);
+                if (error) {
+                    if (error.message.includes('paused') || error.message.includes('inactive')) {
+                        addResult('⏸️', 'Projet Supabase', `PROJET EN PAUSE: ${error.message}`, true);
+                        addResult('💡', 'Solution', 'Allez sur supabase.com → Dashboard → Réactivez votre projet');
+                    } else {
+                        addResult('❌', 'Connexion à la base', `Erreur: ${error.message}`, true);
+                    }
+                } else {
+                    addResult('✅', 'Connexion à la base', 'Connexion réussie! Projet actif.');
+                }
+            } catch (error) {
+                addResult('❌', 'Test de connexion', `Exception: ${error.message}`, true);
+            }
+
+            // Test 4: Check if admin user exists
+            try {
+                const { data: { users }, error } = await client.auth.admin.listUsers();
+                if (!error && users) {
+                    addResult('ℹ️', 'Utilisateurs', `${users.length} utilisateur(s) dans le système`);
+                }
+            } catch (error) {
+                // This might fail if not admin, that's OK
+                addResult('ℹ️', 'Vérification utilisateurs', 'Impossible de lister les utilisateurs (normal)');
+            }
+        }
+
+        // Test login
+        document.getElementById('test-login').addEventListener('click', async () => {
+            const email = document.getElementById('test-email').value.trim();
+            const password = document.getElementById('test-password').value.trim();
+            const resultDiv = document.getElementById('login-result');
+
+            if (!email || !password) {
+                resultDiv.innerHTML = '<span class="text-yellow-400">⚠️ Entrez email et mot de passe</span>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<span class="text-blue-400">🔄 Test en cours...</span>';
+
+            const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            try {
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    resultDiv.innerHTML = `<span class="text-red-400">❌ Échec: ${error.message}</span>`;
+                    console.error('Login error:', error);
+                } else {
+                    resultDiv.innerHTML = `<span class="text-green-400">✅ Connexion réussie! Email: ${data.user.email}</span>`;
+                    console.log('Login success:', data);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="text-red-400">❌ Exception: ${error.message}</span>`;
+                console.error('Exception:', error);
+            }
+        });
+
+        // Run diagnostics on load
+        runDiagnostics();
+    </script>
+</body>
+</html>
