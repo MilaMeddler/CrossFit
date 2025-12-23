@@ -255,18 +255,40 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // PASSWORD
-document.getElementById('login-btn').addEventListener('click', () => {
-    if (document.getElementById('password-input').value.trim() === 'admin123') {
-        document.getElementById('password-modal').classList.add('hidden');
-        document.getElementById('main-content').classList.remove('hidden');
+console.log('✅ Script loaded, setting up login...');
+
+const loginBtn = document.getElementById('login-btn');
+const passwordInput = document.getElementById('password-input');
+const errorMsg = document.getElementById('error-msg');
+const passwordModal = document.getElementById('password-modal');
+const mainContent = document.getElementById('main-content');
+
+if (!loginBtn) console.error('❌ login-btn not found!');
+if (!passwordInput) console.error('❌ password-input not found!');
+
+loginBtn.addEventListener('click', () => {
+    console.log('🔘 Login button clicked');
+    const pwd = passwordInput.value.trim();
+    console.log('🔑 Password entered:', pwd);
+
+    if (pwd === 'admin123') {
+        console.log('✅ Password correct!');
+        passwordModal.classList.add('hidden');
+        mainContent.classList.remove('hidden');
         init();
     } else {
-        document.getElementById('error-msg').classList.remove('hidden');
+        console.log('❌ Password incorrect');
+        errorMsg.classList.remove('hidden');
     }
 });
-document.getElementById('password-input').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') document.getElementById('login-btn').click();
+
+passwordInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+        console.log('⏎ Enter pressed');
+        loginBtn.click();
+    }
 });
+
 document.getElementById('logout-btn').addEventListener('click', () => location.reload());
 
 // UTILS
