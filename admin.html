@@ -13,11 +13,11 @@
 <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">🔒 Accès Administrateur</h2>
-        <p class="text-gray-600 mb-4">Entrez le mot de passe</p>
+        <p class="text-gray-600 mb-4">Authentification Supabase</p>
+        <input type="email" id="email-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4" placeholder="Email">
         <input type="password" id="password-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4" placeholder="Mot de passe">
         <button id="login-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">Connexion</button>
-        <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Mot de passe incorrect</p>
-        <p class="text-xs text-gray-400 mt-4">Par défaut: admin123</p>
+        <p id="error-msg" class="text-red-600 text-sm mt-2 hidden">❌ Erreur d'authentification</p>
     </div>
 </div>
 
@@ -262,34 +262,72 @@ try {
     alert('⚠️ Ошибка подключения к базе данных. Возможно, проект Supabase приостановлен. Зайдите в панель Supabase и возобновите проект.');
 }
 
-// PASSWORD
-console.log('✅ Script loaded, setting up login...');
+// PASSWORD - Supabase Auth Integration
+console.log('✅ Script loaded, setting up Supabase authentication...');
 
 const loginBtn = document.getElementById('login-btn');
+const emailInput = document.getElementById('email-input');
 const passwordInput = document.getElementById('password-input');
 const errorMsg = document.getElementById('error-msg');
 const passwordModal = document.getElementById('password-modal');
 const mainContent = document.getElementById('main-content');
 
-if (!loginBtn) console.error('❌ login-btn not found!');
-if (!passwordInput) console.error('❌ password-input not found!');
+// Check if user is already logged in
+async function checkSession() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            console.log('✅ User already authenticated:', session.user.email);
+            passwordModal.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            init();
+        } else {
+            console.log('ℹ️ No active session, showing login form');
+        }
+    } catch (error) {
+        console.error('❌ Session check error:', error);
+    }
+}
 
-loginBtn.addEventListener('click', () => {
+// Login with email and password
+loginBtn.addEventListener('click', async () => {
     console.log('🔘 Login button clicked');
-    const pwd = passwordInput.value.trim();
-    console.log('🔑 Password entered:', pwd);
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-    if (pwd === 'admin123') {
-        console.log('✅ Password correct!');
+    if (!email || !password) {
+        errorMsg.textContent = '❌ Veuillez remplir tous les champs';
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
+    console.log('🔑 Attempting login for:', email);
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Login successful:', data.user.email);
+        errorMsg.classList.add('hidden');
         passwordModal.classList.add('hidden');
         mainContent.classList.remove('hidden');
         init();
-    } else {
-        console.log('❌ Password incorrect');
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        errorMsg.textContent = '❌ Email ou mot de passe incorrect';
         errorMsg.classList.remove('hidden');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Connexion';
     }
 });
 
+// Enter key to login
 passwordInput.addEventListener('keypress', (e) => {
     if(e.key === 'Enter') {
         console.log('⏎ Enter pressed');
@@ -297,7 +335,21 @@ passwordInput.addEventListener('keypress', (e) => {
     }
 });
 
-document.getElementById('logout-btn').addEventListener('click', () => location.reload());
+emailInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+        passwordInput.focus();
+    }
+});
+
+// Logout
+document.getElementById('logout-btn').addEventListener('click', async () => {
+    console.log('🚪 Logging out...');
+    await supabase.auth.signOut();
+    location.reload();
+});
+
+// Check session on page load
+checkSession();
 
 // UTILS
 const showStatus = (msg, ms = 2500) => {
@@ -962,7 +1014,8 @@ async function init() {
     showStatus('✅ Prêt!', 1500);
 }
 
-document.getElementById('password-input').focus();
+// Focus on email input when page loads
+emailInput.focus();
 </script>
 </body>
 </html>
