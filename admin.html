@@ -230,6 +230,7 @@
                     <table class="w-full">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Tournoi</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Participant</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">WOD</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Résultat</th>
@@ -790,7 +791,7 @@ async function loadResults() {
             athlete1:athletes!teams_athlete1_id_fkey(first_name),
             athlete2:athletes!teams_athlete2_id_fkey(first_name)
         ),
-        workouts(id,wod_number,tournament_id),
+        workouts(id,wod_number,tournament_id,tournaments(name)),
         judges(id,name)
     `).order('id',{ascending:false}).limit(100);
     scores = data || [];
@@ -800,7 +801,7 @@ async function loadResults() {
 function renderResults() {
     const tbody = document.getElementById('results-tbody');
     if(!scores.length) {
-        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td></tr>';
+        tbody.innerHTML='<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td></tr>';
         return;
     }
     tbody.innerHTML = scores.map(s => {
@@ -815,11 +816,13 @@ function renderResults() {
             participant = 'Inconnu';
         }
 
+        const tournament = s.workouts && s.workouts.tournaments ? escapeHtml(s.workouts.tournaments.name) : 'Inconnu';
         const wod = s.workouts ? `WOD ${escapeHtml(String(s.workouts.wod_number))}` : 'Inconnu';
         const result = escapeHtml(String(s.value_time || s.value_int || s.value_decimal || s.notes || '-'));
 
         return `
         <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-600">${tournament}</td>
             <td class="px-4 py-3">${participant}</td>
             <td class="px-4 py-3">${wod}</td>
             <td class="px-4 py-3 font-semibold">${result}</td>
