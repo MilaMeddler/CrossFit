@@ -7,65 +7,83 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
+<body class="bg-gray-50 min-h-screen">
 
 <div class="max-w-7xl mx-auto p-4 md:p-6 pb-24">
     <!-- Header -->
-    <div class="text-center mb-8">
-        <h1 class="text-4xl md:text-6xl font-bold mb-2">CrossFit Tournament</h1>
-        <p class="text-xl md:text-2xl text-gray-300">🏆 Tableau des Leaders</p>
-        <div class="flex justify-center gap-6 mt-4">
-            <a href="index.html" class="text-gray-400 hover:text-white">🏠 Accueil</a>
-            <a href="admin.html" class="text-gray-400 hover:text-white">👥 Admin</a>
+    <div class="text-center mb-6">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CrossFit Tournament</h1>
+        <p class="text-lg text-gray-600">Tableau des Leaders</p>
+        <div class="flex justify-center gap-6 mt-4 text-sm">
+            <a href="index.html" class="text-gray-600 hover:text-gray-900">Accueil</a>
+            <a href="admin.html" class="text-gray-600 hover:text-gray-900">Admin</a>
         </div>
     </div>
 
-    <!-- Tournament Selector -->
-    <div class="bg-gray-800 rounded-lg p-6 mb-8">
-        <label class="block text-sm font-semibold mb-2">Sélectionner un tournoi:</label>
-        <select id="tournament-select" class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-4 py-3 text-white">
-            <option value="">Chargement...</option>
-        </select>
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Tournament -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tournoi</label>
+                <select id="tournament-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <option value="">Chargement...</option>
+                </select>
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
+                <select id="category-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <option value="all">Tous</option>
+                    <option value="RX">RX</option>
+                    <option value="INTER">INTER</option>
+                    <option value="SCALE">SCALE</option>
+                </select>
+            </div>
+
+            <!-- Gender -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Genre</label>
+                <select id="gender-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <option value="all">Tous</option>
+                    <option value="M">Hommes</option>
+                    <option value="F">Femmes</option>
+                </select>
+            </div>
+
+            <!-- WOD -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">WOD</label>
+                <select id="wod-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <option value="overall">Classement Général</option>
+                </select>
+            </div>
+        </div>
     </div>
 
-    <!-- Filter Buttons -->
-    <div class="flex flex-wrap justify-center gap-3 mb-8">
-        <button onclick="setFilter('all')" id="filter-all" class="filter-btn active">🎯 Tous</button>
-        <button onclick="setFilter('RX-M')" id="filter-RX-M" class="filter-btn">💪 RX H</button>
-        <button onclick="setFilter('RX-F')" id="filter-RX-F" class="filter-btn">💪 RX F</button>
-        <button onclick="setFilter('INTER-M')" id="filter-INTER-M" class="filter-btn">🏃 INTER H</button>
-        <button onclick="setFilter('INTER-F')" id="filter-INTER-F" class="filter-btn">🏃 INTER F</button>
-        <button onclick="setFilter('SCALE-M')" id="filter-SCALE-M" class="filter-btn">📊 SCALE H</button>
-        <button onclick="setFilter('SCALE-F')" id="filter-SCALE-F" class="filter-btn">📊 SCALE F</button>
-    </div>
-
-    <!-- Overall Leaderboard -->
-    <div id="overall-board" class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-8">
-        <div class="bg-gradient-to-r from-yellow-600 to-orange-500 p-6">
-            <h2 class="text-2xl md:text-3xl font-bold">🏆 Classement Général</h2>
-            <p class="text-sm text-yellow-100 mt-1">Système: Moins de points = Meilleur classement</p>
+    <!-- Leaderboard -->
+    <div id="leaderboard-container" class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-gray-800 text-white p-4">
+            <h2 class="text-xl font-bold" id="leaderboard-title">Classement Général</h2>
+            <p class="text-sm text-gray-300 mt-1" id="leaderboard-subtitle">Moins de points = Meilleur classement</p>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-700">
-                    <tr>
-                        <th class="text-left py-4 px-4 font-bold">Rang</th>
-                        <th class="text-left py-4 px-4 font-bold">Participant</th>
-                        <th class="text-center py-4 px-4 font-bold hidden md:table-cell">Cat</th>
-                        <th class="text-center py-4 px-4 font-bold" id="wod-headers"></th>
-                        <th class="text-center py-4 px-4 font-bold text-yellow-400">Total</th>
+                <thead class="bg-gray-100 border-b-2 border-gray-300">
+                    <tr id="table-header">
+                        <!-- Dynamic headers -->
                     </tr>
                 </thead>
-                <tbody id="overall-tbody"></tbody>
+                <tbody id="leaderboard-tbody">
+                    <!-- Dynamic content -->
+                </tbody>
             </table>
         </div>
     </div>
 
-    <!-- WOD Leaderboards -->
-    <div id="wod-boards"></div>
-
     <!-- Last Update -->
-    <div class="text-center text-gray-500 text-sm mt-8">
+    <div class="text-center text-gray-500 text-sm mt-6">
         <p>Mise à jour: <span id="last-update">--:--</span></p>
         <p class="mt-1">Auto-refresh: 10s</p>
     </div>
@@ -78,33 +96,16 @@
 </div>
 
 <style>
-.filter-btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid transparent;
-    transition: all 0.3s;
-    white-space: nowrap;
-}
-.filter-btn:hover { background: rgba(255, 255, 255, 0.2); }
-.filter-btn.active { background: #3b82f6; border-color: #60a5fa; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-
-.rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000; font-weight: bold; }
-.rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%); color: #000; font-weight: bold; }
-.rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%); color: #000; font-weight: bold; }
-
 .mobile-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(17, 24, 39, 0.95);
-    backdrop-filter: blur(10px);
+    background: white;
+    border-top: 2px solid #e5e7eb;
     display: flex;
     justify-content: space-around;
     padding: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 50;
 }
 .mobile-nav a {
@@ -113,13 +114,17 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.5rem;
-    color: #9ca3af;
+    color: #6b7280;
     text-decoration: none;
     font-size: 0.75rem;
     transition: color 0.2s;
 }
-.mobile-nav a.active { color: #3b82f6; }
+.mobile-nav a.active { color: #1f2937; font-weight: 600; }
 .mobile-nav a span { font-size: 1.5rem; }
+
+.rank-1 { background-color: #fef3c7; font-weight: 600; }
+.rank-2 { background-color: #f3f4f6; font-weight: 600; }
+.rank-3 { background-color: #fed7aa; font-weight: 600; }
 </style>
 
 <script>
@@ -136,15 +141,40 @@ try {
 
 let tournaments = [];
 let currentTournamentId = null;
-let currentFilter = 'all';
+let currentCategory = 'all';
+let currentGender = 'all';
+let currentWod = 'overall';
 let wods = [];
-let participants = []; // Can be athletes or teams
+let participants = [];
 let scores = [];
 
 // Initialize
 async function init() {
     await loadTournaments();
+    setupEventListeners();
     startAutoRefresh();
+}
+
+function setupEventListeners() {
+    document.getElementById('tournament-select').addEventListener('change', async (e) => {
+        currentTournamentId = parseInt(e.target.value);
+        await loadTournamentData();
+    });
+
+    document.getElementById('category-select').addEventListener('change', (e) => {
+        currentCategory = e.target.value;
+        render();
+    });
+
+    document.getElementById('gender-select').addEventListener('change', (e) => {
+        currentGender = e.target.value;
+        render();
+    });
+
+    document.getElementById('wod-select').addEventListener('change', (e) => {
+        currentWod = e.target.value;
+        render();
+    });
 }
 
 // Load tournaments
@@ -159,20 +189,14 @@ async function loadTournaments() {
     }
 
     select.innerHTML = tournaments.map(t =>
-        `<option value="${t.id}">${t.name} - ${t.competition_type === 'team' ? '🏅 Équipes' : '👤 Individuel'}</option>`
+        `<option value="${t.id}">${t.name} ${t.competition_type === 'team' ? '(Équipes)' : '(Individuel)'}</option>`
     ).join('');
 
-    // Select first tournament
     currentTournamentId = tournaments[0].id;
     select.value = currentTournamentId;
 
     await loadTournamentData();
 }
-
-document.getElementById('tournament-select').addEventListener('change', async (e) => {
-    currentTournamentId = parseInt(e.target.value);
-    await loadTournamentData();
-});
 
 // Load data for current tournament
 async function loadTournamentData() {
@@ -188,7 +212,12 @@ async function loadTournamentData() {
         .order('wod_number');
     wods = wodsData || [];
 
-    // Load participants (athletes or teams)
+    // Update WOD select
+    const wodSelect = document.getElementById('wod-select');
+    wodSelect.innerHTML = '<option value="overall">Classement Général</option>' +
+        wods.map(w => `<option value="${w.id}">WOD ${w.wod_number}</option>`).join('');
+
+    // Load participants
     if (tournament.competition_type === 'team') {
         const {data: teamsData} = await supabaseLeaderboard
             .from('teams')
@@ -203,7 +232,7 @@ async function loadTournamentData() {
             id: `team-${t.id}`,
             teamId: t.id,
             name: t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`,
-            level: t.athlete1.level, // Use first athlete's level
+            level: t.athlete1.level,
             gender: 'TEAM',
             type: 'team'
         }));
@@ -239,35 +268,23 @@ async function loadTournamentData() {
 
 // Filter participants
 function filterParticipants(participants) {
-    if (currentFilter === 'all') return participants;
-    const [level, gender] = currentFilter.split('-');
     return participants.filter(p => {
-        if (level && p.level !== level) return false;
-        if (gender && p.gender !== gender) return false;
+        if (currentCategory !== 'all' && p.level !== currentCategory) return false;
+        if (currentGender !== 'all' && p.gender !== currentGender) return false;
         return true;
     });
 }
 
-function setFilter(filter) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('filter-' + filter).classList.add('active');
-    render();
-}
-
-// Calculate rankings using new system
+// Calculate rankings
 function calculateRankings() {
     const filtered = filterParticipants(participants);
     const rankings = [];
 
-    // For each participant
     filtered.forEach(participant => {
         const participantScores = {};
         let totalPoints = 0;
 
-        // For each WOD
         wods.forEach(wod => {
-            // Find this participant's score for this WOD
             const score = scores.find(s => {
                 const matchesWod = s.workout_id === wod.id;
                 if (participant.type === 'team') {
@@ -277,7 +294,6 @@ function calculateRankings() {
                 }
             });
 
-            // Calculate rank for this WOD among filtered participants
             const wodScores = scores.filter(s => s.workout_id === wod.id);
             const filteredWodScores = wodScores.filter(s => {
                 const scoreParticipant = participants.find(p => {
@@ -287,22 +303,19 @@ function calculateRankings() {
                 return scoreParticipant && filterParticipants([scoreParticipant]).length > 0;
             });
 
-            // Sort by performance
             filteredWodScores.sort((a, b) => {
                 const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
                 const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
-                return aVal - bVal; // Lower is better for time-based
+                return aVal - bVal;
             });
 
             if (score) {
-                // Find rank
                 const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
-                participantScores[wod.id] = rank;
+                participantScores[wod.id] = { rank, score };
                 totalPoints += rank;
             } else {
-                // No score = worst place + 1
                 const worstPlace = filteredWodScores.length;
-                participantScores[wod.id] = worstPlace + 1;
+                participantScores[wod.id] = { rank: worstPlace + 1, score: null };
                 totalPoints += worstPlace + 1;
             }
         });
@@ -314,23 +327,39 @@ function calculateRankings() {
         });
     });
 
-    // Sort by total points (lower is better)
     rankings.sort((a, b) => a.totalPoints - b.totalPoints);
-
     return rankings;
+}
+
+// Render
+function render() {
+    if (currentWod === 'overall') {
+        renderOverall();
+    } else {
+        renderSingleWod(parseInt(currentWod));
+    }
 }
 
 // Render overall leaderboard
 function renderOverall() {
-    const rankings = calculateRankings();
-    const tbody = document.getElementById('overall-tbody');
+    document.getElementById('leaderboard-title').textContent = 'Classement Général';
+    document.getElementById('leaderboard-subtitle').textContent = 'Moins de points = Meilleur classement';
 
-    // Update WOD headers
-    const wodHeaders = document.getElementById('wod-headers');
-    wodHeaders.innerHTML = wods.map(w => `<th class="text-center py-4 px-2 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('');
+    const rankings = calculateRankings();
+    const headerRow = document.getElementById('table-header');
+    const tbody = document.getElementById('leaderboard-tbody');
+
+    // Headers
+    headerRow.innerHTML = `
+        <th class="text-left py-3 px-4 font-semibold text-gray-700">Rang</th>
+        <th class="text-left py-3 px-4 font-semibold text-gray-700">Participant</th>
+        <th class="text-center py-3 px-4 font-semibold text-gray-700 hidden md:table-cell">Catégorie</th>
+        ${wods.map(w => `<th class="text-center py-3 px-2 font-semibold text-gray-700 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('')}
+        <th class="text-center py-3 px-4 font-semibold text-gray-700">Total</th>
+    `;
 
     if (rankings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${3 + wods.length + 1}" class="text-center py-8 text-gray-400">Aucun résultat</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${3 + wods.length + 1}" class="text-center py-8 text-gray-500">Aucun résultat</td></tr>`;
         return;
     }
 
@@ -339,96 +368,90 @@ function renderOverall() {
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
         const wodCells = wods.map(w => {
-            const place = r.wodScores[w.id] || '-';
-            return `<td class="py-4 px-2 text-center font-mono hidden md:table-cell">${place}</td>`;
+            const place = r.wodScores[w.id]?.rank || '-';
+            return `<td class="py-3 px-2 text-center font-mono text-sm hidden md:table-cell">${place}</td>`;
         }).join('');
 
         return `
-            <tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
-                <td class="py-4 px-4 font-bold text-2xl">#${rank}</td>
-                <td class="py-4 px-4 font-bold text-lg">${r.participant.name}</td>
-                <td class="py-4 px-4 text-center hidden md:table-cell">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold ${
-                        r.participant.level === 'RX' ? 'bg-purple-600' :
-                        r.participant.level === 'INTER' ? 'bg-blue-600' :
-                        'bg-green-600'
+            <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
+                <td class="py-3 px-4 font-bold text-lg">${rank}</td>
+                <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
+                <td class="py-3 px-4 text-center hidden md:table-cell">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${
+                        r.participant.level === 'RX' ? 'bg-blue-100 text-blue-800' :
+                        r.participant.level === 'INTER' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
                     }">${r.participant.level}</span>
                 </td>
                 ${wodCells}
-                <td class="py-4 px-4 text-center font-bold text-3xl text-yellow-400">${r.totalPoints}</td>
+                <td class="py-3 px-4 text-center font-bold text-xl">${r.totalPoints}</td>
             </tr>
         `;
     }).join('');
 }
 
-// Render individual WOD leaderboards
-function renderWODs() {
-    const container = document.getElementById('wod-boards');
+// Render single WOD leaderboard
+function renderSingleWod(wodId) {
+    const wod = wods.find(w => w.id === wodId);
+    if (!wod) return;
 
-    container.innerHTML = wods.map(wod => {
-        const filtered = filterParticipants(participants);
-        const wodScores = scores.filter(s => s.workout_id === wod.id);
+    document.getElementById('leaderboard-title').textContent = `WOD ${wod.wod_number}`;
+    document.getElementById('leaderboard-subtitle').textContent = wod.description || '';
 
-        // Get scores for filtered participants
-        const results = filtered.map(p => {
-            const score = wodScores.find(s => {
-                if (p.type === 'team') return s.team_id === p.teamId;
-                return s.athlete_id === p.athleteId;
-            });
-            return { participant: p, score };
-        }).filter(r => r.score); // Only show those with scores
+    const filtered = filterParticipants(participants);
+    const wodScores = scores.filter(s => s.workout_id === wodId);
 
-        // Sort by performance
-        results.sort((a, b) => {
-            const aVal = a.score.value_time || a.score.value_int || a.score.value_decimal || 999999;
-            const bVal = b.score.value_time || b.score.value_int || b.score.value_decimal || 999999;
-            return aVal - bVal;
+    const results = filtered.map(p => {
+        const score = wodScores.find(s => {
+            if (p.type === 'team') return s.team_id === p.teamId;
+            return s.athlete_id === p.athleteId;
         });
+        return { participant: p, score };
+    }).filter(r => r.score);
 
-        const rows = results.length === 0
-            ? '<tr><td colspan="4" class="text-center py-8 text-gray-400">Aucun résultat</td></tr>'
-            : results.map((r, index) => {
-                const rank = index + 1;
-                const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-                const result = r.score.value_time || r.score.value_int || r.score.value_decimal || '-';
+    results.sort((a, b) => {
+        const aVal = a.score.value_time || a.score.value_int || a.score.value_decimal || 999999;
+        const bVal = b.score.value_time || b.score.value_int || b.score.value_decimal || 999999;
+        return aVal - bVal;
+    });
 
-                return `
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
-                        <td class="py-3 px-4 font-bold text-xl">#${rank}</td>
-                        <td class="py-3 px-4 font-bold">${r.participant.name}</td>
-                        <td class="py-3 px-4 text-center font-mono text-lg">${result}</td>
-                        <td class="py-3 px-4 text-center font-bold text-2xl text-yellow-400">${rank} pt</td>
-                    </tr>
-                `;
-            }).join('');
+    const headerRow = document.getElementById('table-header');
+    const tbody = document.getElementById('leaderboard-tbody');
+
+    headerRow.innerHTML = `
+        <th class="text-left py-3 px-4 font-semibold text-gray-700">Rang</th>
+        <th class="text-left py-3 px-4 font-semibold text-gray-700">Participant</th>
+        <th class="text-center py-3 px-4 font-semibold text-gray-700 hidden md:table-cell">Catégorie</th>
+        <th class="text-center py-3 px-4 font-semibold text-gray-700">Résultat</th>
+        <th class="text-center py-3 px-4 font-semibold text-gray-700">Points</th>
+    `;
+
+    if (results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Aucun résultat</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = results.map((r, index) => {
+        const rank = index + 1;
+        const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+        const result = r.score.value_time || r.score.value_int || r.score.value_decimal || '-';
 
         return `
-            <div class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-8">
-                <div class="bg-gradient-to-r from-green-600 to-emerald-500 p-6">
-                    <h2 class="text-2xl font-bold">WOD ${wod.wod_number}</h2>
-                    <p class="text-sm text-green-100 mt-1">${wod.description || ''}</p>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-700">
-                            <tr>
-                                <th class="text-left py-3 px-4 font-bold">Rang</th>
-                                <th class="text-left py-3 px-4 font-bold">Participant</th>
-                                <th class="text-center py-3 px-4 font-bold">Résultat</th>
-                                <th class="text-center py-3 px-4 font-bold">Points</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>
-            </div>
+            <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
+                <td class="py-3 px-4 font-bold text-lg">${rank}</td>
+                <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
+                <td class="py-3 px-4 text-center hidden md:table-cell">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${
+                        r.participant.level === 'RX' ? 'bg-blue-100 text-blue-800' :
+                        r.participant.level === 'INTER' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                    }">${r.participant.level}</span>
+                </td>
+                <td class="py-3 px-4 text-center font-mono">${result}</td>
+                <td class="py-3 px-4 text-center font-bold text-xl">${rank}</td>
+            </tr>
         `;
     }).join('');
-}
-
-function render() {
-    renderOverall();
-    renderWODs();
 }
 
 function updateLastUpdate() {
