@@ -2,53 +2,58 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard - CrossFit Tournament</title>
-    <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
 
-<div class="max-w-6xl mx-auto p-4 md:p-6 pb-24">
+<div class="max-w-7xl mx-auto p-4 md:p-6 pb-24">
     <!-- Header -->
-    <div class="text-center mb-6 md:mb-8">
-        <h1 class="text-3xl md:text-5xl font-bold mb-2" id="tournament-name">CrossFit Tournament</h1>
-        <p class="text-lg md:text-xl text-gray-300">🏆 Tableau des Leaders</p>
-        <div class="flex justify-center gap-4 mt-3 text-sm">
-            <a href="index.html" class="text-gray-400 hover:text-white">Accueil</a>
-            <a href="admin.html" class="text-gray-400 hover:text-white">Admin</a>
-            <a href="judge.html" class="text-gray-400 hover:text-white">Juge</a>
+    <div class="text-center mb-8">
+        <h1 class="text-4xl md:text-6xl font-bold mb-2">CrossFit Tournament</h1>
+        <p class="text-xl md:text-2xl text-gray-300">🏆 Tableau des Leaders</p>
+        <div class="flex justify-center gap-6 mt-4">
+            <a href="index.html" class="text-gray-400 hover:text-white">🏠 Accueil</a>
+            <a href="admin.html" class="text-gray-400 hover:text-white">👥 Admin</a>
         </div>
+    </div>
+
+    <!-- Tournament Selector -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-8">
+        <label class="block text-sm font-semibold mb-2">Sélectionner un tournoi:</label>
+        <select id="tournament-select" class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-4 py-3 text-white">
+            <option value="">Chargement...</option>
+        </select>
     </div>
 
     <!-- Filter Buttons -->
-    <div class="flex flex-wrap justify-center gap-2 mb-6">
+    <div class="flex flex-wrap justify-center gap-3 mb-8">
         <button onclick="setFilter('all')" id="filter-all" class="filter-btn active">🎯 Tous</button>
         <button onclick="setFilter('RX-M')" id="filter-RX-M" class="filter-btn">💪 RX H</button>
         <button onclick="setFilter('RX-F')" id="filter-RX-F" class="filter-btn">💪 RX F</button>
-        <button onclick="setFilter('Inter-M')" id="filter-Inter-M" class="filter-btn">🏃 Inter H</button>
-        <button onclick="setFilter('Inter-F')" id="filter-Inter-F" class="filter-btn">🏃 Inter F</button>
-    </div>
-
-    <!-- WOD Tabs -->
-    <div class="bg-gray-800 rounded-lg p-3 mb-6 overflow-x-auto">
-        <div class="flex gap-2 min-w-max" id="wod-tabs"></div>
+        <button onclick="setFilter('INTER-M')" id="filter-INTER-M" class="filter-btn">🏃 INTER H</button>
+        <button onclick="setFilter('INTER-F')" id="filter-INTER-F" class="filter-btn">🏃 INTER F</button>
+        <button onclick="setFilter('SCALE-M')" id="filter-SCALE-M" class="filter-btn">📊 SCALE H</button>
+        <button onclick="setFilter('SCALE-F')" id="filter-SCALE-F" class="filter-btn">📊 SCALE F</button>
     </div>
 
     <!-- Overall Leaderboard -->
-    <div id="overall-board" class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-6">
-        <div class="bg-gradient-to-r from-yellow-600 to-yellow-500 p-4">
-            <h2 class="text-xl md:text-2xl font-bold">🏆 Classement Général</h2>
+    <div id="overall-board" class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-yellow-600 to-orange-500 p-6">
+            <h2 class="text-2xl md:text-3xl font-bold">🏆 Classement Général</h2>
+            <p class="text-sm text-yellow-100 mt-1">Système: Moins de points = Meilleur classement</p>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm md:text-base">
+            <table class="w-full">
                 <thead class="bg-gray-700">
                     <tr>
-                        <th class="text-left py-3 px-2">Rang</th>
-                        <th class="text-left py-3 px-2">Athlète</th>
-                        <th class="text-left py-3 px-2 hide-mobile">Cat</th>
-                        <th class="text-center py-3 px-2">Points</th>
+                        <th class="text-left py-4 px-4 font-bold">Rang</th>
+                        <th class="text-left py-4 px-4 font-bold">Participant</th>
+                        <th class="text-center py-4 px-4 font-bold hidden md:table-cell">Cat</th>
+                        <th class="text-center py-4 px-4 font-bold" id="wod-headers"></th>
+                        <th class="text-center py-4 px-4 font-bold text-yellow-400">Total</th>
                     </tr>
                 </thead>
                 <tbody id="overall-tbody"></tbody>
@@ -60,7 +65,7 @@
     <div id="wod-boards"></div>
 
     <!-- Last Update -->
-    <div class="text-center text-gray-500 text-sm mt-6">
+    <div class="text-center text-gray-500 text-sm mt-8">
         <p>Mise à jour: <span id="last-update">--:--</span></p>
         <p class="mt-1">Auto-refresh: 10s</p>
     </div>
@@ -69,15 +74,12 @@
 <div class="mobile-nav md:hidden">
     <a href="index.html"><span>🏠</span>Accueil</a>
     <a href="admin.html"><span>👥</span>Admin</a>
-    <a href="judge.html"><span>⚖️</span>Juge</a>
     <a href="leaderboard.html" class="active"><span>🏆</span>Tableau</a>
 </div>
 
-<div id="loading" class="hidden"><div class="spinner"></div></div>
-
 <style>
 .filter-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 9999px;
     font-weight: 600;
     background: rgba(255, 255, 255, 0.1);
@@ -86,212 +88,359 @@
     white-space: nowrap;
 }
 .filter-btn:hover { background: rgba(255, 255, 255, 0.2); }
-.filter-btn.active { background: #3b82f6; border-color: #60a5fa; }
+.filter-btn.active { background: #3b82f6; border-color: #60a5fa; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
 
-.wod-tab {
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.1);
-    transition: all 0.2s;
-    cursor: pointer;
-    white-space: nowrap;
+.rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000; font-weight: bold; }
+.rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%); color: #000; font-weight: bold; }
+.rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%); color: #000; font-weight: bold; }
+
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 50;
 }
-.wod-tab:hover { background: rgba(255, 255, 255, 0.2); }
-.wod-tab.active { background: #10b981; }
-
-.rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000; }
-.rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%); color: #000; }
-.rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%); color: #000; }
+.mobile-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: color 0.2s;
+}
+.mobile-nav a.active { color: #3b82f6; }
+.mobile-nav a span { font-size: 1.5rem; }
 </style>
 
-<script src="config.js"></script>
-<script src="js/api.js"></script>
 <script>
-let data = { athletes: [], wods: [], results: [], settings: {} };
-let currentFilter = 'all';
-let currentWOD = null;
+const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
 
+var supabaseLeaderboard;
+try {
+    supabaseLeaderboard = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    alert('Erreur de connexion à la base de données');
+}
+
+let tournaments = [];
+let currentTournamentId = null;
+let currentFilter = 'all';
+let wods = [];
+let participants = []; // Can be athletes or teams
+let scores = [];
+
+// Initialize
 async function init() {
-    initAPI();
-    await loadData();
+    await loadTournaments();
     startAutoRefresh();
 }
 
-async function loadData() {
-    try {
-        const result = await api.getAllData();
-        data = result;
-        
-        if (data.settings && data.settings.TournamentName) {
-            document.getElementById('tournament-name').textContent = data.settings.TournamentName;
-        }
-        
-        renderWODTabs();
-        renderOverall();
-        renderWODs();
-        updateLastUpdate();
-    } catch (error) {
-        console.error('Error loading data:', error);
+// Load tournaments
+async function loadTournaments() {
+    const {data} = await supabaseLeaderboard.from('tournaments').select('*').order('id', {ascending: false});
+    tournaments = data || [];
+
+    const select = document.getElementById('tournament-select');
+    if (tournaments.length === 0) {
+        select.innerHTML = '<option value="">Aucun tournoi</option>';
+        return;
     }
+
+    select.innerHTML = tournaments.map(t =>
+        `<option value="${t.id}">${t.name} - ${t.competition_type === 'team' ? '🏅 Équipes' : '👤 Individuel'}</option>`
+    ).join('');
+
+    // Select first tournament
+    currentTournamentId = tournaments[0].id;
+    select.value = currentTournamentId;
+
+    await loadTournamentData();
 }
 
-function startAutoRefresh() {
-    setInterval(async () => {
-        await loadData();
-    }, 10000); // 10 seconds
+document.getElementById('tournament-select').addEventListener('change', async (e) => {
+    currentTournamentId = parseInt(e.target.value);
+    await loadTournamentData();
+});
+
+// Load data for current tournament
+async function loadTournamentData() {
+    if (!currentTournamentId) return;
+
+    const tournament = tournaments.find(t => t.id === currentTournamentId);
+
+    // Load WODs
+    const {data: wodsData} = await supabaseLeaderboard
+        .from('workouts')
+        .select('*')
+        .eq('tournament_id', currentTournamentId)
+        .order('wod_number');
+    wods = wodsData || [];
+
+    // Load participants (athletes or teams)
+    if (tournament.competition_type === 'team') {
+        const {data: teamsData} = await supabaseLeaderboard
+            .from('teams')
+            .select(`
+                *,
+                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name,gender,level),
+                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name,gender,level)
+            `)
+            .eq('tournament_id', currentTournamentId);
+
+        participants = (teamsData || []).map(t => ({
+            id: `team-${t.id}`,
+            teamId: t.id,
+            name: t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`,
+            level: t.athlete1.level, // Use first athlete's level
+            gender: 'TEAM',
+            type: 'team'
+        }));
+    } else {
+        const {data: athletesData} = await supabaseLeaderboard
+            .from('athletes')
+            .select('*')
+            .order('last_name');
+
+        participants = (athletesData || []).map(a => ({
+            id: `athlete-${a.id}`,
+            athleteId: a.id,
+            name: `${a.first_name} ${a.last_name}`,
+            level: a.level,
+            gender: a.gender,
+            type: 'athlete'
+        }));
+    }
+
+    // Load scores
+    const {data: scoresData} = await supabaseLeaderboard
+        .from('scores')
+        .select(`
+            *,
+            workouts!inner(id,wod_number,tournament_id)
+        `)
+        .eq('workouts.tournament_id', currentTournamentId);
+    scores = scoresData || [];
+
+    render();
+    updateLastUpdate();
+}
+
+// Filter participants
+function filterParticipants(participants) {
+    if (currentFilter === 'all') return participants;
+    const [level, gender] = currentFilter.split('-');
+    return participants.filter(p => {
+        if (level && p.level !== level) return false;
+        if (gender && p.gender !== gender) return false;
+        return true;
+    });
 }
 
 function setFilter(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('filter-' + filter).classList.add('active');
+    render();
+}
+
+// Calculate rankings using new system
+function calculateRankings() {
+    const filtered = filterParticipants(participants);
+    const rankings = [];
+
+    // For each participant
+    filtered.forEach(participant => {
+        const participantScores = {};
+        let totalPoints = 0;
+
+        // For each WOD
+        wods.forEach(wod => {
+            // Find this participant's score for this WOD
+            const score = scores.find(s => {
+                const matchesWod = s.workout_id === wod.id;
+                if (participant.type === 'team') {
+                    return matchesWod && s.team_id === participant.teamId;
+                } else {
+                    return matchesWod && s.athlete_id === participant.athleteId;
+                }
+            });
+
+            // Calculate rank for this WOD among filtered participants
+            const wodScores = scores.filter(s => s.workout_id === wod.id);
+            const filteredWodScores = wodScores.filter(s => {
+                const scoreParticipant = participants.find(p => {
+                    if (p.type === 'team') return s.team_id === p.teamId;
+                    return s.athlete_id === p.athleteId;
+                });
+                return scoreParticipant && filterParticipants([scoreParticipant]).length > 0;
+            });
+
+            // Sort by performance
+            filteredWodScores.sort((a, b) => {
+                const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
+                const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
+                return aVal - bVal; // Lower is better for time-based
+            });
+
+            if (score) {
+                // Find rank
+                const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
+                participantScores[wod.id] = rank;
+                totalPoints += rank;
+            } else {
+                // No score = worst place + 1
+                const worstPlace = filteredWodScores.length;
+                participantScores[wod.id] = worstPlace + 1;
+                totalPoints += worstPlace + 1;
+            }
+        });
+
+        rankings.push({
+            participant,
+            wodScores: participantScores,
+            totalPoints
+        });
+    });
+
+    // Sort by total points (lower is better)
+    rankings.sort((a, b) => a.totalPoints - b.totalPoints);
+
+    return rankings;
+}
+
+// Render overall leaderboard
+function renderOverall() {
+    const rankings = calculateRankings();
+    const tbody = document.getElementById('overall-tbody');
+
+    // Update WOD headers
+    const wodHeaders = document.getElementById('wod-headers');
+    wodHeaders.innerHTML = wods.map(w => `<th class="text-center py-4 px-2 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('');
+
+    if (rankings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${3 + wods.length + 1}" class="text-center py-8 text-gray-400">Aucun résultat</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = rankings.map((r, index) => {
+        const rank = index + 1;
+        const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+
+        const wodCells = wods.map(w => {
+            const place = r.wodScores[w.id] || '-';
+            return `<td class="py-4 px-2 text-center font-mono hidden md:table-cell">${place}</td>`;
+        }).join('');
+
+        return `
+            <tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
+                <td class="py-4 px-4 font-bold text-2xl">#${rank}</td>
+                <td class="py-4 px-4 font-bold text-lg">${r.participant.name}</td>
+                <td class="py-4 px-4 text-center hidden md:table-cell">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                        r.participant.level === 'RX' ? 'bg-purple-600' :
+                        r.participant.level === 'INTER' ? 'bg-blue-600' :
+                        'bg-green-600'
+                    }">${r.participant.level}</span>
+                </td>
+                ${wodCells}
+                <td class="py-4 px-4 text-center font-bold text-3xl text-yellow-400">${r.totalPoints}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Render individual WOD leaderboards
+function renderWODs() {
+    const container = document.getElementById('wod-boards');
+
+    container.innerHTML = wods.map(wod => {
+        const filtered = filterParticipants(participants);
+        const wodScores = scores.filter(s => s.workout_id === wod.id);
+
+        // Get scores for filtered participants
+        const results = filtered.map(p => {
+            const score = wodScores.find(s => {
+                if (p.type === 'team') return s.team_id === p.teamId;
+                return s.athlete_id === p.athleteId;
+            });
+            return { participant: p, score };
+        }).filter(r => r.score); // Only show those with scores
+
+        // Sort by performance
+        results.sort((a, b) => {
+            const aVal = a.score.value_time || a.score.value_int || a.score.value_decimal || 999999;
+            const bVal = b.score.value_time || b.score.value_int || b.score.value_decimal || 999999;
+            return aVal - bVal;
+        });
+
+        const rows = results.length === 0
+            ? '<tr><td colspan="4" class="text-center py-8 text-gray-400">Aucun résultat</td></tr>'
+            : results.map((r, index) => {
+                const rank = index + 1;
+                const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+                const result = r.score.value_time || r.score.value_int || r.score.value_decimal || '-';
+
+                return `
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
+                        <td class="py-3 px-4 font-bold text-xl">#${rank}</td>
+                        <td class="py-3 px-4 font-bold">${r.participant.name}</td>
+                        <td class="py-3 px-4 text-center font-mono text-lg">${result}</td>
+                        <td class="py-3 px-4 text-center font-bold text-2xl text-yellow-400">${rank} pt</td>
+                    </tr>
+                `;
+            }).join('');
+
+        return `
+            <div class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-green-600 to-emerald-500 p-6">
+                    <h2 class="text-2xl font-bold">WOD ${wod.wod_number}</h2>
+                    <p class="text-sm text-green-100 mt-1">${wod.description || ''}</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="text-left py-3 px-4 font-bold">Rang</th>
+                                <th class="text-left py-3 px-4 font-bold">Participant</th>
+                                <th class="text-center py-3 px-4 font-bold">Résultat</th>
+                                <th class="text-center py-3 px-4 font-bold">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function render() {
     renderOverall();
     renderWODs();
 }
 
-function filterAthletes(athletes) {
-    if (currentFilter === 'all') return athletes;
-    const [category, gender] = currentFilter.split('-');
-    return athletes.filter(a => {
-        if (category && a.category !== category) return false;
-        if (gender && a.gender !== gender) return false;
-        return true;
-    });
-}
-
-function renderWODTabs() {
-    const container = document.getElementById('wod-tabs');
-    let html = '<button onclick="showAll()" class="wod-tab active" id="wod-tab-all">📊 Général</button>';
-    
-    data.wods.forEach(wod => {
-        html += `<button onclick="showWOD(${wod.id})" class="wod-tab" id="wod-tab-${wod.id}">${wod.name}</button>`;
-    });
-    
-    container.innerHTML = html;
-}
-
-function showAll() {
-    currentWOD = null;
-    document.querySelectorAll('.wod-tab').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('wod-tab-all').classList.add('active');
-    document.getElementById('overall-board').style.display = 'block';
-    document.querySelectorAll('.wod-board').forEach(el => el.style.display = 'block');
-}
-
-function showWOD(wodID) {
-    currentWOD = wodID;
-    document.querySelectorAll('.wod-tab').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('wod-tab-' + wodID).classList.add('active');
-    document.getElementById('overall-board').style.display = 'none';
-    document.querySelectorAll('.wod-board').forEach(el => {
-        el.style.display = el.id === 'wod-board-' + wodID ? 'block' : 'none';
-    });
-}
-
-function renderOverall() {
-    const tbody = document.getElementById('overall-tbody');
-    const standings = calculateOverall();
-    
-    if (standings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-gray-400">Aucun résultat</td></tr>';
-        return;
-    }
-    
-    let html = '';
-    standings.forEach((s, index) => {
-        const rank = index + 1;
-        const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-        
-        html += `<tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
-            <td class="py-3 px-2 font-bold text-xl">#${rank}</td>
-            <td class="py-3 px-2 font-bold">${s.athlete.name}</td>
-            <td class="py-3 px-2 hide-mobile"><span class="bg-blue-600 px-2 py-1 rounded text-xs">${s.athlete.category}</span></td>
-            <td class="py-3 px-2 text-center font-bold text-2xl text-yellow-400">${s.totalPoints}</td>
-        </tr>`;
-    });
-    
-    tbody.innerHTML = html;
-}
-
-function calculateOverall() {
-    const standings = [];
-    
-    filterAthletes(data.athletes.filter(a => a.active === 'TRUE')).forEach(athlete => {
-        const athleteResults = data.results.filter(r => r.athleteID === athlete.id);
-        const totalPoints = athleteResults.reduce((sum, r) => sum + (r.points || 0), 0);
-        
-        standings.push({
-            athlete: athlete,
-            totalPoints: totalPoints,
-            wodCount: athleteResults.length
-        });
-    });
-    
-    standings.sort((a, b) => b.totalPoints - a.totalPoints);
-    return standings;
-}
-
-function renderWODs() {
-    const container = document.getElementById('wod-boards');
-    let html = '';
-    
-    data.wods.forEach(wod => {
-        const wodResults = data.results.filter(r => r.wodID === wod.id);
-        const filteredResults = wodResults.filter(r => {
-            const athlete = data.athletes.find(a => a.id === r.athleteID);
-            return filterAthletes([athlete]).length > 0;
-        });
-        
-        filteredResults.sort((a, b) => (a.rank || 999) - (b.rank || 999));
-        
-        html += `<div class="wod-board bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-6" id="wod-board-${wod.id}">
-            <div class="bg-gradient-to-r from-green-600 to-green-500 p-4">
-                <h2 class="text-xl font-bold">${wod.name}</h2>
-                <p class="text-sm text-green-100">${wod.type}</p>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-700">
-                        <tr>
-                            <th class="text-left py-2 px-2">Rang</th>
-                            <th class="text-left py-2 px-2">Athlète</th>
-                            <th class="text-center py-2 px-2 hide-mobile">Résultat</th>
-                            <th class="text-center py-2 px-2">Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-        
-        if (filteredResults.length === 0) {
-            html += '<tr><td colspan="4" class="text-center py-6 text-gray-400">Aucun résultat</td></tr>';
-        } else {
-            filteredResults.forEach(result => {
-                const athlete = data.athletes.find(a => a.id === result.athleteID);
-                if (!athlete) return;
-                
-                const rankClass = result.rank === 1 ? 'rank-1' : result.rank === 2 ? 'rank-2' : result.rank === 3 ? 'rank-3' : '';
-                let displayValue = result.value1;
-                if (result.value2) displayValue += ' + ' + result.value2;
-                
-                html += `<tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
-                    <td class="py-2 px-2 font-bold text-lg">#${result.rank}</td>
-                    <td class="py-2 px-2 font-bold">${athlete.name}</td>
-                    <td class="py-2 px-2 text-center font-mono hide-mobile">${displayValue}</td>
-                    <td class="py-2 px-2 text-center font-bold text-xl text-yellow-400">${result.points}</td>
-                </tr>`;
-            });
-        }
-        
-        html += `</tbody></table></div></div>`;
-    });
-    
-    container.innerHTML = html;
-}
-
 function updateLastUpdate() {
     const now = new Date();
-    const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     document.getElementById('last-update').textContent = time;
+}
+
+function startAutoRefresh() {
+    setInterval(async () => {
+        await loadTournamentData();
+    }, 10000);
 }
 
 init();

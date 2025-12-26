@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Leaderboard - CrossFit Tournament</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
+
+<div class="max-w-6xl mx-auto p-4 md:p-6 pb-24">
+    <!-- Header -->
+    <div class="text-center mb-6 md:mb-8">
+        <h1 class="text-3xl md:text-5xl font-bold mb-2" id="tournament-name">CrossFit Tournament</h1>
+        <p class="text-lg md:text-xl text-gray-300">🏆 Tableau des Leaders</p>
+        <div class="flex justify-center gap-4 mt-3 text-sm">
+            <a href="index.html" class="text-gray-400 hover:text-white">Accueil</a>
+            <a href="admin.html" class="text-gray-400 hover:text-white">Admin</a>
+            <a href="judge.html" class="text-gray-400 hover:text-white">Juge</a>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="flex flex-wrap justify-center gap-2 mb-6">
+        <button onclick="setFilter('all')" id="filter-all" class="filter-btn active">🎯 Tous</button>
+        <button onclick="setFilter('RX-M')" id="filter-RX-M" class="filter-btn">💪 RX H</button>
+        <button onclick="setFilter('RX-F')" id="filter-RX-F" class="filter-btn">💪 RX F</button>
+        <button onclick="setFilter('Inter-M')" id="filter-Inter-M" class="filter-btn">🏃 Inter H</button>
+        <button onclick="setFilter('Inter-F')" id="filter-Inter-F" class="filter-btn">🏃 Inter F</button>
+    </div>
+
+    <!-- WOD Tabs -->
+    <div class="bg-gray-800 rounded-lg p-3 mb-6 overflow-x-auto">
+        <div class="flex gap-2 min-w-max" id="wod-tabs"></div>
+    </div>
+
+    <!-- Overall Leaderboard -->
+    <div id="overall-board" class="bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-yellow-600 to-yellow-500 p-4">
+            <h2 class="text-xl md:text-2xl font-bold">🏆 Classement Général</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm md:text-base">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="text-left py-3 px-2">Rang</th>
+                        <th class="text-left py-3 px-2">Athlète</th>
+                        <th class="text-left py-3 px-2 hide-mobile">Cat</th>
+                        <th class="text-center py-3 px-2">Points</th>
+                    </tr>
+                </thead>
+                <tbody id="overall-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WOD Leaderboards -->
+    <div id="wod-boards"></div>
+
+    <!-- Last Update -->
+    <div class="text-center text-gray-500 text-sm mt-6">
+        <p>Mise à jour: <span id="last-update">--:--</span></p>
+        <p class="mt-1">Auto-refresh: 10s</p>
+    </div>
+</div>
+
+<div class="mobile-nav md:hidden">
+    <a href="index.html"><span>🏠</span>Accueil</a>
+    <a href="admin.html"><span>👥</span>Admin</a>
+    <a href="judge.html"><span>⚖️</span>Juge</a>
+    <a href="leaderboard.html" class="active"><span>🏆</span>Tableau</a>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div></div>
+
+<style>
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+.filter-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.filter-btn.active { background: #3b82f6; border-color: #60a5fa; }
+
+.wod-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.wod-tab:hover { background: rgba(255, 255, 255, 0.2); }
+.wod-tab.active { background: #10b981; }
+
+.rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000; }
+.rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%); color: #000; }
+.rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%); color: #000; }
+</style>
+
+<script src="config.js"></script>
+<script src="js/api.js"></script>
+<script>
+let data = { athletes: [], wods: [], results: [], settings: {} };
+let currentFilter = 'all';
+let currentWOD = null;
+
+async function init() {
+    initAPI();
+    await loadData();
+    startAutoRefresh();
+}
+
+async function loadData() {
+    try {
+        const result = await api.getAllData();
+        data = result;
+        
+        if (data.settings && data.settings.TournamentName) {
+            document.getElementById('tournament-name').textContent = data.settings.TournamentName;
+        }
+        
+        renderWODTabs();
+        renderOverall();
+        renderWODs();
+        updateLastUpdate();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+function startAutoRefresh() {
+    setInterval(async () => {
+        await loadData();
+    }, 10000); // 10 seconds
+}
+
+function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('filter-' + filter).classList.add('active');
+    renderOverall();
+    renderWODs();
+}
+
+function filterAthletes(athletes) {
+    if (currentFilter === 'all') return athletes;
+    const [category, gender] = currentFilter.split('-');
+    return athletes.filter(a => {
+        if (category && a.category !== category) return false;
+        if (gender && a.gender !== gender) return false;
+        return true;
+    });
+}
+
+function renderWODTabs() {
+    const container = document.getElementById('wod-tabs');
+    let html = '<button onclick="showAll()" class="wod-tab active" id="wod-tab-all">📊 Général</button>';
+    
+    data.wods.forEach(wod => {
+        html += `<button onclick="showWOD(${wod.id})" class="wod-tab" id="wod-tab-${wod.id}">${wod.name}</button>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+function showAll() {
+    currentWOD = null;
+    document.querySelectorAll('.wod-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('wod-tab-all').classList.add('active');
+    document.getElementById('overall-board').style.display = 'block';
+    document.querySelectorAll('.wod-board').forEach(el => el.style.display = 'block');
+}
+
+function showWOD(wodID) {
+    currentWOD = wodID;
+    document.querySelectorAll('.wod-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('wod-tab-' + wodID).classList.add('active');
+    document.getElementById('overall-board').style.display = 'none';
+    document.querySelectorAll('.wod-board').forEach(el => {
+        el.style.display = el.id === 'wod-board-' + wodID ? 'block' : 'none';
+    });
+}
+
+function renderOverall() {
+    const tbody = document.getElementById('overall-tbody');
+    const standings = calculateOverall();
+    
+    if (standings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-gray-400">Aucun résultat</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    standings.forEach((s, index) => {
+        const rank = index + 1;
+        const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+        
+        html += `<tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
+            <td class="py-3 px-2 font-bold text-xl">#${rank}</td>
+            <td class="py-3 px-2 font-bold">${s.athlete.name}</td>
+            <td class="py-3 px-2 hide-mobile"><span class="bg-blue-600 px-2 py-1 rounded text-xs">${s.athlete.category}</span></td>
+            <td class="py-3 px-2 text-center font-bold text-2xl text-yellow-400">${s.totalPoints}</td>
+        </tr>`;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function calculateOverall() {
+    const standings = [];
+    
+    filterAthletes(data.athletes.filter(a => a.active === 'TRUE')).forEach(athlete => {
+        const athleteResults = data.results.filter(r => r.athleteID === athlete.id);
+        const totalPoints = athleteResults.reduce((sum, r) => sum + (r.points || 0), 0);
+        
+        standings.push({
+            athlete: athlete,
+            totalPoints: totalPoints,
+            wodCount: athleteResults.length
+        });
+    });
+    
+    standings.sort((a, b) => b.totalPoints - a.totalPoints);
+    return standings;
+}
+
+function renderWODs() {
+    const container = document.getElementById('wod-boards');
+    let html = '';
+    
+    data.wods.forEach(wod => {
+        const wodResults = data.results.filter(r => r.wodID === wod.id);
+        const filteredResults = wodResults.filter(r => {
+            const athlete = data.athletes.find(a => a.id === r.athleteID);
+            return filterAthletes([athlete]).length > 0;
+        });
+        
+        filteredResults.sort((a, b) => (a.rank || 999) - (b.rank || 999));
+        
+        html += `<div class="wod-board bg-gray-800 rounded-lg shadow-2xl overflow-hidden mb-6" id="wod-board-${wod.id}">
+            <div class="bg-gradient-to-r from-green-600 to-green-500 p-4">
+                <h2 class="text-xl font-bold">${wod.name}</h2>
+                <p class="text-sm text-green-100">${wod.type}</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="text-left py-2 px-2">Rang</th>
+                            <th class="text-left py-2 px-2">Athlète</th>
+                            <th class="text-center py-2 px-2 hide-mobile">Résultat</th>
+                            <th class="text-center py-2 px-2">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        if (filteredResults.length === 0) {
+            html += '<tr><td colspan="4" class="text-center py-6 text-gray-400">Aucun résultat</td></tr>';
+        } else {
+            filteredResults.forEach(result => {
+                const athlete = data.athletes.find(a => a.id === result.athleteID);
+                if (!athlete) return;
+                
+                const rankClass = result.rank === 1 ? 'rank-1' : result.rank === 2 ? 'rank-2' : result.rank === 3 ? 'rank-3' : '';
+                let displayValue = result.value1;
+                if (result.value2) displayValue += ' + ' + result.value2;
+                
+                html += `<tr class="border-b border-gray-700 hover:bg-gray-700 ${rankClass}">
+                    <td class="py-2 px-2 font-bold text-lg">#${result.rank}</td>
+                    <td class="py-2 px-2 font-bold">${athlete.name}</td>
+                    <td class="py-2 px-2 text-center font-mono hide-mobile">${displayValue}</td>
+                    <td class="py-2 px-2 text-center font-bold text-xl text-yellow-400">${result.points}</td>
+                </tr>`;
+            });
+        }
+        
+        html += `</tbody></table></div></div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+function updateLastUpdate() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-update').textContent = time;
+}
+
+init();
+</script>
+
+</body>
+</html>
