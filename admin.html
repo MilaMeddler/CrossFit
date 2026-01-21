@@ -210,7 +210,29 @@
                     <select id="result-wod" class="border rounded-lg px-4 py-2"></select>
                     <select id="result-participant" class="border rounded-lg px-4 py-2"></select>
                     <select id="result-judge" class="border rounded-lg px-4 py-2"></select>
-                    <input type="text" id="result-value" placeholder="Résultat (ex: 10:45, 150, 85kg)" class="border rounded-lg px-4 py-2 md:col-span-2">
+
+                    <!-- Regular result input (for reps, weight, complex) -->
+                    <div id="result-value-regular" class="md:col-span-2">
+                        <input type="text" id="result-value" placeholder="Résultat (ex: 150, 85kg)" class="w-full border rounded-lg px-4 py-2">
+                    </div>
+
+                    <!-- Time result input (for time-based WODs) -->
+                    <div id="result-value-time" class="md:col-span-2 hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">⏱️ Temps (For Time)</label>
+                        <div class="flex gap-3 items-center">
+                            <div class="flex-1">
+                                <input type="number" id="result-minutes" min="0" max="999" placeholder="00" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-2xl font-mono focus:border-blue-500 focus:outline-none">
+                                <p class="text-xs text-gray-500 text-center mt-1">minutes</p>
+                            </div>
+                            <span class="text-3xl font-bold text-gray-400 pb-6">:</span>
+                            <div class="flex-1">
+                                <input type="number" id="result-seconds" min="0" max="59" placeholder="00" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-2xl font-mono focus:border-blue-500 focus:outline-none">
+                                <p class="text-xs text-gray-500 text-center mt-1">secondes</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">💡 Exemple: 12 minutes 34 secondes = 12:34</p>
+                    </div>
+
                     <textarea id="result-notes" rows="2" placeholder="Notes (optionnel)" class="border rounded-lg px-4 py-2 md:col-span-2"></textarea>
                 </div>
                 <div class="flex gap-3">
@@ -818,7 +840,22 @@ function renderResults() {
 
         const tournament = s.workouts && s.workouts.tournaments ? escapeHtml(s.workouts.tournaments.name) : 'Inconnu';
         const wod = s.workouts ? `WOD ${escapeHtml(String(s.workouts.wod_number))}` : 'Inconnu';
-        const result = escapeHtml(String(s.value_time || s.value_int || s.value_decimal || s.notes || '-'));
+
+        // Format result based on type
+        let result;
+        if (s.value_time) {
+            // Convert seconds to mm:ss format
+            const minutes = Math.floor(s.value_time / 60);
+            const seconds = s.value_time % 60;
+            result = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else if (s.value_int) {
+            result = String(s.value_int);
+        } else if (s.value_decimal) {
+            result = String(s.value_decimal);
+        } else {
+            result = s.notes || '-';
+        }
+        result = escapeHtml(result);
 
         return `
         <tr class="hover:bg-gray-50">
@@ -843,6 +880,40 @@ async function loadJudges() {
         judges.map(j=>`<option value="${j.id}">${escapeHtml(j.name)}</option>`).join('');
 }
 
+// Switch result input type based on WOD type
+function updateResultInputType() {
+    const wodId = parseInt(document.getElementById('result-wod').value);
+    if (!wodId) return;
+
+    const selectedWod = wods.find(w => w.id === wodId);
+    const regularInput = document.getElementById('result-value-regular');
+    const timeInput = document.getElementById('result-value-time');
+
+    if (selectedWod && selectedWod.wod_type === 'time') {
+        // Show time inputs
+        regularInput.classList.add('hidden');
+        timeInput.classList.remove('hidden');
+    } else {
+        // Show regular input
+        regularInput.classList.remove('hidden');
+        timeInput.classList.add('hidden');
+    }
+}
+
+// Validate seconds input (0-59)
+document.getElementById('result-seconds').addEventListener('input', (e) => {
+    let value = parseInt(e.target.value);
+    if (value > 59) {
+        e.target.value = 59;
+        showStatus('⚠️ Secondes: maximum 59', 2000);
+    }
+    if (value < 0) {
+        e.target.value = 0;
+    }
+});
+
+document.getElementById('result-wod').addEventListener('change', updateResultInputType);
+
 document.getElementById('result-tournament').addEventListener('change', async (e) => {
     const tid = parseInt(e.target.value);
     if(!tid) {
@@ -855,6 +926,7 @@ document.getElementById('result-tournament').addEventListener('change', async (e
 
     // Load WODs
     const {data:wodsData} = await supabase.from('workouts').select('*').eq('tournament_id',tid).order('wod_number');
+    wods = wodsData || []; // Store in global variable for later use
     const wodSel = document.getElementById('result-wod');
     wodSel.innerHTML = '<option value="">Sélectionner un WOD</option>' +
         (wodsData||[]).map(w=>`<option value="${w.id}">WOD ${escapeHtml(String(w.wod_number))}</option>`).join('');
@@ -886,9 +958,13 @@ document.getElementById('result-tournament').addEventListener('change', async (e
 });
 
 function clearResultForm() {
-    ['result-tournament','result-wod','result-participant','result-judge','result-value','result-notes'].forEach(id => {
+    ['result-tournament','result-wod','result-participant','result-judge','result-value','result-notes','result-minutes','result-seconds'].forEach(id => {
         document.getElementById(id).value = '';
     });
+    // Reset to regular input view
+    document.getElementById('result-value-regular').classList.remove('hidden');
+    document.getElementById('result-value-time').classList.add('hidden');
+
     editingResultId=null;
     document.getElementById('result-form-title').textContent='➕ Ajouter un résultat';
     document.getElementById('save-result-btn').textContent='Enregistrer';
@@ -898,14 +974,30 @@ function clearResultForm() {
 window.editResult = async (id) => {
     const s = scores.find(x=>x.id===id);
     if(!s) return;
-    
+
     if(s.workouts && s.workouts.tournament_id) {
         document.getElementById('result-tournament').value = s.workouts.tournament_id;
         await document.getElementById('result-tournament').dispatchEvent(new Event('change'));
-        
+
         // Wait for selects to populate
         setTimeout(() => {
             document.getElementById('result-wod').value = s.workout_id;
+            updateResultInputType(); // Update input type based on WOD
+
+            // Populate result based on type
+            const selectedWod = wods.find(w => w.id === s.workout_id);
+            if (selectedWod && selectedWod.wod_type === 'time' && s.value_time) {
+                // Convert seconds to minutes and seconds
+                const totalSeconds = s.value_time;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                document.getElementById('result-minutes').value = minutes;
+                document.getElementById('result-seconds').value = seconds;
+            } else {
+                // Regular value
+                document.getElementById('result-value').value = s.value_int || s.value_decimal || '';
+            }
+
             if(s.athlete_id) {
                 document.getElementById('result-participant').value = `athlete-${s.athlete_id}`;
             } else if(s.team_id) {
@@ -913,16 +1005,15 @@ window.editResult = async (id) => {
             }
         }, 300);
     }
-    
+
     document.getElementById('result-judge').value = s.judge_id || '';
-    document.getElementById('result-value').value = s.value_time || s.value_int || s.value_decimal || '';
     document.getElementById('result-notes').value = s.notes || '';
-    
+
     editingResultId = id;
     document.getElementById('result-form-title').textContent = '✏️ Modifier un résultat';
     document.getElementById('save-result-btn').textContent = 'Enregistrer';
     document.getElementById('cancel-result-btn').classList.remove('hidden');
-    
+
     // Switch to results tab
     document.querySelector('[data-tab="results"]').click();
 };
@@ -933,11 +1024,35 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
     const wodId = parseInt(document.getElementById('result-wod').value);
     const judgeId = parseInt(document.getElementById('result-judge').value) || null;
     const participant = document.getElementById('result-participant').value;
-    const value = document.getElementById('result-value').value.trim();
     const notes = document.getElementById('result-notes').value.trim() || null;
-    
+
     if(!wodId || !participant) return alert('⚠️ WOD et participant requis');
-    
+
+    // Check if time-based WOD
+    const selectedWod = wods.find(w => w.id === wodId);
+    const isTimeWod = selectedWod && selectedWod.wod_type === 'time';
+
+    let value = '';
+    if (isTimeWod) {
+        // Get time from separate inputs
+        const minutes = parseInt(document.getElementById('result-minutes').value) || 0;
+        const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
+
+        // Validate
+        if (minutes === 0 && seconds === 0) {
+            return alert('⚠️ Veuillez entrer un temps (minutes et secondes)');
+        }
+        if (seconds > 59) {
+            return alert('⚠️ Les secondes doivent être entre 0 et 59');
+        }
+
+        // Format as mm:ss for parsing
+        value = `${minutes}:${seconds}`;
+    } else {
+        // Get regular value
+        value = document.getElementById('result-value').value.trim();
+    }
+
     const [type, idStr] = participant.split('-');
     const data = {
         workout_id: wodId,
@@ -949,21 +1064,21 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
         value_decimal: null,
         notes: notes
     };
-    
+
     // Parse value
     if(value) {
         if(value.includes(':')) {
             const parts = value.split(':');
             const m = parseInt(parts[0]) || 0;
             const s = parseInt(parts[1]) || 0;
-            data.value_time = m*60 + s;
+            data.value_time = m*60 + s; // Store as total seconds
         } else if(value.includes('.')) {
             data.value_decimal = parseFloat(value);
         } else {
             data.value_int = parseInt(value);
         }
     }
-    
+
     if(editingResultId) {
         await supabase.from('scores').update(data).eq('id',editingResultId);
         showStatus('✅ Résultat modifié');
@@ -971,7 +1086,7 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
         await supabase.from('scores').insert(data);
         showStatus('✅ Résultat ajouté');
     }
-    
+
     clearResultForm();
     await loadResults();
 });

@@ -434,7 +434,20 @@ function renderSingleWod(wodId) {
     tbody.innerHTML = results.map((r, index) => {
         const rank = index + 1;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-        const result = r.score.value_time || r.score.value_int || r.score.value_decimal || '-';
+
+        // Format result based on type
+        let result;
+        if (r.score.value_time) {
+            const minutes = Math.floor(r.score.value_time / 60);
+            const seconds = r.score.value_time % 60;
+            result = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else if (r.score.value_int) {
+            result = r.score.value_int;
+        } else if (r.score.value_decimal) {
+            result = r.score.value_decimal;
+        } else {
+            result = '-';
+        }
 
         return `
             <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
