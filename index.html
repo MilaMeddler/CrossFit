@@ -2,108 +2,51 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrossFit Tournament</title>
-    <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-white">
 
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
-
-<div class="max-w-4xl mx-auto p-4 md:p-6 pb-24">
-    <div class="text-center mb-8 md:mb-12">
-        <h1 class="text-4xl md:text-6xl font-bold mb-4">CrossFit Tournament</h1>
-        <p class="text-lg md:text-xl text-gray-300">Système de Gestion de Tournoi</p>
+<div class="min-h-screen flex flex-col">
+    <!-- Header Image -->
+    <div class="w-full bg-gray-900">
+        <img src="https://scontent-cdg4-1.xx.fbcdn.net/v/t39.30808-6/468391109_10237480978070725_1581418224090640416_n.jpg?stp=dst-jpg_s720x720_tt6&_nc_cat=108&ccb=1-7&_nc_sid=2285d6&_nc_ohc=UoZSqAqj0mEQ7kNvwEd5r9m&_nc_oc=AdmlIItzHG-O23RXv_rUxiYkaFDjyyYx3iMf4OOGU5XmwKtpPirfkufqpWm-NthMO_JSV9RxqJ-ZgUqjN66YYLP0&_nc_zt=23&_nc_ht=scontent-cdg4-1.xx&_nc_gid=hghi-uYo4RW1Vi5FeZBR6Q&oh=00_AfrLdB3FRrIcl4JpWxoNKR4sJs-IvejZbh5V1-okAS4gLA&oe=6976BA65"
+             alt="CrossFit"
+             class="w-full h-64 object-cover">
     </div>
 
-    <div class="flex flex-col md:flex-row gap-8 mb-8 max-w-4xl mx-auto justify-center items-stretch">
-        <a href="admin.html" class="flex-1 max-w-sm bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-8 text-center transform hover:scale-105 transition-all shadow-2xl">
-            <div class="text-6xl mb-4">👥</div>
-            <h2 class="text-2xl font-bold mb-2">Administration</h2>
-            <p class="text-sm text-blue-200">Gérer athlètes & WODs</p>
-        </a>
+    <!-- Main Content -->
+    <div class="flex-1 max-w-2xl mx-auto px-6 py-12 w-full">
+        <h1 class="text-4xl font-bold text-center text-gray-900 mb-12">CrossFit Tournament</h1>
 
-        <a href="leaderboard.html" class="flex-1 max-w-sm bg-gradient-to-br from-yellow-600 to-orange-600 rounded-2xl p-8 text-center transform hover:scale-105 transition-all shadow-2xl">
-            <div class="text-6xl mb-4">🏆</div>
-            <h2 class="text-2xl font-bold mb-2">Tableau des Leaders</h2>
-            <p class="text-sm text-yellow-200">Résultats en temps réel</p>
-        </a>
-    </div>
-<!-- 
-    <div class="bg-gray-800 rounded-2xl p-6 mb-8">
-        <h2 class="text-2xl font-bold mb-4">✨ Fonctionnalités</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex items-start">
-                <div class="text-2xl mr-3">✅</div>
-                <div>
-                    <h3 class="font-bold">Protection des données</h3>
-                    <p class="text-sm text-gray-400">Un résultat par athlète par WOD</p>
-                </div>
-            </div>
-            
-            <div class="flex items-start">
-                <div class="text-2xl mr-3">🔄</div>
-                <div>
-                    <h3 class="font-bold">Temps réel</h3>
-                    <p class="text-sm text-gray-400">Synchronisation Google Sheets</p>
-                </div>
-            </div>
-            
-            <div class="flex items-start">
-                <div class="text-2xl mr-3">📱</div>
-                <div>
-                    <h3 class="font-bold">Mobile-first</h3>
-                    <p class="text-sm text-gray-400">Optimisé pour téléphone</p>
-                </div>
-            </div>
-            
-            <div class="flex items-start">
-                <div class="text-2xl mr-3">🎯</div>
-                <div>
-                    <h3 class="font-bold">Filtres avancés</h3>
-                    <p class="text-sm text-gray-400">RX/Inter, Hommes/Femmes</p>
-                </div>
-            </div>
+        <!-- Main Buttons -->
+        <div class="space-y-4 mb-12">
+            <a href="judge.html"
+               class="block w-full bg-white border-2 border-gray-800 text-gray-900 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-800 hover:text-white transition-colors">
+                ⚖️ Entrée Juge
+            </a>
+
+            <a href="leaderboard.html"
+               class="block w-full bg-white border-2 border-gray-800 text-gray-900 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-800 hover:text-white transition-colors">
+                🏆 Tableau des Résultats
+            </a>
+        </div>
+
+        <!-- Admin Button -->
+        <div class="pt-8 border-t border-gray-300">
+            <a href="admin.html"
+               class="block w-full bg-gray-200 border border-gray-400 text-gray-700 text-center py-4 px-6 text-lg font-medium hover:bg-gray-300 transition-colors">
+                👤 Administration
+            </a>
         </div>
     </div>
 
-    <div class="bg-gray-800 rounded-2xl p-6">
-        <h2 class="text-2xl font-bold mb-4">🚀 Guide Rapide</h2>
-        <div class="space-y-4">
-            <div class="border-l-4 border-blue-500 pl-4">
-                <h3 class="font-bold text-lg mb-1">1. Administration</h3>
-                <p class="text-sm text-gray-400">Authentifiez-vous avec votre email et mot de passe Supabase</p>
-            </div>
-            <div class="border-l-4 border-yellow-500 pl-4">
-                <h3 class="font-bold text-lg mb-1">2. Tableau des Leaders</h3>
-                <p class="text-sm text-gray-400">Affichage public des résultats en temps réel</p>
-            </div>
-        </div>
-    </div>
--->
-    <div class="text-center text-gray-500 text-sm mt-8">
-        <p>🏆 Bon tournoi! 🏆</p>
-        <p class="mt-2">
-            <a href="https://github.com/MilaMeddler/CrossFit" class="text-blue-400 hover:underline" target="_blank">GitHub</a>
-        </p>
-    </div>
+    <!-- Footer -->
+    <footer class="text-center text-gray-500 text-sm py-6">
+        <p>CrossFit Tournament Management System</p>
+    </footer>
 </div>
-
-<div class="mobile-nav md:hidden">
-    <a href="index.html" class="active"><span></span>Accueil</a>
-    <a href="admin.html"><span></span>Admin</a>
-    <a href="leaderboard.html"><span></span>Tableau</a>
-</div>
-
-<!-- CONFIG -->
-<script src="config.js"></script>
-
-<!-- SUPABASE (must be before API) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- API -->
-<script src="js/api.js"></script>
 
 </body>
 </html>

@@ -21,12 +21,39 @@
     </div>
 </div>
 
+<!-- TOURNAMENT DATA MODAL -->
+<div id="tournament-data-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <h2 id="tournament-modal-title" class="text-2xl font-bold mb-4">🏆 Nouveau Tournoi</h2>
+        <p class="text-gray-600 mb-4">Entrez les informations du tournoi:</p>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Nom du tournoi</label>
+                <input type="text" id="tournament-name-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3" placeholder="Ex: Printemps 2026">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">🔐 Mot de passe pour les juges</label>
+                <input type="text" id="tournament-judge-password-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3" placeholder="Ex: spring2026">
+                <p class="text-xs text-gray-500 mt-1">Les juges utiliseront ce mot de passe pour entrer les résultats</p>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button id="continue-tournament-btn" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">Continuer</button>
+            <button id="save-tournament-edit-btn" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 hidden">Enregistrer</button>
+            <button id="cancel-tournament-data-btn" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300">Annuler</button>
+        </div>
+    </div>
+</div>
+
 <!-- TOURNAMENT TYPE MODAL -->
 <div id="tournament-type-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold mb-4">🏆 Type de compétition</h2>
         <p class="text-gray-600 mb-6">Choisissez le type de tournoi:</p>
-        
+
         <div class="space-y-3">
             <button id="select-individual" class="w-full bg-green-600 text-white py-4 rounded-lg font-semibold hover:bg-green-700 transition text-left px-6">
                 <div class="flex items-center">
@@ -37,7 +64,7 @@
                     </div>
                 </div>
             </button>
-            
+
             <button id="select-team" class="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition text-left px-6">
                 <div class="flex items-center">
                     <span class="text-2xl mr-3">🏅</span>
@@ -48,7 +75,7 @@
                 </div>
             </button>
         </div>
-        
+
         <button id="cancel-tournament-type" class="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
     </div>
 </div>
@@ -409,6 +436,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 let athletes=[], tournaments=[], wods=[], teams=[], scores=[], judges=[];
 let editingAthleteId=null, editingResultId=null, editingWodId=null, currentTournamentId=null, currentTournament=null;
 let pendingTournamentName = null;
+let pendingTournamentPassword = null;
+let editingTournamentId = null;
 
 // ============================================
 // ATHLETES
@@ -563,14 +592,45 @@ async function onTournamentChange() {
     await loadWods();
 }
 
-// CREATE TOURNAMENT
+// CREATE TOURNAMENT - Step 1: Open data modal
 document.getElementById('new-tournament-btn').addEventListener('click', () => {
-    const name = prompt('Nom du tournoi:');
-    if(!name) return;
+    document.getElementById('tournament-name-input').value = '';
+    document.getElementById('tournament-judge-password-input').value = '';
+    document.getElementById('tournament-data-modal').classList.remove('hidden');
+});
+
+// CREATE TOURNAMENT - Step 2: Continue to type selection
+document.getElementById('continue-tournament-btn').addEventListener('click', () => {
+    const name = document.getElementById('tournament-name-input').value.trim();
+    const password = document.getElementById('tournament-judge-password-input').value.trim();
+
+    if (!name) {
+        return alert('⚠️ Veuillez entrer un nom de tournoi');
+    }
+    if (!password) {
+        return alert('⚠️ Veuillez entrer un mot de passe pour les juges');
+    }
+
     pendingTournamentName = name;
+    pendingTournamentPassword = password;
+
+    document.getElementById('tournament-data-modal').classList.add('hidden');
     document.getElementById('tournament-type-modal').classList.remove('hidden');
 });
 
+document.getElementById('cancel-tournament-data-btn').addEventListener('click', () => {
+    document.getElementById('tournament-data-modal').classList.add('hidden');
+    pendingTournamentName = null;
+    pendingTournamentPassword = null;
+    editingTournamentId = null;
+
+    // Reset modal to create mode
+    document.getElementById('tournament-modal-title').textContent = '🏆 Nouveau Tournoi';
+    document.getElementById('continue-tournament-btn').classList.remove('hidden');
+    document.getElementById('save-tournament-edit-btn').classList.add('hidden');
+});
+
+// CREATE TOURNAMENT - Step 3: Select type and save
 document.getElementById('select-individual').addEventListener('click', async () => {
     document.getElementById('tournament-type-modal').classList.add('hidden');
     await createTournament('individual');
@@ -584,15 +644,18 @@ document.getElementById('select-team').addEventListener('click', async () => {
 document.getElementById('cancel-tournament-type').addEventListener('click', () => {
     document.getElementById('tournament-type-modal').classList.add('hidden');
     pendingTournamentName = null;
+    pendingTournamentPassword = null;
 });
 
 async function createTournament(type) {
     await supabase.from('tournaments').insert({
         name: pendingTournamentName,
-        competition_type: type
+        competition_type: type,
+        judge_password: pendingTournamentPassword
     });
     showStatus('✅ Tournoi créé');
     pendingTournamentName = null;
+    pendingTournamentPassword = null;
     await loadTournaments();
 }
 
@@ -600,11 +663,49 @@ async function createTournament(type) {
 document.getElementById('edit-tournament-btn').addEventListener('click', async () => {
     if(!currentTournamentId) return alert('⚠️ Sélectionnez un tournoi');
     const t = tournaments.find(x => x.id === currentTournamentId);
-    const newName = prompt('Nouveau nom du tournoi:', t.name);
-    if(!newName || newName === t.name) return;
-    
-    await supabase.from('tournaments').update({name: newName}).eq('id', currentTournamentId);
-    showStatus('✅ Tournoi renommé');
+
+    editingTournamentId = currentTournamentId;
+
+    // Change modal title and buttons for editing
+    document.getElementById('tournament-modal-title').textContent = '✏️ Modifier le Tournoi';
+    document.getElementById('tournament-name-input').value = t.name;
+    document.getElementById('tournament-judge-password-input').value = t.judge_password || '';
+
+    // Show save button, hide continue button
+    document.getElementById('continue-tournament-btn').classList.add('hidden');
+    document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
+
+    document.getElementById('tournament-data-modal').classList.remove('hidden');
+});
+
+// Save tournament edit
+document.getElementById('save-tournament-edit-btn').addEventListener('click', async () => {
+    const name = document.getElementById('tournament-name-input').value.trim();
+    const password = document.getElementById('tournament-judge-password-input').value.trim();
+
+    if (!name) {
+        return alert('⚠️ Veuillez entrer un nom de tournoi');
+    }
+    if (!password) {
+        return alert('⚠️ Veuillez entrer un mot de passe pour les juges');
+    }
+
+    await supabase.from('tournaments')
+        .update({
+            name: name,
+            judge_password: password
+        })
+        .eq('id', editingTournamentId);
+
+    showStatus('✅ Tournoi modifié');
+    document.getElementById('tournament-data-modal').classList.add('hidden');
+    editingTournamentId = null;
+
+    // Reset modal to create mode
+    document.getElementById('tournament-modal-title').textContent = '🏆 Nouveau Tournoi';
+    document.getElementById('continue-tournament-btn').classList.remove('hidden');
+    document.getElementById('save-tournament-edit-btn').classList.add('hidden');
+
     await loadTournaments();
 });
 
