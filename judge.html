@@ -64,6 +64,12 @@
                     </select>
                 </div>
 
+                <!-- WOD Description -->
+                <div id="wod-description" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <h3 class="font-semibold text-blue-900 mb-2">📝 Description du WOD</h3>
+                    <p id="wod-description-text" class="text-sm text-blue-800 whitespace-pre-wrap"></p>
+                </div>
+
                 <!-- Regular Result Input (for reps, weight, complex) -->
                 <div id="result-regular" class="hidden">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Résultat</label>
@@ -151,18 +157,23 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     const { data, error } = await supabase
         .from('tournaments')
         .select('*')
-        .eq('judge_password', password)
-        .single();
+        .eq('judge_password', password);
 
-    if (error || !data) {
+    if (error) {
+        console.error('Login error:', error);
         document.getElementById('login-error').classList.remove('hidden');
         return;
     }
 
-    currentTournament = data;
+    if (!data || data.length === 0) {
+        document.getElementById('login-error').classList.remove('hidden');
+        return;
+    }
+
+    currentTournament = data[0];
     document.getElementById('login-modal').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
-    document.getElementById('tournament-name').textContent = `Tournoi: ${escapeHtml(data.name)}`;
+    document.getElementById('tournament-name').textContent = `Tournoi: ${escapeHtml(currentTournament.name)}`;
 
     await loadData();
 });
@@ -232,15 +243,27 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     const wodId = parseInt(e.target.value);
     const regularInput = document.getElementById('result-regular');
     const timeInput = document.getElementById('result-time');
+    const descriptionBlock = document.getElementById('wod-description');
+    const descriptionText = document.getElementById('wod-description-text');
 
     if (!wodId) {
         regularInput.classList.add('hidden');
         timeInput.classList.add('hidden');
+        descriptionBlock.classList.add('hidden');
         return;
     }
 
     const wod = wods.find(w => w.id === wodId);
 
+    // Show WOD description
+    if (wod && wod.description) {
+        descriptionText.textContent = wod.description;
+        descriptionBlock.classList.remove('hidden');
+    } else {
+        descriptionBlock.classList.add('hidden');
+    }
+
+    // Update input type
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
