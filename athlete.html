@@ -23,7 +23,7 @@
                     </a>
                 </div>
             </div>
-            <p class="text-gray-300 text-lg">OPEN 2026 - Entrez votre résultat pour un WOD</p>
+            <p class="text-gray-300 text-lg" id="tournament-name-display">Entrez votre résultat pour un WOD</p>
         </div>
     </header>
 
@@ -158,6 +158,12 @@ async function loadTournamentAndAthletes() {
     ) || tournamentsData[0];
 
     selectedTournamentId = tournamentData.id;
+
+    // Update header with tournament name
+    const headerDisplay = document.getElementById('tournament-name-display');
+    if (headerDisplay) {
+        headerDisplay.textContent = `${tournamentData.name} - Entrez votre résultat pour un WOD`;
+    }
 
     // Load athletes
     const { data: athletesData } = await supabase
