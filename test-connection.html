@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Connection - Supabase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">🔍 Test de connexion Supabase</h1>
+
+    <div class="space-y-6">
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-xl font-bold mb-4">📊 Résultats</h2>
+            <div id="results" class="space-y-4 font-mono text-sm"></div>
+        </div>
+
+        <button onclick="runTests()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold">
+            🔄 Relancer les tests
+        </button>
+    </div>
+</div>
+
+<script>
+// SUPABASE CONFIG
+const SUPABASE_URL = 'https://nczkbyaowkkkohemakva.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jemtieWFvd2tra29oZW1ha3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTI1NDQsImV4cCI6MjA1MjY4ODU0NH0.YRVo26qWrTugb8C_c6I56EjcQujsaWQ6JXUBcHPP62I';
+var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function addResult(title, success, data, error = null) {
+    const div = document.getElementById('results');
+    const resultDiv = document.createElement('div');
+    resultDiv.className = `p-4 rounded ${success ? 'bg-green-900 border-l-4 border-green-500' : 'bg-red-900 border-l-4 border-red-500'}`;
+
+    let html = `<div class="font-bold mb-2">${success ? '✅' : '❌'} ${title}</div>`;
+
+    if (success && data) {
+        if (Array.isArray(data)) {
+            html += `<div class="text-gray-300">Nombre de résultats: ${data.length}</div>`;
+            if (data.length > 0) {
+                html += `<div class="text-gray-400 mt-2">Premier résultat:</div>`;
+                html += `<pre class="text-xs text-gray-300 mt-1 overflow-auto">${JSON.stringify(data[0], null, 2)}</pre>`;
+            }
+        } else {
+            html += `<pre class="text-xs text-gray-300 mt-1 overflow-auto">${JSON.stringify(data, null, 2)}</pre>`;
+        }
+    }
+
+    if (error) {
+        html += `<div class="text-red-300 mt-2">Erreur: ${error.message || JSON.stringify(error)}</div>`;
+        if (error.details) {
+            html += `<div class="text-red-400 text-xs mt-1">Détails: ${error.details}</div>`;
+        }
+        if (error.hint) {
+            html += `<div class="text-yellow-400 text-xs mt-1">Conseil: ${error.hint}</div>`;
+        }
+    }
+
+    resultDiv.innerHTML = html;
+    div.appendChild(resultDiv);
+}
+
+async function runTests() {
+    const div = document.getElementById('results');
+    div.innerHTML = '<div class="text-gray-400">Test en cours...</div>';
+
+    // Test 1: Tournaments
+    try {
+        const { data, error } = await supabase
+            .from('tournaments')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            addResult('Chargement des tournois', false, null, error);
+        } else {
+            addResult('Chargement des tournois', true, data);
+        }
+    } catch (err) {
+        addResult('Chargement des tournois', false, null, err);
+    }
+
+    // Test 2: Athletes
+    try {
+        const { data, error } = await supabase
+            .from('athletes')
+            .select('*')
+            .order('last_name');
+
+        if (error) {
+            addResult('Chargement des athlètes', false, null, error);
+        } else {
+            addResult('Chargement des athlètes', true, data);
+        }
+    } catch (err) {
+        addResult('Chargement des athlètes', false, null, err);
+    }
+
+    // Test 3: Workouts
+    try {
+        const { data, error } = await supabase
+            .from('workouts')
+            .select('*')
+            .order('wod_number');
+
+        if (error) {
+            addResult('Chargement des WODs', false, null, error);
+        } else {
+            addResult('Chargement des WODs', true, data);
+        }
+    } catch (err) {
+        addResult('Chargement des WODs', false, null, err);
+    }
+
+    // Test 4: Scores (for reference)
+    try {
+        const { data, error } = await supabase
+            .from('scores')
+            .select('*')
+            .limit(5);
+
+        if (error) {
+            addResult('Chargement des scores (exemple)', false, null, error);
+        } else {
+            addResult('Chargement des scores (exemple)', true, data);
+        }
+    } catch (err) {
+        addResult('Chargement des scores (exemple)', false, null, err);
+    }
+}
+
+// Run tests on load
+runTests();
+</script>
+
+</body>
+</html>
