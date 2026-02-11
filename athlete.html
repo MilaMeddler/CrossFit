@@ -12,8 +12,18 @@
 <div class="min-h-screen pb-8">
     <header class="bg-white shadow-sm mb-6">
         <div class="max-w-4xl mx-auto px-4 py-4">
-            <h1 class="text-2xl font-bold">🏋️ Saisie de résultat - Athlète</h1>
-            <p class="text-gray-600">Entrez votre résultat pour un WOD</p>
+            <div class="flex justify-between items-center mb-2">
+                <h1 class="text-2xl font-bold">🏋️ Saisie de résultat - Athlète</h1>
+                <div class="flex gap-2">
+                    <a href="index.html" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">
+                        🏠 Accueil
+                    </a>
+                    <a href="leaderboard.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                        🏆 Résultats
+                    </a>
+                </div>
+            </div>
+            <p class="text-gray-600">OPEN 2026 - Entrez votre résultat pour un WOD</p>
         </div>
     </header>
 
@@ -23,16 +33,8 @@
             <h2 class="text-xl font-bold mb-4">📝 Entrer mon résultat</h2>
 
             <div class="space-y-4">
-                <!-- Tournament Selection -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tournoi</label>
-                    <select id="tournament-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3">
-                        <option value="">-- Sélectionner un tournoi --</option>
-                    </select>
-                </div>
-
                 <!-- Athlete Selection -->
-                <div id="athlete-container" class="hidden">
+                <div id="athlete-container">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Je suis...</label>
                     <select id="athlete-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3">
                         <option value="">-- Sélectionner votre nom --</option>
@@ -110,7 +112,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // STATE
-let tournaments = [];
 let athletes = [];
 let wods = [];
 let selectedTournamentId = null;
@@ -137,48 +138,37 @@ function showStatus(msg, isError = false) {
     setTimeout(() => div.remove(), 4000);
 }
 
-// LOAD TOURNAMENTS
-async function loadTournaments() {
-    const { data } = await supabase
+// LOAD OPEN 2026 TOURNAMENT AND ATHLETES
+async function loadTournamentAndAthletes() {
+    // Load OPEN 2026 tournament
+    const { data: tournamentData, error: tournamentError } = await supabase
         .from('tournaments')
         .select('*')
-        .order('name');
+        .eq('name', 'OPEN 2026')
+        .maybeSingle();
 
-    tournaments = data || [];
-
-    const select = document.getElementById('tournament-select');
-    select.innerHTML = '<option value="">-- Sélectionner un tournoi --</option>';
-    tournaments.forEach(t => {
-        select.innerHTML += `<option value="${t.id}">${escapeHtml(t.name)}</option>`;
-    });
-}
-
-// TOURNAMENT CHANGE
-document.getElementById('tournament-select').addEventListener('change', async (e) => {
-    selectedTournamentId = parseInt(e.target.value);
-
-    if (!selectedTournamentId) {
-        document.getElementById('athlete-container').classList.add('hidden');
-        document.getElementById('wod-container').classList.add('hidden');
+    if (tournamentError || !tournamentData) {
+        console.error('Tournament error:', tournamentError);
+        showStatus('❌ Erreur: Tournoi OPEN 2026 non trouvé', true);
         return;
     }
 
+    selectedTournamentId = tournamentData.id;
+
     // Load athletes
-    const { data } = await supabase
+    const { data: athletesData } = await supabase
         .from('athletes')
         .select('*')
         .order('last_name');
 
-    athletes = data || [];
+    athletes = athletesData || [];
 
     const select = document.getElementById('athlete-select');
     select.innerHTML = '<option value="">-- Sélectionner votre nom --</option>';
     athletes.forEach(a => {
         select.innerHTML += `<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)} (${escapeHtml(a.category)} - ${escapeHtml(a.gender)})</option>`;
     });
-
-    document.getElementById('athlete-container').classList.remove('hidden');
-});
+}
 
 // ATHLETE CHANGE
 document.getElementById('athlete-select').addEventListener('change', async (e) => {
@@ -344,7 +334,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 });
 
 // INIT
-loadTournaments();
+loadTournamentAndAthletes();
 </script>
 
 </body>
