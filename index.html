@@ -3,52 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrossFit Tournament</title>
+    <title>Black Monkeys CrossFit</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white">
+<body class="bg-gray-900">
 
 <div class="min-h-screen flex flex-col">
-    <!-- Header -->
-    <div class="w-full bg-gray-900 py-8">
-        <h1 class="text-5xl font-bold text-center text-white">Black Monkeys CrossFit</h1>
-        <p class="text-center text-gray-300 mt-2">Tournament Management</p>
+    <!-- Header with Logo -->
+    <div class="w-full bg-black py-8">
+        <div class="max-w-4xl mx-auto px-6">
+            <img src="logo.png"
+                 alt="Black Monkeys CrossFit"
+                 class="w-full max-w-2xl mx-auto h-auto"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div style="display: none;" class="text-center">
+                <h1 class="text-5xl font-bold text-white mb-2">BLACK MONKEYS</h1>
+                <h2 class="text-4xl font-bold text-white">CROSSFIT</h2>
+                <p class="text-xl text-gray-400 mt-3">BOURG LES VALENCE</p>
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 max-w-2xl mx-auto px-6 py-12 w-full">
-        <h1 class="text-4xl font-bold text-center text-gray-900 mb-12">CrossFit Tournament</h1>
+    <div class="flex-1 max-w-3xl mx-auto px-6 py-16 w-full">
+        <h1 class="text-5xl font-bold text-center text-white mb-16">OPEN 2026</h1>
 
         <!-- Main Buttons -->
-        <div class="space-y-4 mb-12">
+        <div class="space-y-6 mb-16">
             <a href="athlete.html"
-               class="block w-full bg-white border-2 border-gray-800 text-gray-900 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-800 hover:text-white transition-colors">
+               class="block w-full bg-gray-800 border-2 border-red-600 text-white text-center py-8 px-10 text-2xl font-bold hover:bg-red-600 hover:border-red-500 transition-all shadow-lg rounded-lg">
                 🏋️ Entrée Athlète
             </a>
 
             <a href="judge.html"
-               class="block w-full bg-white border-2 border-gray-800 text-gray-900 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-800 hover:text-white transition-colors">
+               class="block w-full bg-gray-800 border-2 border-red-600 text-white text-center py-8 px-10 text-2xl font-bold hover:bg-red-600 hover:border-red-500 transition-all shadow-lg rounded-lg">
                 ⚖️ Entrée Juge
             </a>
 
             <a href="leaderboard.html"
-               class="block w-full bg-white border-2 border-gray-800 text-gray-900 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-800 hover:text-white transition-colors">
+               class="block w-full bg-gray-800 border-2 border-red-600 text-white text-center py-8 px-10 text-2xl font-bold hover:bg-red-600 hover:border-red-500 transition-all shadow-lg rounded-lg">
                 🏆 Tableau des Résultats
             </a>
         </div>
 
         <!-- Admin Button -->
-        <div class="pt-8 border-t border-gray-300">
+        <div class="pt-8 border-t border-gray-700">
             <a href="admin.html"
-               class="block w-full bg-gray-200 border border-gray-400 text-gray-700 text-center py-4 px-6 text-lg font-medium hover:bg-gray-300 transition-colors">
+               class="block w-full bg-gray-800 border border-gray-600 text-gray-300 text-center py-6 px-8 text-xl font-semibold hover:bg-gray-700 transition-colors rounded-lg">
                 👤 Administration
             </a>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="text-center text-gray-500 text-sm py-6">
-        <p>CrossFit Tournament Management System</p>
+    <footer class="text-center text-gray-500 text-lg py-8">
+        <p>Black Monkeys CrossFit - Tournament Management</p>
     </footer>
 </div>
 
