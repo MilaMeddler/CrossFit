@@ -47,10 +47,13 @@
                     </select>
                 </div>
 
-                <!-- WOD Description -->
-                <div id="wod-description" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <h3 class="font-semibold text-blue-900 mb-2">📝 Description du WOD</h3>
-                    <p id="wod-description-text" class="text-sm text-blue-800 whitespace-pre-wrap"></p>
+                <!-- WOD Description (prominent position) -->
+                <div id="wod-description" class="hidden bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-500 p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-blue-900 mb-3 text-lg flex items-center gap-2">
+                        <span class="text-2xl">📝</span>
+                        <span>Description du WOD</span>
+                    </h3>
+                    <p id="wod-description-text" class="text-base text-blue-900 whitespace-pre-wrap font-medium leading-relaxed"></p>
                 </div>
 
                 <!-- Regular Result Input -->
@@ -334,17 +337,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
     showStatus('✅ Résultat enregistré avec succès!');
 
-    // Reset form
-    document.getElementById('result-value').value = '';
-    document.getElementById('result-minutes').value = '';
-    document.getElementById('result-seconds').value = '';
-    document.getElementById('result-regular').classList.add('hidden');
-    document.getElementById('result-time').classList.add('hidden');
-    document.getElementById('submit-result-btn').classList.add('hidden');
-    document.getElementById('wod-description').classList.add('hidden');
-
-    // Reload WOD list to show checkmark
-    document.getElementById('athlete-select').dispatchEvent(new Event('change'));
+    // Redirect to leaderboard after 1.5 seconds
+    setTimeout(() => {
+        window.location.href = 'leaderboard.html';
+    }, 1500);
 });
 
 // INIT
