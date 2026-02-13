@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic - Tournaments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">🔍 Diagnostic - Tournois et Mots de passe</h1>
+
+    <div class="bg-gray-800 p-6 rounded-lg">
+        <h2 class="text-xl font-bold mb-4">📊 Liste des tournois</h2>
+        <div id="results" class="space-y-4"></div>
+    </div>
+
+    <button onclick="location.reload()" class="mt-6 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold">
+        🔄 Recharger
+    </button>
+</div>
+
+<script>
+// SUPABASE CONFIG
+const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
+var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function checkTournaments() {
+    const div = document.getElementById('results');
+    div.innerHTML = '<p class="text-gray-400">Chargement...</p>';
+
+    try {
+        const { data, error } = await supabase
+            .from('tournaments')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            div.innerHTML = `<div class="bg-red-900 border-l-4 border-red-500 p-4 rounded">
+                <p class="font-bold text-red-300">❌ Erreur</p>
+                <pre class="text-sm mt-2 text-red-200">${JSON.stringify(error, null, 2)}</pre>
+            </div>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            div.innerHTML = `<div class="bg-yellow-900 border-l-4 border-yellow-500 p-4 rounded">
+                <p class="font-bold text-yellow-300">⚠️ Aucun tournoi trouvé</p>
+            </div>`;
+            return;
+        }
+
+        let html = '';
+        data.forEach((t, index) => {
+            const hasPassword = t.judge_password ? true : false;
+            const passwordDisplay = hasPassword
+                ? `✅ Défini: <code class="bg-gray-700 px-2 py-1 rounded">${t.judge_password}</code>`
+                : '❌ Non défini';
+
+            html += `<div class="bg-gray-700 p-4 rounded border-l-4 ${hasPassword ? 'border-green-500' : 'border-red-500'}">
+                <p class="font-bold text-lg">${index + 1}. ${t.name}</p>
+                <p class="text-sm text-gray-300 mt-2">ID: ${t.id}</p>
+                <p class="text-sm text-gray-300">Créé: ${new Date(t.created_at).toLocaleString('fr-FR')}</p>
+                <p class="text-sm mt-2">Mot de passe juge: ${passwordDisplay}</p>
+                <details class="mt-2">
+                    <summary class="cursor-pointer text-gray-400 text-xs hover:text-gray-200">Voir toutes les données</summary>
+                    <pre class="text-xs mt-2 bg-gray-900 p-2 rounded overflow-auto">${JSON.stringify(t, null, 2)}</pre>
+                </details>
+            </div>`;
+        });
+
+        div.innerHTML = html;
+
+    } catch (err) {
+        div.innerHTML = `<div class="bg-red-900 border-l-4 border-red-500 p-4 rounded">
+            <p class="font-bold text-red-300">❌ Exception</p>
+            <pre class="text-sm mt-2 text-red-200">${err.message}</pre>
+        </div>`;
+    }
+}
+
+checkTournaments();
+</script>
+
+</body>
+</html>
