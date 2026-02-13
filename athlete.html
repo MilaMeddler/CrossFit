@@ -13,13 +13,13 @@
     <header class="bg-gray-800 shadow-lg mb-6">
         <div class="max-w-4xl mx-auto px-4 py-6">
             <div class="flex justify-between items-center mb-3">
-                <h1 class="text-3xl font-bold text-white">🏋️ Saisie de résultat - Athlète</h1>
+                <h1 class="text-3xl font-bold text-white">Saisie de résultat - Athlète</h1>
                 <div class="flex gap-3">
                     <a href="index.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-lg text-base font-semibold">
-                        🏠 Accueil
+                        Accueil
                     </a>
                     <a href="leaderboard.html" class="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg text-base font-semibold">
-                        🏆 Résultats
+                        Résultats
                     </a>
                 </div>
             </div>
@@ -30,7 +30,7 @@
     <div class="max-w-4xl mx-auto px-4">
         <!-- RESULT ENTRY FORM -->
         <div class="bg-gray-800 rounded-lg shadow-xl p-8">
-            <h2 class="text-2xl font-bold mb-6 text-white">📝 Entrer mon résultat</h2>
+            <h2 class="text-2xl font-bold mb-6 text-white">Entrer mon résultat</h2>
 
             <div class="space-y-6">
                 <!-- Tournament Selection -->
@@ -59,9 +59,8 @@
 
                 <!-- WOD Description (prominent position) -->
                 <div id="wod-description" class="hidden bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-red-600 p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-white mb-4 text-xl flex items-center gap-2">
-                        <span class="text-3xl">📝</span>
-                        <span>Description du WOD</span>
+                    <h3 class="font-bold text-white mb-4 text-xl">
+                        Description du WOD
                     </h3>
                     <p id="wod-description-text" class="text-lg text-gray-100 whitespace-pre-wrap font-medium leading-relaxed"></p>
                 </div>
@@ -76,7 +75,7 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <label class="block text-base font-semibold text-gray-200 mb-3">⏱️ Temps (For Time)</label>
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Temps (For Time)</label>
                     <div class="flex gap-4 items-center">
                         <div class="flex-1">
                             <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
@@ -90,20 +89,20 @@
                             <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-400 mt-3">💡 Exemple: 12 minutes 34 secondes = 12:34</p>
+                    <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
                 </div>
 
                 <!-- Submit Button -->
                 <button id="submit-result-btn"
                         class="w-full bg-red-600 text-white py-5 rounded-lg font-bold text-xl hover:bg-red-700 transition-colors shadow-lg hidden">
-                    ✅ Enregistrer mon résultat
+                    Enregistrer mon résultat
                 </button>
             </div>
         </div>
 
         <!-- Info Box -->
         <div class="bg-yellow-900 bg-opacity-40 border-l-4 border-yellow-500 p-6 rounded-lg mt-6">
-            <h3 class="font-semibold text-yellow-300 mb-3 text-lg">⚠️ Important</h3>
+            <h3 class="font-semibold text-yellow-300 mb-3 text-lg">Important</h3>
             <ul class="text-base text-yellow-100 space-y-2">
                 <li>• Vous ne pouvez entrer qu'UN SEUL résultat par WOD</li>
                 <li>• Une fois enregistré, vous ne pourrez pas le modifier</li>
@@ -155,7 +154,7 @@ async function loadTournaments() {
 
     if (error) {
         console.error('Error loading tournaments:', error);
-        showStatus('❌ Erreur lors du chargement des tournois', true);
+        showStatus('Erreur lors du chargement des tournois', true);
         return;
     }
 
@@ -187,7 +186,7 @@ document.getElementById('tournament-select').addEventListener('change', async (e
 
     if (error) {
         console.error('Error loading athletes:', error);
-        showStatus('❌ Erreur lors du chargement des athlètes', true);
+        showStatus('Erreur lors du chargement des athlètes', true);
         return;
     }
 
@@ -232,7 +231,7 @@ document.getElementById('athlete-select').addEventListener('change', async (e) =
             .eq('athlete_id', selectedAthleteId)
             .maybeSingle();
 
-        const alreadyEntered = existingResult ? ' ✅ (déjà entré)' : '';
+        const alreadyEntered = existingResult ? ' (déjà entré)' : '';
         select.innerHTML += `<option value="${w.id}" ${existingResult ? 'disabled' : ''}>WOD ${w.wod_number} (${escapeHtml(w.wod_type)})${alreadyEntered}</option>`;
     }
 
@@ -284,7 +283,7 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
     let value = parseInt(e.target.value);
     if (value > 59) {
         e.target.value = 59;
-        showStatus('⚠️ Secondes: maximum 59', true);
+        showStatus('Secondes: maximum 59', true);
     }
     if (value < 0) {
         e.target.value = 0;
@@ -294,7 +293,7 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
 // SUBMIT RESULT
 document.getElementById('submit-result-btn').addEventListener('click', async () => {
     if (!selectedTournamentId || !selectedAthleteId || !selectedWodId) {
-        return alert('⚠️ Veuillez remplir tous les champs');
+        return alert('Veuillez remplir tous les champs');
     }
 
     const wod = wods.find(w => w.id === selectedWodId);
@@ -309,7 +308,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         .maybeSingle();
 
     if (existing) {
-        return alert('⚠️ Vous avez déjà entré un résultat pour ce WOD. Contactez un juge pour le modifier.');
+        return alert('Vous avez déjà entré un résultat pour ce WOD. Contactez un juge pour le modifier.');
     }
 
     // Prepare result data
@@ -323,10 +322,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
 
         if (minutes === 0 && seconds === 0) {
-            return alert('⚠️ Veuillez entrer un temps (minutes et secondes)');
+            return alert('Veuillez entrer un temps (minutes et secondes)');
         }
         if (seconds > 59) {
-            return alert('⚠️ Les secondes doivent être entre 0 et 59');
+            return alert('Les secondes doivent être entre 0 et 59');
         }
 
         resultData.value_time = minutes * 60 + seconds;
@@ -334,7 +333,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         const value = document.getElementById('result-value').value.trim();
 
         if (!value) {
-            return alert('⚠️ Veuillez entrer un résultat');
+            return alert('Veuillez entrer un résultat');
         }
 
         const numValue = parseFloat(value);
@@ -354,10 +353,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
     if (error) {
         console.error('Error saving result:', error);
-        return showStatus('❌ Erreur lors de la sauvegarde', true);
+        return showStatus('Erreur lors de la sauvegarde', true);
     }
 
-    showStatus('✅ Résultat enregistré avec succès!');
+    showStatus('Résultat enregistré avec succès!');
 
     // Redirect to leaderboard after 1.5 seconds
     setTimeout(() => {

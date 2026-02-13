@@ -12,7 +12,7 @@
 <!-- LOGIN MODAL -->
 <div id="login-modal" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-700">
-        <h1 class="text-3xl font-bold mb-2 text-center text-white">⚖️ Accès Juge</h1>
+        <h1 class="text-3xl font-bold mb-2 text-center text-white">Accès Juge</h1>
         <p class="text-gray-300 mb-6 text-center">Entrez le mot de passe du tournoi</p>
 
         <input type="password" id="judge-password-input"
@@ -24,7 +24,7 @@
             Connexion
         </button>
 
-        <p id="login-error" class="text-red-400 text-sm mt-3 text-center hidden">❌ Mot de passe incorrect</p>
+        <p id="login-error" class="text-red-400 text-sm mt-3 text-center hidden">Mot de passe incorrect</p>
 
         <a href="index.html" class="block text-center text-gray-400 hover:text-gray-200 mt-6 text-sm">
             ← Retour à l'accueil
@@ -38,15 +38,15 @@
         <div class="max-w-4xl mx-auto px-4 py-6">
             <div class="flex justify-between items-center mb-3">
                 <div>
-                    <h1 class="text-3xl font-bold text-white">⚖️ Interface Juge</h1>
+                    <h1 class="text-3xl font-bold text-white">Interface Juge</h1>
                     <p id="tournament-name" class="text-gray-300 text-lg mt-1"></p>
                 </div>
                 <div class="flex gap-3">
                     <a href="leaderboard.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-lg text-base font-semibold">
-                        🏆 Résultats
+                        Résultats
                     </a>
                     <button id="logout-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-lg text-base font-semibold">
-                        🚪 Déconnexion
+                        Déconnexion
                     </button>
                 </div>
             </div>
@@ -56,7 +56,7 @@
     <div class="max-w-4xl mx-auto px-4">
         <!-- RESULT ENTRY FORM -->
         <div class="bg-gray-800 rounded-lg shadow-xl p-8">
-            <h2 class="text-2xl font-bold mb-6 text-white">📝 Saisie de résultat</h2>
+            <h2 class="text-2xl font-bold mb-6 text-white">Saisie de résultat</h2>
 
             <div class="space-y-6">
                 <!-- Athlete Selection -->
@@ -77,9 +77,8 @@
 
                 <!-- WOD Description -->
                 <div id="wod-description" class="hidden bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-red-600 p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-white mb-4 text-xl flex items-center gap-2">
-                        <span class="text-3xl">📝</span>
-                        <span>Description du WOD</span>
+                    <h3 class="font-bold text-white mb-4 text-xl">
+                        Description du WOD
                     </h3>
                     <p id="wod-description-text" class="text-lg text-gray-100 whitespace-pre-wrap font-medium leading-relaxed"></p>
                 </div>
@@ -94,7 +93,7 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <label class="block text-base font-semibold text-gray-200 mb-3">⏱️ Temps (For Time)</label>
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Temps (For Time)</label>
                     <div class="flex gap-4 items-center">
                         <div class="flex-1">
                             <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
@@ -108,13 +107,13 @@
                             <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-400 mt-3">💡 Exemple: 12 minutes 34 secondes = 12:34</p>
+                    <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
                 </div>
 
                 <!-- Submit Button -->
                 <button id="submit-result-btn"
                         class="w-full bg-red-600 text-white py-5 rounded-lg font-bold text-xl hover:bg-red-700 transition-colors shadow-lg hidden">
-                    ✅ Enregistrer le résultat
+                    Enregistrer le résultat
                 </button>
             </div>
         </div>
@@ -157,7 +156,7 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     const password = document.getElementById('judge-password-input').value.trim();
 
     if (!password) {
-        return alert('⚠️ Veuillez entrer un mot de passe');
+        return alert('Veuillez entrer un mot de passe');
     }
 
     // Find tournament by judge password
@@ -211,7 +210,7 @@ async function loadAthletes() {
 
     if (error) {
         console.error('Error loading athletes:', error);
-        return showStatus('❌ Erreur lors du chargement des athlètes', true);
+        return showStatus('Erreur lors du chargement des athlètes', true);
     }
 
     athletes = data || [];
@@ -233,7 +232,7 @@ async function loadWODs() {
 
     if (error) {
         console.error('Error loading WODs:', error);
-        return showStatus('❌ Erreur lors du chargement des WODs', true);
+        return showStatus('Erreur lors du chargement des WODs', true);
     }
 
     wods = data || [];
@@ -289,7 +288,7 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
     let value = parseInt(e.target.value);
     if (value > 59) {
         e.target.value = 59;
-        showStatus('⚠️ Secondes: maximum 59', true);
+        showStatus('Secondes: maximum 59', true);
     }
     if (value < 0) {
         e.target.value = 0;
@@ -302,7 +301,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     const wodId = parseInt(document.getElementById('wod-select').value);
 
     if (!athleteId || !wodId) {
-        return alert('⚠️ Veuillez sélectionner un participant et un WOD');
+        return alert('Veuillez sélectionner un participant et un WOD');
     }
 
     const wod = wods.find(w => w.id === wodId);
@@ -319,10 +318,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
 
         if (minutes === 0 && seconds === 0) {
-            return alert('⚠️ Veuillez entrer un temps');
+            return alert('Veuillez entrer un temps');
         }
         if (seconds > 59) {
-            return alert('⚠️ Les secondes doivent être entre 0 et 59');
+            return alert('Les secondes doivent être entre 0 et 59');
         }
 
         resultData.value_time = minutes * 60 + seconds;
@@ -362,20 +361,20 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
         if (error) {
             console.error('Error updating result:', error);
-            return showStatus('❌ Erreur lors de la mise à jour', true);
+            return showStatus('Erreur lors de la mise à jour', true);
         }
 
-        showStatus('✅ Résultat mis à jour avec succès!');
+        showStatus('Résultat mis à jour avec succès!');
     } else {
         // Insert new result
         const { error } = await supabase.from('scores').insert(resultData);
 
         if (error) {
             console.error('Error saving result:', error);
-            return showStatus('❌ Erreur lors de la sauvegarde', true);
+            return showStatus('Erreur lors de la sauvegarde', true);
         }
 
-        showStatus('✅ Résultat enregistré avec succès!');
+        showStatus('Résultat enregistré avec succès!');
     }
 
     // Reset form
