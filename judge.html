@@ -3,127 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juge - CrossFit Competition</title>
+    <title>Entrée Juge - CrossFit Competition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-900">
 
 <!-- LOGIN MODAL -->
-<div id="login-modal" class="fixed inset-0 bg-gray-100 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
-        <h1 class="text-3xl font-bold mb-2 text-center">⚖️ Accès Juge</h1>
-        <p class="text-gray-600 mb-6 text-center">Entrez le mot de passe du tournoi</p>
+<div id="login-modal" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-700">
+        <h1 class="text-3xl font-bold mb-2 text-center text-white">⚖️ Accès Juge</h1>
+        <p class="text-gray-300 mb-6 text-center">Entrez le mot de passe du tournoi</p>
 
         <input type="password" id="judge-password-input"
-               class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-4 text-center text-lg"
+               class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 mb-4 text-center text-xl placeholder-gray-400"
                placeholder="Mot de passe">
 
         <button id="judge-login-btn"
-                class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 text-lg">
+                class="w-full bg-red-600 text-white py-4 rounded-lg font-bold hover:bg-red-700 text-xl transition-colors">
             Connexion
         </button>
 
-        <p id="login-error" class="text-red-600 text-sm mt-3 text-center hidden">❌ Mot de passe incorrect</p>
+        <p id="login-error" class="text-red-400 text-sm mt-3 text-center hidden">❌ Mot de passe incorrect</p>
+
+        <a href="index.html" class="block text-center text-gray-400 hover:text-gray-200 mt-6 text-sm">
+            ← Retour à l'accueil
+        </a>
     </div>
 </div>
 
 <!-- MAIN CONTENT -->
 <div id="main-content" class="hidden min-h-screen pb-8">
-    <header class="bg-white shadow-sm mb-6">
-        <div class="max-w-4xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
+    <header class="bg-gray-800 shadow-lg mb-6">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <div class="flex justify-between items-center mb-3">
                 <div>
-                    <h1 class="text-2xl font-bold">⚖️ Interface Juge</h1>
-                    <p id="tournament-name" class="text-gray-600"></p>
+                    <h1 class="text-3xl font-bold text-white">⚖️ Interface Juge</h1>
+                    <p id="tournament-name" class="text-gray-300 text-lg mt-1"></p>
                 </div>
-                <button id="logout-btn" class="text-sm text-gray-600 hover:text-gray-800">Déconnexion</button>
+                <div class="flex gap-3">
+                    <a href="leaderboard.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-lg text-base font-semibold">
+                        🏆 Résultats
+                    </a>
+                    <button id="logout-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-lg text-base font-semibold">
+                        🚪 Déconnexion
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
     <div class="max-w-4xl mx-auto px-4">
         <!-- RESULT ENTRY FORM -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">📝 Saisie de résultat</h2>
+        <div class="bg-gray-800 rounded-lg shadow-xl p-8">
+            <h2 class="text-2xl font-bold mb-6 text-white">📝 Saisie de résultat</h2>
 
-            <div class="space-y-4">
+            <div class="space-y-6">
                 <!-- Athlete Selection -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Participant</label>
-                    <select id="athlete-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3">
-                        <option value="">-- Sélectionner --</option>
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Participant</label>
+                    <select id="athlete-select" class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-lg">
+                        <option value="">-- Sélectionner un participant --</option>
                     </select>
                 </div>
 
                 <!-- WOD Selection -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">WOD</label>
-                    <select id="wod-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3">
-                        <option value="">-- Sélectionner --</option>
+                    <label class="block text-base font-semibold text-gray-200 mb-3">WOD</label>
+                    <select id="wod-select" class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-lg">
+                        <option value="">-- Sélectionner un WOD --</option>
                     </select>
                 </div>
 
                 <!-- WOD Description -->
-                <div id="wod-description" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <h3 class="font-semibold text-blue-900 mb-2">📝 Description du WOD</h3>
-                    <p id="wod-description-text" class="text-sm text-blue-800 whitespace-pre-wrap"></p>
+                <div id="wod-description" class="hidden bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-red-600 p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-white mb-4 text-xl flex items-center gap-2">
+                        <span class="text-3xl">📝</span>
+                        <span>Description du WOD</span>
+                    </h3>
+                    <p id="wod-description-text" class="text-lg text-gray-100 whitespace-pre-wrap font-medium leading-relaxed"></p>
                 </div>
 
-                <!-- Regular Result Input (for reps, weight, complex) -->
+                <!-- Regular Result Input -->
                 <div id="result-regular" class="hidden">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Résultat</label>
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Résultat</label>
                     <input type="text" id="result-value"
                            placeholder="Ex: 150, 85kg"
-                           class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg">
+                           class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl placeholder-gray-400">
                 </div>
 
-                <!-- Time Result Input (for time-based WODs) -->
+                <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">⏱️ Temps (For Time)</label>
-                    <div class="flex gap-3 items-center">
+                    <label class="block text-base font-semibold text-gray-200 mb-3">⏱️ Temps (For Time)</label>
+                    <div class="flex gap-4 items-center">
                         <div class="flex-1">
                             <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
-                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-2xl font-mono">
-                            <p class="text-xs text-gray-500 text-center mt-1">minutes</p>
+                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                            <p class="text-sm text-gray-300 text-center mt-2">minutes</p>
                         </div>
-                        <span class="text-3xl font-bold text-gray-400 pb-6">:</span>
+                        <span class="text-4xl font-bold text-gray-400 pb-8">:</span>
                         <div class="flex-1">
                             <input type="number" id="result-seconds" min="0" max="59" placeholder="00"
-                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-2xl font-mono">
-                            <p class="text-xs text-gray-500 text-center mt-1">secondes</p>
+                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                            <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">💡 Exemple: 12 minutes 34 secondes = 12:34</p>
+                    <p class="text-sm text-gray-400 mt-3">💡 Exemple: 12 minutes 34 secondes = 12:34</p>
                 </div>
 
                 <!-- Submit Button -->
                 <button id="submit-result-btn"
-                        class="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700">
+                        class="w-full bg-red-600 text-white py-5 rounded-lg font-bold text-xl hover:bg-red-700 transition-colors shadow-lg hidden">
                     ✅ Enregistrer le résultat
                 </button>
             </div>
-        </div>
-
-        <!-- Recent Results -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-            <h2 class="text-xl font-bold mb-4">📋 Résultats récents</h2>
-            <div id="recent-results" class="space-y-2"></div>
         </div>
     </div>
 </div>
 
 <script>
 // SUPABASE CONFIG
-const SUPABASE_URL = 'https://nczkbyaowkkkohemakva.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jemtieWFvd2tra29oZW1ha3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTI1NDQsImV4cCI6MjA1MjY4ODU0NH0.YRVo26qWrTugb8C_c6I56EjcQujsaWQ6JXUBcHPP62I';
+const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
 var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // STATE
 let currentTournament = null;
 let athletes = [];
 let wods = [];
-let teams = [];
 
 // UTILITY
 function escapeHtml(text) {
@@ -132,17 +139,17 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function showStatus(msg, duration = 3000) {
+function showStatus(msg, isError = false) {
     const existing = document.getElementById('status-message');
     if (existing) existing.remove();
 
     const div = document.createElement('div');
     div.id = 'status-message';
-    div.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    div.className = `fixed top-4 right-4 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
     div.textContent = msg;
     document.body.appendChild(div);
 
-    setTimeout(() => div.remove(), duration);
+    setTimeout(() => div.remove(), 4000);
 }
 
 // LOGIN
@@ -173,9 +180,17 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     currentTournament = data[0];
     document.getElementById('login-modal').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
-    document.getElementById('tournament-name').textContent = `Tournoi: ${escapeHtml(currentTournament.name)}`;
+    document.getElementById('tournament-name').textContent = currentTournament.name;
 
-    await loadData();
+    loadAthletes();
+    loadWODs();
+});
+
+// Allow Enter key to login
+document.getElementById('judge-password-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('judge-login-btn').click();
+    }
 });
 
 // LOGOUT
@@ -187,75 +202,69 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     document.getElementById('login-error').classList.add('hidden');
 });
 
-// LOAD DATA
-async function loadData() {
-    // Load athletes (or teams if team tournament)
-    if (currentTournament.competition_type === 'team') {
-        const { data } = await supabase
-            .from('teams')
-            .select('*, athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name), athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name)')
-            .eq('tournament_id', currentTournament.id)
-            .order('id');
+// LOAD ATHLETES
+async function loadAthletes() {
+    const { data, error } = await supabase
+        .from('athletes')
+        .select('*')
+        .order('last_name');
 
-        teams = data || [];
-
-        const select = document.getElementById('athlete-select');
-        select.innerHTML = '<option value="">-- Sélectionner une équipe --</option>';
-        teams.forEach(t => {
-            const name = t.team_name || `${t.athlete1.first_name} ${t.athlete1.last_name} & ${t.athlete2.first_name} ${t.athlete2.last_name}`;
-            select.innerHTML += `<option value="team-${t.id}">${escapeHtml(name)}</option>`;
-        });
-    } else {
-        const { data } = await supabase
-            .from('athletes')
-            .select('*')
-            .order('last_name');
-
-        athletes = data || [];
-
-        const select = document.getElementById('athlete-select');
-        select.innerHTML = '<option value="">-- Sélectionner un athlète --</option>';
-        athletes.forEach(a => {
-            select.innerHTML += `<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)} (${escapeHtml(a.category)} - ${escapeHtml(a.gender)})</option>`;
-        });
+    if (error) {
+        console.error('Error loading athletes:', error);
+        return showStatus('❌ Erreur lors du chargement des athlètes', true);
     }
 
-    // Load WODs for this tournament
-    const { data: wodData } = await supabase
+    athletes = data || [];
+
+    const select = document.getElementById('athlete-select');
+    select.innerHTML = '<option value="">-- Sélectionner un participant --</option>';
+    athletes.forEach(a => {
+        select.innerHTML += `<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)} (${escapeHtml(a.category)} - ${escapeHtml(a.gender)})</option>`;
+    });
+}
+
+// LOAD WODS
+async function loadWODs() {
+    const { data, error } = await supabase
         .from('workouts')
         .select('*')
         .eq('tournament_id', currentTournament.id)
         .order('wod_number');
 
-    wods = wodData || [];
+    if (error) {
+        console.error('Error loading WODs:', error);
+        return showStatus('❌ Erreur lors du chargement des WODs', true);
+    }
 
-    const wodSelect = document.getElementById('wod-select');
-    wodSelect.innerHTML = '<option value="">-- Sélectionner un WOD --</option>';
+    wods = data || [];
+
+    const select = document.getElementById('wod-select');
+    select.innerHTML = '<option value="">-- Sélectionner un WOD --</option>';
     wods.forEach(w => {
-        wodSelect.innerHTML += `<option value="${w.id}">WOD ${w.wod_number} (${escapeHtml(w.wod_type)})</option>`;
+        select.innerHTML += `<option value="${w.id}">WOD ${w.wod_number} (${escapeHtml(w.wod_type)})</option>`;
     });
-
-    loadRecentResults();
 }
 
-// Update result input type based on WOD
+// WOD CHANGE
 document.getElementById('wod-select').addEventListener('change', (e) => {
     const wodId = parseInt(e.target.value);
     const regularInput = document.getElementById('result-regular');
     const timeInput = document.getElementById('result-time');
     const descriptionBlock = document.getElementById('wod-description');
     const descriptionText = document.getElementById('wod-description-text');
+    const submitBtn = document.getElementById('submit-result-btn');
 
     if (!wodId) {
         regularInput.classList.add('hidden');
         timeInput.classList.add('hidden');
         descriptionBlock.classList.add('hidden');
+        submitBtn.classList.add('hidden');
         return;
     }
 
     const wod = wods.find(w => w.id === wodId);
 
-    // Show WOD description
+    // Show description
     if (wod && wod.description) {
         descriptionText.textContent = wod.description;
         descriptionBlock.classList.remove('hidden');
@@ -263,7 +272,7 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         descriptionBlock.classList.add('hidden');
     }
 
-    // Update input type
+    // Show appropriate input
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
@@ -271,6 +280,8 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
     }
+
+    submitBtn.classList.remove('hidden');
 });
 
 // Seconds validation
@@ -278,7 +289,7 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
     let value = parseInt(e.target.value);
     if (value > 59) {
         e.target.value = 59;
-        showStatus('⚠️ Secondes: maximum 59', 2000);
+        showStatus('⚠️ Secondes: maximum 59', true);
     }
     if (value < 0) {
         e.target.value = 0;
@@ -287,33 +298,20 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
 
 // SUBMIT RESULT
 document.getElementById('submit-result-btn').addEventListener('click', async () => {
-    const athleteValue = document.getElementById('athlete-select').value;
+    const athleteId = parseInt(document.getElementById('athlete-select').value);
     const wodId = parseInt(document.getElementById('wod-select').value);
 
-    if (!athleteValue) {
-        return alert('⚠️ Veuillez sélectionner un participant');
-    }
-    if (!wodId) {
-        return alert('⚠️ Veuillez sélectionner un WOD');
+    if (!athleteId || !wodId) {
+        return alert('⚠️ Veuillez sélectionner un participant et un WOD');
     }
 
     const wod = wods.find(w => w.id === wodId);
     const isTimeWod = wod && wod.wod_type === 'time';
 
-    let athleteId = null;
-    let teamId = null;
-
-    if (athleteValue.startsWith('team-')) {
-        teamId = parseInt(athleteValue.replace('team-', ''));
-    } else {
-        athleteId = parseInt(athleteValue);
-    }
-
     // Prepare result data
     let resultData = {
         workout_id: wodId,
-        athlete_id: athleteId,
-        team_id: teamId
+        athlete_id: athleteId
     };
 
     if (isTimeWod) {
@@ -321,7 +319,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
 
         if (minutes === 0 && seconds === 0) {
-            return alert('⚠️ Veuillez entrer un temps (minutes et secondes)');
+            return alert('⚠️ Veuillez entrer un temps');
         }
         if (seconds > 59) {
             return alert('⚠️ Les secondes doivent être entre 0 et 59');
@@ -335,7 +333,6 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             return alert('⚠️ Veuillez entrer un résultat');
         }
 
-        // Try to parse as number
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
             if (Number.isInteger(numValue)) {
@@ -348,17 +345,40 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         }
     }
 
-    // Save to database
-    const { error } = await supabase.from('scores').insert(resultData);
+    // Check if result already exists
+    const { data: existing } = await supabase
+        .from('scores')
+        .select('id')
+        .eq('workout_id', wodId)
+        .eq('athlete_id', athleteId)
+        .maybeSingle();
 
-    if (error) {
-        console.error('Error saving result:', error);
-        return alert('❌ Erreur lors de la sauvegarde');
+    if (existing) {
+        // Update existing result
+        const { error } = await supabase
+            .from('scores')
+            .update(resultData)
+            .eq('id', existing.id);
+
+        if (error) {
+            console.error('Error updating result:', error);
+            return showStatus('❌ Erreur lors de la mise à jour', true);
+        }
+
+        showStatus('✅ Résultat mis à jour avec succès!');
+    } else {
+        // Insert new result
+        const { error } = await supabase.from('scores').insert(resultData);
+
+        if (error) {
+            console.error('Error saving result:', error);
+            return showStatus('❌ Erreur lors de la sauvegarde', true);
+        }
+
+        showStatus('✅ Résultat enregistré avec succès!');
     }
 
-    showStatus('✅ Résultat enregistré');
-
-    // Clear form
+    // Reset form
     document.getElementById('result-value').value = '';
     document.getElementById('result-minutes').value = '';
     document.getElementById('result-seconds').value = '';
@@ -366,83 +386,8 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
     document.getElementById('result-time').classList.add('hidden');
-
-    await loadRecentResults();
-});
-
-// LOAD RECENT RESULTS
-async function loadRecentResults() {
-    let query = supabase
-        .from('scores')
-        .select(`
-            id,
-            value_int,
-            value_decimal,
-            value_time,
-            notes,
-            created_at,
-            athletes(first_name, last_name),
-            teams(id, team_name, athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name), athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name)),
-            workouts(wod_number, wod_type, tournament_id)
-        `)
-        .eq('workouts.tournament_id', currentTournament.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-    const { data } = await query;
-
-    const container = document.getElementById('recent-results');
-
-    if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-sm">Aucun résultat pour l\'instant</p>';
-        return;
-    }
-
-    container.innerHTML = data.map(s => {
-        let participantName;
-        if (s.teams) {
-            participantName = s.teams.team_name || `${s.teams.athlete1.first_name} ${s.teams.athlete1.last_name} & ${s.teams.athlete2.first_name} ${s.teams.athlete2.last_name}`;
-        } else if (s.athletes) {
-            participantName = `${s.athletes.first_name} ${s.athletes.last_name}`;
-        } else {
-            participantName = 'Inconnu';
-        }
-
-        let result;
-        if (s.value_time) {
-            const minutes = Math.floor(s.value_time / 60);
-            const seconds = s.value_time % 60;
-            result = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        } else if (s.value_int !== null) {
-            result = String(s.value_int);
-        } else if (s.value_decimal !== null) {
-            result = String(s.value_decimal);
-        } else {
-            result = s.notes || '-';
-        }
-
-        const time = new Date(s.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-        return `
-            <div class="flex justify-between items-center py-2 border-b">
-                <div>
-                    <span class="font-semibold">${escapeHtml(participantName)}</span>
-                    <span class="text-gray-600 text-sm">- WOD ${s.workouts.wod_number}</span>
-                </div>
-                <div class="text-right">
-                    <div class="font-bold text-blue-600">${escapeHtml(result)}</div>
-                    <div class="text-xs text-gray-500">${time}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Allow Enter key to login
-document.getElementById('judge-password-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        document.getElementById('judge-login-btn').click();
-    }
+    document.getElementById('wod-description').classList.add('hidden');
+    document.getElementById('submit-result-btn').classList.add('hidden');
 });
 </script>
 
