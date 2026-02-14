@@ -314,9 +314,10 @@ function calculateRankings() {
                 participantScores[wod.id] = { rank, score };
                 totalPoints += rank;
             } else {
-                const worstPlace = filteredWodScores.length;
-                participantScores[wod.id] = { rank: worstPlace + 1, score: null };
-                totalPoints += worstPlace + 1;
+                // If no result, give last place = total number of participants in this category
+                const lastPlace = filtered.length;
+                participantScores[wod.id] = { rank: lastPlace, score: null };
+                totalPoints += lastPlace;
             }
         });
 
@@ -401,19 +402,29 @@ function renderSingleWod(wodId) {
     const filtered = filterParticipants(participants);
     const wodScores = scores.filter(s => s.workout_id === wodId);
 
+    // Get all participants with their scores (including those without results)
     const results = filtered.map(p => {
         const score = wodScores.find(s => {
             if (p.type === 'team') return s.team_id === p.teamId;
             return s.athlete_id === p.athleteId;
         });
         return { participant: p, score };
-    }).filter(r => r.score);
+    });
 
-    results.sort((a, b) => {
+    // Separate participants with scores and without scores
+    const withScores = results.filter(r => r.score);
+    const withoutScores = results.filter(r => !r.score);
+
+    // Sort participants with scores
+    withScores.sort((a, b) => {
         const aVal = a.score.value_time || a.score.value_int || a.score.value_decimal || 999999;
         const bVal = b.score.value_time || b.score.value_int || b.score.value_decimal || 999999;
         return aVal - bVal;
     });
+
+    // Combine: participants with scores first, then those without
+    const sortedResults = [...withScores, ...withoutScores];
+    const lastPlace = filtered.length;
 
     const headerRow = document.getElementById('table-header');
     const tbody = document.getElementById('leaderboard-tbody');
@@ -426,18 +437,21 @@ function renderSingleWod(wodId) {
         <th class="text-center py-3 px-4 font-semibold text-gray-700">Points</th>
     `;
 
-    if (results.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Aucun résultat</td></tr>';
+    if (sortedResults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Aucun participant</td></tr>';
         return;
     }
 
-    tbody.innerHTML = results.map((r, index) => {
-        const rank = index + 1;
+    tbody.innerHTML = sortedResults.map((r, index) => {
+        // If no score, assign last place to everyone without a result
+        const rank = r.score ? (index + 1) : lastPlace;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
         // Format result based on type
         let result;
-        if (r.score.value_time) {
+        if (!r.score) {
+            result = '-';
+        } else if (r.score.value_time) {
             const minutes = Math.floor(r.score.value_time / 60);
             const seconds = r.score.value_time % 60;
             result = `${minutes}:${seconds.toString().padStart(2, '0')}`;
