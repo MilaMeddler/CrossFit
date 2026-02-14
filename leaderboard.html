@@ -341,6 +341,23 @@ function render() {
     }
 }
 
+// Format result for display
+function formatResult(score) {
+    if (!score) return '-';
+
+    if (score.value_time) {
+        const minutes = Math.floor(score.value_time / 60);
+        const seconds = score.value_time % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } else if (score.value_int) {
+        return score.value_int.toString();
+    } else if (score.value_decimal) {
+        return score.value_decimal.toString();
+    } else {
+        return '-';
+    }
+}
+
 // Render overall leaderboard
 function renderOverall() {
     document.getElementById('leaderboard-title').textContent = 'Classement Général';
@@ -369,13 +386,20 @@ function renderOverall() {
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
         const wodCells = wods.map(w => {
-            const place = r.wodScores[w.id]?.rank || '-';
-            return `<td class="py-3 px-2 text-center font-mono text-sm hidden md:table-cell">${place}</td>`;
+            const wodData = r.wodScores[w.id];
+            const place = wodData?.rank || '-';
+            const result = formatResult(wodData?.score);
+
+            // Show result on top line, place on bottom line
+            return `<td class="py-3 px-2 text-center text-xs hidden md:table-cell">
+                <div class="font-mono font-semibold text-gray-900">${result}</div>
+                <div class="text-gray-500 text-xs mt-1">(${place})</div>
+            </td>`;
         }).join('');
 
         return `
             <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
-                <td class="py-3 px-4 font-bold text-lg">${rank}</td>
+                <td class="py-3 px-4 font-bold text-xl">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
                 <td class="py-3 px-4 text-center hidden md:table-cell">
                     <span class="px-2 py-1 rounded text-xs font-semibold ${
