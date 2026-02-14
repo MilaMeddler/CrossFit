@@ -237,17 +237,22 @@ async function loadTournamentData() {
             type: 'team'
         }));
     } else {
-        const {data: athletesData} = await supabaseLeaderboard
-            .from('athletes')
-            .select('*')
-            .order('last_name');
+        // Load registered participants for this tournament
+        const {data: participantsData} = await supabaseLeaderboard
+            .from('tournament_participants')
+            .select(`
+                *,
+                athletes(id,first_name,last_name,gender)
+            `)
+            .eq('tournament_id', currentTournamentId)
+            .order('athletes(last_name)');
 
-        participants = (athletesData || []).map(a => ({
-            id: `athlete-${a.id}`,
-            athleteId: a.id,
-            name: `${a.first_name} ${a.last_name}`,
-            level: a.level,
-            gender: a.gender,
+        participants = (participantsData || []).map(p => ({
+            id: `athlete-${p.athletes.id}`,
+            athleteId: p.athletes.id,
+            name: `${p.athletes.first_name} ${p.athletes.last_name}`,
+            level: p.level, // Level from registration, not global athlete level
+            gender: p.athletes.gender,
             type: 'athlete'
         }));
     }

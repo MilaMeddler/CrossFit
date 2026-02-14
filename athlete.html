@@ -178,24 +178,35 @@ document.getElementById('tournament-select').addEventListener('change', async (e
         return;
     }
 
-    // Load athletes
+    // Load registered participants for this tournament
     const { data, error } = await supabase
-        .from('athletes')
-        .select('*')
-        .order('last_name');
+        .from('tournament_participants')
+        .select(`
+            *,
+            athletes(id,first_name,last_name,gender)
+        `)
+        .eq('tournament_id', selectedTournamentId)
+        .order('athletes(last_name)');
 
     if (error) {
-        console.error('Error loading athletes:', error);
-        showStatus('Erreur lors du chargement des athlètes', true);
+        console.error('Error loading participants:', error);
+        showStatus('Erreur lors du chargement des participants', true);
         return;
     }
 
-    athletes = data || [];
+    const participants = data || [];
 
     const select = document.getElementById('athlete-select');
     select.innerHTML = '<option value="">-- Sélectionner votre nom --</option>';
-    athletes.forEach(a => {
-        select.innerHTML += `<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)} (${escapeHtml(a.category)} - ${escapeHtml(a.gender)})</option>`;
+
+    if (participants.length === 0) {
+        select.innerHTML += '<option value="" disabled>Aucun participant inscrit</option>';
+        document.getElementById('athlete-container').classList.remove('hidden');
+        return;
+    }
+
+    participants.forEach(p => {
+        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)} (${escapeHtml(p.level)} - ${escapeHtml(p.athletes.gender)})</option>`;
     });
 
     document.getElementById('athlete-container').classList.remove('hidden');

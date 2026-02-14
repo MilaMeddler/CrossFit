@@ -189,6 +189,37 @@
                 </div>
             </div>
 
+            <!-- PARTICIPANTS SECTION -->
+            <div id="participants-section" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">👤 Gestion des participants</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <select id="participant-athlete" class="border rounded-lg px-4 py-2">
+                        <option value="">Sélectionner un athlète</option>
+                    </select>
+                    <select id="participant-level" class="border rounded-lg px-4 py-2">
+                        <option value="RX">RX</option>
+                        <option value="INTER">INTER</option>
+                        <option value="SCALE">SCALE</option>
+                    </select>
+                </div>
+                <button id="add-participant-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 mb-6">Ajouter participant</button>
+
+                <h4 class="font-semibold mb-3">📋 Participants inscrits</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Athlète</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Niveau</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Genre</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participants-tbody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- WODS -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h3 class="text-lg font-semibold mb-4" id="wod-form-title">➕ Ajouter un WOD</h3>
@@ -433,7 +464,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // STATE
-let athletes=[], tournaments=[], wods=[], teams=[], scores=[], judges=[];
+let athletes=[], tournaments=[], wods=[], teams=[], scores=[], judges=[], tournamentParticipants=[];
 let editingAthleteId=null, editingResultId=null, editingWodId=null, currentTournamentId=null, currentTournament=null;
 let pendingTournamentName = null;
 let pendingTournamentPassword = null;
@@ -571,24 +602,28 @@ async function onTournamentChange() {
     if(!currentTournament) {
         document.getElementById('tournament-type-badge').classList.add('hidden');
         document.getElementById('teams-section').classList.add('hidden');
+        document.getElementById('participants-section').classList.add('hidden');
         return;
     }
-    
+
     const badge = document.getElementById('tournament-type-badge');
     const span = badge.querySelector('span');
-    
+
     if(currentTournament.competition_type === 'team') {
         span.textContent = '🏅 Tournoi par équipes';
         span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
         document.getElementById('teams-section').classList.remove('hidden');
+        document.getElementById('participants-section').classList.add('hidden');
         await loadTeams();
     } else {
         span.textContent = '👤 Tournoi individuel';
         span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
         document.getElementById('teams-section').classList.add('hidden');
+        document.getElementById('participants-section').classList.remove('hidden');
+        await loadParticipants();
     }
     badge.classList.remove('hidden');
-    
+
     await loadWods();
 }
 
@@ -803,6 +838,88 @@ window.deleteTeam = async (id) => {
     await supabase.from('teams').delete().eq('id',id);
     showStatus('✅ Équipe supprimée');
     await loadTeams();
+};
+
+// ============================================
+// TOURNAMENT PARTICIPANTS
+// ============================================
+async function loadParticipants() {
+    if(!currentTournamentId) return;
+    const {data} = await supabase.from('tournament_participants').select(`
+        *,
+        athletes(id,first_name,last_name,gender)
+    `).eq('tournament_id', currentTournamentId);
+    tournamentParticipants = data || [];
+    renderParticipants();
+    updateParticipantSelect();
+}
+
+function renderParticipants() {
+    const tbody = document.getElementById('participants-tbody');
+    if(!tournamentParticipants.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun participant inscrit</td></tr>';
+        return;
+    }
+    tbody.innerHTML = tournamentParticipants.map(p => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-semibold">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</td>
+            <td class="px-4 py-3">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    p.level==='RX'?'bg-purple-100 text-purple-800':
+                    p.level==='INTER'?'bg-blue-100 text-blue-800':
+                    'bg-green-100 text-green-800'
+                }">${escapeHtml(p.level)}</span>
+            </td>
+            <td class="px-4 py-3">${p.athletes.gender==='M'?'👨 Homme':'👩 Femme'}</td>
+            <td class="px-4 py-3 text-center">
+                <button onclick="deleteParticipant(${p.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateParticipantSelect() {
+    const sel = document.getElementById('participant-athlete');
+
+    // Get athletes who are NOT already registered for this tournament
+    const registeredAthleteIds = tournamentParticipants.map(p => p.athlete_id);
+    const availableAthletes = athletes.filter(a => !registeredAthleteIds.includes(a.id));
+
+    sel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
+        availableAthletes.map(a=>`<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
+}
+
+document.getElementById('add-participant-btn').addEventListener('click', async () => {
+    const athleteId = parseInt(document.getElementById('participant-athlete').value);
+    const level = document.getElementById('participant-level').value;
+
+    if(!athleteId) return alert('⚠️ Sélectionnez un athlète');
+
+    const {error} = await supabase.from('tournament_participants').insert({
+        tournament_id: currentTournamentId,
+        athlete_id: athleteId,
+        level: level
+    });
+
+    if(error) {
+        if(error.message.includes('unique')) {
+            alert('⚠️ Cet athlète est déjà inscrit pour ce tournoi');
+        } else {
+            alert('❌ Erreur: ' + error.message);
+        }
+        return;
+    }
+
+    showStatus('✅ Participant ajouté');
+    document.getElementById('participant-athlete').value='';
+    await loadParticipants();
+});
+
+window.deleteParticipant = async (id) => {
+    if(!confirm('⚠️ Désinscrire ce participant du tournoi?')) return;
+    await supabase.from('tournament_participants').delete().eq('id',id);
+    showStatus('✅ Participant désinscrit');
+    await loadParticipants();
 };
 
 // ============================================
