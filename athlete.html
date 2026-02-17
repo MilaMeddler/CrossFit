@@ -101,7 +101,7 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <!-- OPEN: Is completed checkbox -->
+                    <!-- Is completed checkbox (shown for all For Time WODs) -->
                     <div id="open-completed-container" class="hidden mb-4">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" id="result-is-completed" checked
@@ -370,18 +370,15 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
-        // Reset is_completed for OPEN
-        if (currentTournamentIsOpen) {
-            openCompletedContainer.classList.remove('hidden');
-            document.getElementById('result-is-completed').checked = true;
-            document.getElementById('time-inputs-block').classList.remove('hidden');
-            document.getElementById('timecap-reps-block').classList.add('hidden');
-        } else {
-            openCompletedContainer.classList.add('hidden');
-        }
+        // Always show timecap option for For Time WODs
+        openCompletedContainer.classList.remove('hidden');
+        document.getElementById('result-is-completed').checked = true;
+        document.getElementById('time-inputs-block').classList.remove('hidden');
+        document.getElementById('timecap-reps-block').classList.add('hidden');
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
+        openCompletedContainer.classList.add('hidden');
     }
 
     submitBtn.classList.remove('hidden');
@@ -462,9 +459,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     };
 
     if (isTimeWod) {
-        const isCompleted = currentTournamentIsOpen
-            ? document.getElementById('result-is-completed').checked
-            : true;
+        const isCompleted = document.getElementById('result-is-completed').checked;
         resultData.is_completed = isCompleted;
 
         if (isCompleted) {

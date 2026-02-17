@@ -354,7 +354,29 @@ function compareOpenScores(a, b, wod) {
 }
 
 // Compare two scores for a WOD in regular format
-function compareRegularScores(a, b) {
+// wod is optional — used to determine sort direction for AMRAP vs For Time
+function compareRegularScores(a, b, wod) {
+    if (wod && wod.wod_type === 'time') {
+        const aCompleted = a.is_completed !== false;
+        const bCompleted = b.is_completed !== false;
+        // Completed always beats timecap
+        if (aCompleted && !bCompleted) return -1;
+        if (!aCompleted && bCompleted) return 1;
+        if (aCompleted && bCompleted) {
+            // Both finished: lower time = better
+            return (a.value_time || 999999) - (b.value_time || 999999);
+        } else {
+            // Both hit timecap: more reps = better
+            return (b.value_int || 0) - (a.value_int || 0);
+        }
+    }
+    // AMRAP / reps: more = better
+    if (wod && wod.wod_type === 'reps') {
+        const repsA = a.value_int || a.value_decimal || 0;
+        const repsB = b.value_int || b.value_decimal || 0;
+        return repsB - repsA;
+    }
+    // Generic fallback: lower = better
     const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
     const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
     return aVal - bVal;
@@ -515,7 +537,7 @@ function calculateRankings() {
                 return scoreParticipant && filterParticipants([scoreParticipant]).length > 0;
             });
 
-            filteredWodScores.sort(compareRegularScores);
+            filteredWodScores.sort((a, b) => compareRegularScores(a, b, wod));
 
             if (score) {
                 const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
@@ -683,7 +705,7 @@ function renderSingleWod(wodId) {
     if (isOpen) {
         withScores.sort((a, b) => compareOpenScores(a.score, b.score, wod));
     } else {
-        withScores.sort((a, b) => compareRegularScores(a.score, b.score));
+        withScores.sort((a, b) => compareRegularScores(a.score, b.score, wod));
     }
 
     // Combine: participants with scores first, then those without
