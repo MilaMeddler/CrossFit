@@ -257,7 +257,7 @@ document.getElementById('tournament-select').addEventListener('change', async (e
     }
 
     participants.forEach(p => {
-        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)} (${escapeHtml(p.level)} - ${escapeHtml(p.athletes.gender)})</option>`;
+        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
     });
 
     document.getElementById('athlete-container').classList.remove('hidden');
