@@ -93,21 +93,40 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <label class="block text-base font-semibold text-gray-200 mb-3">Temps (For Time)</label>
-                    <div class="flex gap-4 items-center">
-                        <div class="flex-1">
-                            <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
-                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
-                            <p class="text-sm text-gray-300 text-center mt-2">minutes</p>
-                        </div>
-                        <span class="text-4xl font-bold text-gray-400 pb-8">:</span>
-                        <div class="flex-1">
-                            <input type="number" id="result-seconds" min="0" max="59" placeholder="00"
-                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
-                            <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
-                        </div>
+                    <!-- Timecap checkbox -->
+                    <div class="mb-4">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="result-is-completed" checked
+                                   class="w-6 h-6 accent-orange-500">
+                            <span class="text-gray-200 font-semibold text-lg">WOD terminé (sans time cap)</span>
+                        </label>
                     </div>
-                    <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
+
+                    <!-- Time inputs (when completed) -->
+                    <div id="time-inputs-block">
+                        <label class="block text-base font-semibold text-gray-200 mb-3">Temps (For Time)</label>
+                        <div class="flex gap-4 items-center">
+                            <div class="flex-1">
+                                <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
+                                       class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                                <p class="text-sm text-gray-300 text-center mt-2">minutes</p>
+                            </div>
+                            <span class="text-4xl font-bold text-gray-400 pb-8">:</span>
+                            <div class="flex-1">
+                                <input type="number" id="result-seconds" min="0" max="59" placeholder="00"
+                                       class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                                <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
+                    </div>
+
+                    <!-- Reps at time cap -->
+                    <div id="timecap-reps-block" class="hidden">
+                        <label class="block text-base font-semibold text-gray-200 mb-3">Répétitions au time cap</label>
+                        <input type="number" id="result-timecap-reps" min="0" placeholder="0"
+                               class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl text-center font-mono">
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -286,12 +305,27 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
+        // Reset timecap state
+        document.getElementById('result-is-completed').checked = true;
+        document.getElementById('time-inputs-block').classList.remove('hidden');
+        document.getElementById('timecap-reps-block').classList.add('hidden');
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
     }
 
     submitBtn.classList.remove('hidden');
+});
+
+// Toggle timecap
+document.getElementById('result-is-completed').addEventListener('change', (e) => {
+    if (e.target.checked) {
+        document.getElementById('time-inputs-block').classList.remove('hidden');
+        document.getElementById('timecap-reps-block').classList.add('hidden');
+    } else {
+        document.getElementById('time-inputs-block').classList.add('hidden');
+        document.getElementById('timecap-reps-block').classList.remove('hidden');
+    }
 });
 
 // Seconds validation
@@ -325,17 +359,21 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     };
 
     if (isTimeWod) {
-        const minutes = parseInt(document.getElementById('result-minutes').value) || 0;
-        const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
+        const isCompleted = document.getElementById('result-is-completed').checked;
+        resultData.is_completed = isCompleted;
 
-        if (minutes === 0 && seconds === 0) {
-            return alert('Veuillez entrer un temps');
+        if (isCompleted) {
+            const minutes = parseInt(document.getElementById('result-minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
+            if (minutes === 0 && seconds === 0) return alert('Veuillez entrer un temps');
+            if (seconds > 59) return alert('Les secondes doivent être entre 0 et 59');
+            resultData.value_time = minutes * 60 + seconds;
+        } else {
+            // Time cap — save reps as value_int
+            const reps = parseInt(document.getElementById('result-timecap-reps').value) || 0;
+            if (reps === 0) return alert('Veuillez entrer le nombre de répétitions au time cap');
+            resultData.value_int = reps;
         }
-        if (seconds > 59) {
-            return alert('Les secondes doivent être entre 0 et 59');
-        }
-
-        resultData.value_time = minutes * 60 + seconds;
     } else {
         const value = document.getElementById('result-value').value.trim();
 
@@ -392,6 +430,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('result-value').value = '';
     document.getElementById('result-minutes').value = '';
     document.getElementById('result-seconds').value = '';
+    document.getElementById('result-timecap-reps').value = '';
+    document.getElementById('result-is-completed').checked = true;
+    document.getElementById('time-inputs-block').classList.remove('hidden');
+    document.getElementById('timecap-reps-block').classList.add('hidden');
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
