@@ -7,85 +7,82 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-900 min-h-screen">
 
-<div class="max-w-7xl mx-auto p-4 md:p-6 pb-24">
+<div class="min-h-screen pb-24">
     <!-- Header -->
-    <div class="text-center mb-6">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CrossFit Tournament</h1>
-        <p class="text-lg text-gray-600">Tableau des Leaders</p>
-        <div class="flex justify-center gap-6 mt-4 text-sm">
-            <a href="index.html" class="text-gray-600 hover:text-gray-900">Accueil</a>
-            <a href="admin.html" class="text-gray-600 hover:text-gray-900">Admin</a>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Tournament -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Tournoi</label>
-                <select id="tournament-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <option value="">Chargement...</option>
-                </select>
-            </div>
-
-            <!-- Category -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
-                <select id="category-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <option value="all">Tous</option>
-                    <option value="RX">RX</option>
-                    <option value="INTER">INTER</option>
-                    <option value="SCALE">SCALE</option>
-                </select>
-            </div>
-
-            <!-- Gender -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Genre</label>
-                <select id="gender-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <option value="all">Tous</option>
-                    <option value="M">Hommes</option>
-                    <option value="F">Femmes</option>
-                </select>
-            </div>
-
-            <!-- WOD -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">WOD</label>
-                <select id="wod-select" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <option value="overall">Classement Général</option>
-                </select>
+    <div class="w-full bg-black py-6 mb-6">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <img src="logo.jpeg" alt="Black Monkeys CrossFit"
+                 class="h-16 mx-auto mb-3 object-contain"
+                 onerror="this.style.display='none'">
+            <h1 class="text-2xl md:text-3xl font-bold text-white">Tableau des Leaders</h1>
+            <div class="flex justify-center gap-8 mt-3 text-sm">
+                <a href="index.html" class="text-gray-400 hover:text-white transition-colors">Accueil</a>
+                <a href="admin.html" class="text-gray-400 hover:text-white transition-colors">Admin</a>
             </div>
         </div>
     </div>
 
-    <!-- Leaderboard -->
-    <div id="leaderboard-container" class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-gray-800 text-white p-4">
-            <h2 class="text-xl font-bold" id="leaderboard-title">Classement Général</h2>
-            <p class="text-sm text-gray-300 mt-1" id="leaderboard-subtitle">Moins de points = Meilleur classement</p>
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Filters -->
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-5 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Tournoi</label>
+                    <select id="tournament-select" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2.5 focus:border-orange-500 focus:outline-none">
+                        <option value="">Chargement...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Catégorie</label>
+                    <select id="category-select" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2.5 focus:border-orange-500 focus:outline-none">
+                        <option value="all">Tous</option>
+                        <option value="RX">RX</option>
+                        <option value="INTER">Scaled</option>
+                        <option value="SCALE">Foundations</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Genre</label>
+                    <select id="gender-select" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2.5 focus:border-orange-500 focus:outline-none">
+                        <option value="all">Tous</option>
+                        <option value="M">Hommes</option>
+                        <option value="F">Femmes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">WOD</label>
+                    <select id="wod-select" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2.5 focus:border-orange-500 focus:outline-none">
+                        <option value="overall">Classement Général</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-100 border-b-2 border-gray-300">
-                    <tr id="table-header">
-                        <!-- Dynamic headers -->
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-tbody">
-                    <!-- Dynamic content -->
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- Last Update -->
-    <div class="text-center text-gray-500 text-sm mt-6">
-        <p>Mise à jour: <span id="last-update">--:--</span></p>
-        <p class="mt-1">Auto-refresh: 10s</p>
+        <!-- Leaderboard -->
+        <div class="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+            <div class="bg-gray-900 border-b border-gray-700 px-5 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-white" id="leaderboard-title">Classement Général</h2>
+                    <p class="text-xs text-gray-400 mt-0.5" id="leaderboard-subtitle">Moins de points = Meilleur classement</p>
+                </div>
+                <span id="open-badge" class="hidden px-3 py-1 bg-orange-600 text-white text-xs font-bold rounded-full uppercase tracking-wider">CrossFit Open</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-900 border-b border-gray-700">
+                        <tr id="table-header"></tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Last Update -->
+        <div class="text-center text-gray-600 text-xs mt-5">
+            <p>Mise à jour: <span id="last-update">--:--</span> &bull; Auto-refresh: 10s</p>
+        </div>
     </div>
 </div>
 
@@ -97,34 +94,28 @@
 
 <style>
 .mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 2px solid #e5e7eb;
-    display: flex;
-    justify-content: space-around;
-    padding: 0.5rem;
-    z-index: 50;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #1f2937; border-top: 1px solid #374151;
+    display: flex; justify-content: space-around; padding: 0.5rem; z-index: 50;
 }
 .mobile-nav a {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem;
-    color: #6b7280;
-    text-decoration: none;
-    font-size: 0.75rem;
-    transition: color 0.2s;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0.25rem; padding: 0.5rem; color: #6b7280;
+    text-decoration: none; font-size: 0.75rem; transition: color 0.2s;
 }
-.mobile-nav a.active { color: #1f2937; font-weight: 600; }
+.mobile-nav a.active { color: #f97316; font-weight: 600; }
 .mobile-nav a span { font-size: 1.5rem; }
 
-.rank-1 { background-color: #fef3c7; font-weight: 600; }
-.rank-2 { background-color: #f3f4f6; font-weight: 600; }
-.rank-3 { background-color: #fed7aa; font-weight: 600; }
+/* Row highlights in dark theme */
+.rank-1 { background-color: rgba(234,179,8,0.15); }
+.rank-2 { background-color: rgba(156,163,175,0.1); }
+.rank-3 { background-color: rgba(234,138,52,0.12); }
+tr.border-b { border-color: #374151; }
+
+/* Table base styles */
+th { color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { color: #e5e7eb; }
+tr:hover td { background-color: rgba(255,255,255,0.03); }
 </style>
 
 <script>
@@ -141,6 +132,7 @@ try {
 
 let tournaments = [];
 let currentTournamentId = null;
+let currentTournament = null;
 let currentCategory = 'all';
 let currentGender = 'all';
 let currentWod = 'overall';
@@ -188,9 +180,10 @@ async function loadTournaments() {
         return;
     }
 
-    select.innerHTML = tournaments.map(t =>
-        `<option value="${t.id}">${t.name} ${t.competition_type === 'team' ? '(Équipes)' : '(Individuel)'}</option>`
-    ).join('');
+    select.innerHTML = tournaments.map(t => {
+        const tag = t.competition_type === 'team' ? '(Équipes)' : (t.is_open ? '[OPEN]' : '(Individuel)');
+        return `<option value="${t.id}">${t.name} ${tag}</option>`;
+    }).join('');
 
     currentTournamentId = tournaments[0].id;
     select.value = currentTournamentId;
@@ -203,6 +196,18 @@ async function loadTournamentData() {
     if (!currentTournamentId) return;
 
     const tournament = tournaments.find(t => t.id === currentTournamentId);
+    currentTournament = tournament;
+
+    // Show/hide OPEN badge
+    const badge = document.getElementById('open-badge');
+    if (tournament && tournament.is_open) {
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    // Update category filter options based on tournament type
+    updateCategoryFilter(tournament);
 
     // Load WODs
     const {data: wodsData} = await supabaseLeaderboard
@@ -271,17 +276,219 @@ async function loadTournamentData() {
     updateLastUpdate();
 }
 
-// Filter participants
-function filterParticipants(participants) {
-    return participants.filter(p => {
-        if (currentCategory !== 'all' && p.level !== currentCategory) return false;
+// Update category filter based on tournament type
+function updateCategoryFilter(tournament) {
+    const sel = document.getElementById('category-select');
+    const savedValue = sel.value;
+    if (tournament && tournament.is_open) {
+        sel.innerHTML = `
+            <option value="all">Tous</option>
+            <option value="rx">RX (Élite)</option>
+            <option value="scaled">Scaled (Intermédiaire)</option>
+            <option value="foundations">Foundations (Débutant)</option>
+        `;
+    } else {
+        sel.innerHTML = `
+            <option value="all">Tous</option>
+            <option value="RX">RX</option>
+            <option value="INTER">Scaled</option>
+            <option value="SCALE">Foundations</option>
+        `;
+    }
+    // Restore selection if it still exists, else reset to 'all'
+    if ([...sel.options].some(o => o.value === savedValue)) {
+        sel.value = savedValue;
+    } else {
+        sel.value = 'all';
+        currentCategory = 'all';
+    }
+}
+
+// Division priority for OPEN ranking (lower = better)
+function divisionPriority(division) {
+    if (division === 'rx') return 1;
+    if (division === 'scaled') return 2;
+    if (division === 'foundations') return 3;
+    return 4;
+}
+
+// Compare two scores for a WOD in OPEN format
+// Returns negative if a is better than b, positive if b is better
+function compareOpenScores(a, b, wod) {
+    // 1. Division priority (rx < scaled < foundations)
+    const divA = divisionPriority(a.division);
+    const divB = divisionPriority(b.division);
+    if (divA !== divB) return divA - divB;
+
+    // 2. Result comparison within same division
+    if (wod.wod_type === 'reps') {
+        // AMRAP: more reps = better
+        const repsA = a.value_int || a.value_decimal || 0;
+        const repsB = b.value_int || b.value_decimal || 0;
+        if (repsA !== repsB) return repsB - repsA; // higher is better
+    } else {
+        // For Time
+        const aCompleted = a.is_completed !== false; // null/undefined treated as true
+        const bCompleted = b.is_completed !== false;
+        if (aCompleted && bCompleted) {
+            // Both finished: lower time = better
+            const tA = a.value_time || 999999;
+            const tB = b.value_time || 999999;
+            if (tA !== tB) return tA - tB;
+        } else if (aCompleted && !bCompleted) {
+            return -1; // a finished, b didn't — a is better
+        } else if (!aCompleted && bCompleted) {
+            return 1;  // b finished — b is better
+        } else {
+            // Both hit time cap: more reps = better
+            const repsA = a.value_int || 0;
+            const repsB = b.value_int || 0;
+            if (repsA !== repsB) return repsB - repsA;
+        }
+    }
+
+    // 3. Tiebreak time (lower = better), null means no tiebreak
+    const tbA = a.tiebreak_time != null ? a.tiebreak_time : 999999;
+    const tbB = b.tiebreak_time != null ? b.tiebreak_time : 999999;
+    return tbA - tbB;
+}
+
+// Compare two scores for a WOD in regular format
+function compareRegularScores(a, b) {
+    const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
+    const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
+    return aVal - bVal;
+}
+
+// Filter participants based on current filters
+// For OPEN tournaments, category filter is based on score.division (per-WOD)
+// For regular tournaments, category filter is based on participant.level
+function filterParticipants(participantList) {
+    return participantList.filter(p => {
         if (currentGender !== 'all' && p.gender !== currentGender) return false;
+        // For regular tournaments, filter by registration level
+        if (currentCategory !== 'all' && currentTournament && !currentTournament.is_open) {
+            if (p.level !== currentCategory) return false;
+        }
         return true;
     });
 }
 
-// Calculate rankings
+// For OPEN: check if a participant has any score in the selected division
+function participantMatchesOpenCategory(participant, wodScoresList) {
+    if (currentCategory === 'all') return true;
+    // If any of their scores matches the division filter, include them
+    return wodScoresList.some(s => {
+        const isThisParticipant = participant.type === 'team'
+            ? s.team_id === participant.teamId
+            : s.athlete_id === participant.athleteId;
+        return isThisParticipant && s.division === currentCategory;
+    });
+}
+
+// Calculate OPEN rankings (CrossFit Open algorithm)
+function calculateOpenRankings() {
+    const filtered = filterParticipants(participants);
+    const allWodScores = scores.filter(s => {
+        const wod = wods.find(w => w.id === s.workout_id);
+        return wod != null;
+    });
+
+    // For OPEN, category filter is applied per-WOD based on division
+    // But we show all filtered participants (by gender)
+    // Each WOD rank is calculated within the category (division) filter
+
+    const rankings = [];
+
+    filtered.forEach(participant => {
+        const participantWodData = {};
+        let totalPoints = 0;
+        const wodRanks = []; // for tiebreak
+
+        wods.forEach(wod => {
+            // Get this participant's score for this WOD
+            const myScore = scores.find(s => {
+                if (s.workout_id !== wod.id) return false;
+                if (participant.type === 'team') return s.team_id === participant.teamId;
+                return s.athlete_id === participant.athleteId;
+            });
+
+            // For OPEN: rank within same division (and gender-filtered participants)
+            // Collect all scores for this WOD from gender-filtered participants
+            const wodScores = scores.filter(s => {
+                if (s.workout_id !== wod.id) return false;
+                const p = participants.find(pp => {
+                    if (pp.type === 'team') return s.team_id === pp.teamId;
+                    return s.athlete_id === pp.athleteId;
+                });
+                return p && filterParticipants([p]).length > 0;
+            });
+
+            // Determine which division to rank in
+            // If category filter is set, only rank among that division
+            // If 'all', rank within participant's own division (Open standard)
+            const myDivision = myScore ? myScore.division : null;
+
+            // Get competitors in same division
+            const divisionFilter = currentCategory !== 'all' ? currentCategory : myDivision;
+            const sameDiv = divisionFilter
+                ? wodScores.filter(s => s.division === divisionFilter)
+                : wodScores;
+
+            const totalInCategory = currentCategory !== 'all'
+                ? filtered.filter(p => {
+                    // Count participants who have a score in this division
+                    const theirScore = scores.find(s =>
+                        s.workout_id === wod.id &&
+                        (p.type === 'team' ? s.team_id === p.teamId : s.athlete_id === p.athleteId)
+                    );
+                    return theirScore ? theirScore.division === currentCategory : true;
+                }).length
+                : filtered.length;
+
+            if (myScore && (currentCategory === 'all' || myScore.division === currentCategory)) {
+                // Sort same-division scores using OPEN algorithm
+                const sorted = [...sameDiv].sort((a, b) => compareOpenScores(a, b, wod));
+                const rank = sorted.findIndex(s => s.id === myScore.id) + 1;
+                participantWodData[wod.id] = { rank, score: myScore };
+                totalPoints += rank;
+                wodRanks.push(rank);
+            } else {
+                // No score or wrong division: last place in category
+                const lastPlace = totalInCategory || filtered.length;
+                participantWodData[wod.id] = { rank: lastPlace, score: null };
+                totalPoints += lastPlace;
+                wodRanks.push(lastPlace);
+            }
+        });
+
+        rankings.push({
+            participant,
+            wodScores: participantWodData,
+            totalPoints,
+            wodRanks: [...wodRanks].sort((a, b) => a - b) // sorted for tiebreak
+        });
+    });
+
+    // Sort: lower totalPoints = better; tiebreak = compare sorted WOD rank arrays
+    rankings.sort((a, b) => {
+        if (a.totalPoints !== b.totalPoints) return a.totalPoints - b.totalPoints;
+        // Tiebreak: compare sorted arrays element by element
+        for (let i = 0; i < Math.min(a.wodRanks.length, b.wodRanks.length); i++) {
+            if (a.wodRanks[i] !== b.wodRanks[i]) return a.wodRanks[i] - b.wodRanks[i];
+        }
+        return 0;
+    });
+
+    return rankings;
+}
+
+// Calculate regular rankings
 function calculateRankings() {
+    if (currentTournament && currentTournament.is_open) {
+        return calculateOpenRankings();
+    }
+
     const filtered = filterParticipants(participants);
     const rankings = [];
 
@@ -308,18 +515,13 @@ function calculateRankings() {
                 return scoreParticipant && filterParticipants([scoreParticipant]).length > 0;
             });
 
-            filteredWodScores.sort((a, b) => {
-                const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
-                const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
-                return aVal - bVal;
-            });
+            filteredWodScores.sort(compareRegularScores);
 
             if (score) {
                 const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
                 participantScores[wod.id] = { rank, score };
                 totalPoints += rank;
             } else {
-                // If no result, give last place = total number of participants in this category
                 const lastPlace = filtered.length;
                 participantScores[wod.id] = { rank: lastPlace, score: null };
                 totalPoints += lastPlace;
@@ -347,20 +549,43 @@ function render() {
 }
 
 // Format result for display
-function formatResult(score) {
+function formatResult(score, wod) {
     if (!score) return '-';
 
     if (score.value_time) {
         const minutes = Math.floor(score.value_time / 60);
         const seconds = score.value_time % 60;
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    } else if (score.value_int) {
+    } else if (score.value_int !== null && score.value_int !== undefined) {
+        // Check if this is a time-cap reps (is_completed = false)
+        if (score.is_completed === false) {
+            return `${score.value_int} reps*`;
+        }
         return score.value_int.toString();
-    } else if (score.value_decimal) {
+    } else if (score.value_decimal !== null && score.value_decimal !== undefined) {
         return score.value_decimal.toString();
     } else {
         return '-';
     }
+}
+
+// Get display label for level/division
+function levelLabel(level) {
+    if (!level) return '-';
+    const map = { RX: 'RX', INTER: 'Scaled', SCALE: 'Foundations', rx: 'RX', scaled: 'Scaled', foundations: 'Foundations' };
+    return map[level] || level;
+}
+
+function levelBadgeClass(level) {
+    if (level === 'RX' || level === 'rx') return 'bg-orange-900 text-orange-300';
+    if (level === 'INTER' || level === 'scaled') return 'bg-blue-900 text-blue-300';
+    return 'bg-green-900 text-green-300';
+}
+
+// Get division label for OPEN score
+function scoreDivisionLabel(score) {
+    if (!score || !score.division) return null;
+    return levelLabel(score.division);
 }
 
 // Render overall leaderboard
@@ -371,14 +596,15 @@ function renderOverall() {
     const rankings = calculateRankings();
     const headerRow = document.getElementById('table-header');
     const tbody = document.getElementById('leaderboard-tbody');
+    const isOpen = currentTournament && currentTournament.is_open;
 
     // Headers
     headerRow.innerHTML = `
-        <th class="text-left py-3 px-4 font-semibold text-gray-700">Rang</th>
-        <th class="text-left py-3 px-4 font-semibold text-gray-700">Participant</th>
-        <th class="text-center py-3 px-4 font-semibold text-gray-700 hidden md:table-cell">Catégorie</th>
-        ${wods.map(w => `<th class="text-center py-3 px-2 font-semibold text-gray-700 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('')}
-        <th class="text-center py-3 px-4 font-semibold text-gray-700">Total</th>
+        <th class="text-left py-3 px-4">Rang</th>
+        <th class="text-left py-3 px-4">Participant</th>
+        <th class="text-center py-3 px-4 hidden md:table-cell">${isOpen ? 'Division' : 'Catégorie'}</th>
+        ${wods.map(w => `<th class="text-center py-3 px-2 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('')}
+        <th class="text-center py-3 px-4">Total</th>
     `;
 
     if (rankings.length === 0) {
@@ -390,28 +616,32 @@ function renderOverall() {
         const rank = index + 1;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
+        // For OPEN: show division from their first scored WOD (or registration level)
+        let displayLevel = r.participant.level;
+        if (isOpen) {
+            const firstScored = wods.map(w => r.wodScores[w.id]?.score).find(s => s && s.division);
+            if (firstScored) displayLevel = firstScored.division;
+        }
+
         const wodCells = wods.map(w => {
             const wodData = r.wodScores[w.id];
             const place = wodData?.rank || '-';
-            const result = formatResult(wodData?.score);
+            const result = formatResult(wodData?.score, w);
+            const divLabel = isOpen && wodData?.score ? `<div class="text-gray-500 text-xs">${levelLabel(wodData.score.division)}</div>` : '';
 
-            // Show result on top line, place on bottom line
             return `<td class="py-3 px-2 text-center text-xs hidden md:table-cell">
-                <div class="font-mono font-semibold text-gray-900">${result}</div>
-                <div class="text-gray-500 text-xs mt-1">(${place})</div>
+                <div class="font-mono font-semibold">${result}</div>
+                ${divLabel}
+                <div class="text-gray-500 text-xs mt-0.5">(${place})</div>
             </td>`;
         }).join('');
 
         return `
-            <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
+            <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-xl">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
                 <td class="py-3 px-4 text-center hidden md:table-cell">
-                    <span class="px-2 py-1 rounded text-xs font-semibold ${
-                        r.participant.level === 'RX' ? 'bg-blue-100 text-blue-800' :
-                        r.participant.level === 'INTER' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                    }">${r.participant.level}</span>
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>
                 </td>
                 ${wodCells}
                 <td class="py-3 px-4 text-center font-bold text-xl">${r.totalPoints}</td>
@@ -428,6 +658,7 @@ function renderSingleWod(wodId) {
     document.getElementById('leaderboard-title').textContent = `WOD ${wod.wod_number}`;
     document.getElementById('leaderboard-subtitle').textContent = wod.description || '';
 
+    const isOpen = currentTournament && currentTournament.is_open;
     const filtered = filterParticipants(participants);
     const wodScores = scores.filter(s => s.workout_id === wodId);
 
@@ -437,19 +668,23 @@ function renderSingleWod(wodId) {
             if (p.type === 'team') return s.team_id === p.teamId;
             return s.athlete_id === p.athleteId;
         });
+        // For OPEN: skip if category filter is set and division doesn't match
+        if (isOpen && currentCategory !== 'all' && score && score.division !== currentCategory) {
+            return null;
+        }
         return { participant: p, score };
-    });
+    }).filter(Boolean);
 
     // Separate participants with scores and without scores
     const withScores = results.filter(r => r.score);
     const withoutScores = results.filter(r => !r.score);
 
     // Sort participants with scores
-    withScores.sort((a, b) => {
-        const aVal = a.score.value_time || a.score.value_int || a.score.value_decimal || 999999;
-        const bVal = b.score.value_time || b.score.value_int || b.score.value_decimal || 999999;
-        return aVal - bVal;
-    });
+    if (isOpen) {
+        withScores.sort((a, b) => compareOpenScores(a.score, b.score, wod));
+    } else {
+        withScores.sort((a, b) => compareRegularScores(a.score, b.score));
+    }
 
     // Combine: participants with scores first, then those without
     const sortedResults = [...withScores, ...withoutScores];
@@ -459,11 +694,11 @@ function renderSingleWod(wodId) {
     const tbody = document.getElementById('leaderboard-tbody');
 
     headerRow.innerHTML = `
-        <th class="text-left py-3 px-4 font-semibold text-gray-700">Rang</th>
-        <th class="text-left py-3 px-4 font-semibold text-gray-700">Participant</th>
-        <th class="text-center py-3 px-4 font-semibold text-gray-700 hidden md:table-cell">Catégorie</th>
-        <th class="text-center py-3 px-4 font-semibold text-gray-700">Résultat</th>
-        <th class="text-center py-3 px-4 font-semibold text-gray-700">Points</th>
+        <th class="text-left py-3 px-4">Rang</th>
+        <th class="text-left py-3 px-4">Participant</th>
+        <th class="text-center py-3 px-4 hidden md:table-cell">${isOpen ? 'Division' : 'Catégorie'}</th>
+        <th class="text-center py-3 px-4">Résultat</th>
+        <th class="text-center py-3 px-4">Points</th>
     `;
 
     if (sortedResults.length === 0) {
@@ -472,38 +707,30 @@ function renderSingleWod(wodId) {
     }
 
     tbody.innerHTML = sortedResults.map((r, index) => {
-        // If no score, assign last place to everyone without a result
         const rank = r.score ? (index + 1) : lastPlace;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
-        // Format result based on type
-        let result;
-        if (!r.score) {
-            result = '-';
-        } else if (r.score.value_time) {
-            const minutes = Math.floor(r.score.value_time / 60);
-            const seconds = r.score.value_time % 60;
-            result = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        } else if (r.score.value_int) {
-            result = r.score.value_int;
-        } else if (r.score.value_decimal) {
-            result = r.score.value_decimal;
-        } else {
-            result = '-';
-        }
+        const result = formatResult(r.score, wod);
+
+        // For OPEN: show division from score; for regular: show registration level
+        const displayLevel = isOpen && r.score ? r.score.division : r.participant.level;
+
+        // Tiebreak indicator
+        const tbTime = isOpen && r.score && r.score.tiebreak_time
+            ? `<div class="text-gray-500 text-xs mt-0.5">TB: ${Math.floor(r.score.tiebreak_time/60)}:${String(r.score.tiebreak_time%60).padStart(2,'0')}</div>`
+            : '';
 
         return `
-            <tr class="border-b border-gray-200 hover:bg-gray-50 ${rankClass}">
+            <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-lg">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
                 <td class="py-3 px-4 text-center hidden md:table-cell">
-                    <span class="px-2 py-1 rounded text-xs font-semibold ${
-                        r.participant.level === 'RX' ? 'bg-blue-100 text-blue-800' :
-                        r.participant.level === 'INTER' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                    }">${r.participant.level}</span>
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>
                 </td>
-                <td class="py-3 px-4 text-center font-mono">${result}</td>
+                <td class="py-3 px-4 text-center font-mono">
+                    <div>${result}</div>
+                    ${tbTime}
+                </td>
                 <td class="py-3 px-4 text-center font-bold text-xl">${rank}</td>
             </tr>
         `;
