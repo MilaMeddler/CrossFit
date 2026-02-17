@@ -38,6 +38,14 @@
                 <input type="text" id="tournament-judge-password-input" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3" placeholder="Ex: spring2026">
                 <p class="text-xs text-gray-500 mt-1">Les juges utiliseront ce mot de passe pour entrer les résultats</p>
             </div>
+
+            <div class="flex items-center gap-3 p-3 bg-orange-50 border-2 border-orange-200 rounded-lg">
+                <input type="checkbox" id="tournament-is-open-input" class="w-5 h-5 accent-orange-500">
+                <div>
+                    <label for="tournament-is-open-input" class="font-semibold text-gray-800 cursor-pointer">Format CrossFit Open</label>
+                    <p class="text-xs text-gray-500">Les athlètes choisissent leur niveau (RX / Scaled / Foundations) à chaque WOD</p>
+                </div>
+            </div>
         </div>
 
         <div class="flex gap-3 mt-6">
@@ -468,6 +476,7 @@ let athletes=[], tournaments=[], wods=[], teams=[], scores=[], judges=[], tourna
 let editingAthleteId=null, editingResultId=null, editingWodId=null, currentTournamentId=null, currentTournament=null;
 let pendingTournamentName = null;
 let pendingTournamentPassword = null;
+let pendingTournamentIsOpen = false;
 let editingTournamentId = null;
 
 // ============================================
@@ -631,6 +640,7 @@ async function onTournamentChange() {
 document.getElementById('new-tournament-btn').addEventListener('click', () => {
     document.getElementById('tournament-name-input').value = '';
     document.getElementById('tournament-judge-password-input').value = '';
+    document.getElementById('tournament-is-open-input').checked = false;
     document.getElementById('tournament-data-modal').classList.remove('hidden');
 });
 
@@ -648,6 +658,7 @@ document.getElementById('continue-tournament-btn').addEventListener('click', () 
 
     pendingTournamentName = name;
     pendingTournamentPassword = password;
+    pendingTournamentIsOpen = document.getElementById('tournament-is-open-input').checked;
 
     document.getElementById('tournament-data-modal').classList.add('hidden');
     document.getElementById('tournament-type-modal').classList.remove('hidden');
@@ -657,6 +668,7 @@ document.getElementById('cancel-tournament-data-btn').addEventListener('click', 
     document.getElementById('tournament-data-modal').classList.add('hidden');
     pendingTournamentName = null;
     pendingTournamentPassword = null;
+    pendingTournamentIsOpen = false;
     editingTournamentId = null;
 
     // Reset modal to create mode
@@ -686,11 +698,13 @@ async function createTournament(type) {
     await supabase.from('tournaments').insert({
         name: pendingTournamentName,
         competition_type: type,
-        judge_password: pendingTournamentPassword
+        judge_password: pendingTournamentPassword,
+        is_open: pendingTournamentIsOpen
     });
     showStatus('✅ Tournoi créé');
     pendingTournamentName = null;
     pendingTournamentPassword = null;
+    pendingTournamentIsOpen = false;
     await loadTournaments();
 }
 
@@ -705,6 +719,7 @@ document.getElementById('edit-tournament-btn').addEventListener('click', async (
     document.getElementById('tournament-modal-title').textContent = '✏️ Modifier le Tournoi';
     document.getElementById('tournament-name-input').value = t.name;
     document.getElementById('tournament-judge-password-input').value = t.judge_password || '';
+    document.getElementById('tournament-is-open-input').checked = t.is_open || false;
 
     // Show save button, hide continue button
     document.getElementById('continue-tournament-btn').classList.add('hidden');
@@ -728,7 +743,8 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
     await supabase.from('tournaments')
         .update({
             name: name,
-            judge_password: password
+            judge_password: password,
+            is_open: document.getElementById('tournament-is-open-input').checked
         })
         .eq('id', editingTournamentId);
 
