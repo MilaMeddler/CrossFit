@@ -69,22 +69,22 @@
                     <div class="grid grid-cols-3 gap-3">
                         <label class="cursor-pointer">
                             <input type="radio" name="division" value="rx" class="sr-only" id="div-rx">
-                            <div class="division-btn border-2 border-gray-600 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-orange-500" data-value="rx">
-                                <div class="text-orange-400">RX</div>
+                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="rx">
+                                <div class="text-gray-100">RX</div>
                                 <div class="text-xs text-gray-400 mt-1">Élite</div>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="division" value="scaled" class="sr-only" id="div-scaled">
-                            <div class="division-btn border-2 border-gray-600 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-blue-500" data-value="scaled">
-                                <div class="text-blue-400">Scaled</div>
+                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="scaled">
+                                <div class="text-gray-100">Scaled</div>
                                 <div class="text-xs text-gray-400 mt-1">Intermédiaire</div>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="division" value="foundations" class="sr-only" id="div-foundations">
-                            <div class="division-btn border-2 border-gray-600 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-green-500" data-value="foundations">
-                                <div class="text-green-400">Foundations</div>
+                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="foundations">
+                                <div class="text-gray-100">Found.</div>
                                 <div class="text-xs text-gray-400 mt-1">Débutant</div>
                             </div>
                         </label>
@@ -101,13 +101,14 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <!-- Is completed checkbox (shown for all For Time WODs) -->
-                    <div id="open-completed-container" class="hidden mb-4">
-                        <label class="flex items-center gap-3 cursor-pointer">
+                    <!-- Timecap checkbox (shown for all For Time WODs) -->
+                    <div id="open-completed-container" class="hidden mb-5 bg-gray-700 border-2 border-gray-500 rounded-xl p-4">
+                        <label class="flex items-center gap-4 cursor-pointer">
                             <input type="checkbox" id="result-is-completed" checked
-                                   class="w-6 h-6 accent-orange-500">
-                            <span class="text-gray-200 font-semibold text-lg">WOD terminé (sans time cap)</span>
+                                   class="w-6 h-6 accent-white flex-shrink-0">
+                            <span class="text-white font-bold text-base">WOD terminé</span>
                         </label>
+                        <p class="text-gray-400 text-sm mt-2 ml-10">Décochez si l'athlète a atteint le time cap</p>
                     </div>
 
                     <!-- Time inputs (when completed) -->
@@ -135,25 +136,6 @@
                         <input type="number" id="result-timecap-reps" min="0" placeholder="0"
                                class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl text-center font-mono">
                     </div>
-                </div>
-
-                <!-- OPEN: Tiebreak time -->
-                <div id="open-tiebreak-container" class="hidden">
-                    <label class="block text-base font-semibold text-gray-200 mb-3">Tiebreak (temps en secondes, optionnel)</label>
-                    <div class="flex gap-4 items-center">
-                        <div class="flex-1">
-                            <input type="number" id="tiebreak-minutes" min="0" max="999" placeholder="00"
-                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-2xl font-mono">
-                            <p class="text-sm text-gray-300 text-center mt-2">minutes</p>
-                        </div>
-                        <span class="text-3xl font-bold text-gray-400 pb-8">:</span>
-                        <div class="flex-1">
-                            <input type="number" id="tiebreak-seconds" min="0" max="59" placeholder="00"
-                                   class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-2xl font-mono">
-                            <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">Laissez vide si aucun tiebreak</p>
                 </div>
 
                 <!-- Submit Button -->
@@ -328,7 +310,6 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     const descriptionText = document.getElementById('wod-description-text');
     const submitBtn = document.getElementById('submit-result-btn');
     const openDivisionContainer = document.getElementById('open-division-container');
-    const openTiebreakContainer = document.getElementById('open-tiebreak-container');
     const openCompletedContainer = document.getElementById('open-completed-container');
 
     if (!selectedWodId) {
@@ -336,7 +317,6 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         timeInput.classList.add('hidden');
         descriptionBlock.classList.add('hidden');
         openDivisionContainer.classList.add('hidden');
-        openTiebreakContainer.classList.add('hidden');
         submitBtn.classList.add('hidden');
         return;
     }
@@ -351,19 +331,17 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         descriptionBlock.classList.add('hidden');
     }
 
-    // OPEN format: show division selector and tiebreak
+    // OPEN format: show division selector
     if (currentTournamentIsOpen) {
         openDivisionContainer.classList.remove('hidden');
-        openTiebreakContainer.classList.remove('hidden');
         // Reset division selection
         document.querySelectorAll('input[name="division"]').forEach(r => r.checked = false);
         document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-orange-500','border-blue-500','border-green-500','bg-orange-900','bg-blue-900','bg-green-900');
-            b.classList.add('border-gray-600');
+            b.classList.remove('border-white', 'bg-gray-600');
+            b.classList.add('border-gray-600', 'bg-gray-700');
         });
     } else {
         openDivisionContainer.classList.add('hidden');
-        openTiebreakContainer.classList.add('hidden');
     }
 
     // Show appropriate result input
@@ -389,12 +367,11 @@ document.querySelectorAll('.division-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const value = btn.dataset.value;
         document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-orange-500','border-blue-500','border-green-500','bg-orange-900','bg-blue-900','bg-green-900');
-            b.classList.add('border-gray-600');
+            b.classList.remove('border-white', 'bg-gray-600');
+            b.classList.add('border-gray-600', 'bg-gray-700');
         });
-        const colorMap = { rx: ['border-orange-500','bg-orange-900'], scaled: ['border-blue-500','bg-blue-900'], foundations: ['border-green-500','bg-green-900'] };
-        btn.classList.remove('border-gray-600');
-        btn.classList.add(...(colorMap[value] || []));
+        btn.classList.remove('border-gray-600', 'bg-gray-700');
+        btn.classList.add('border-white', 'bg-gray-600');
         document.getElementById(`div-${value}`).checked = true;
     });
 });
@@ -487,15 +464,6 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             }
         } else {
             resultData.notes = value;
-        }
-    }
-
-    // OPEN: tiebreak time
-    if (currentTournamentIsOpen) {
-        const tbMin = parseInt(document.getElementById('tiebreak-minutes').value) || 0;
-        const tbSec = parseInt(document.getElementById('tiebreak-seconds').value) || 0;
-        if (tbMin > 0 || tbSec > 0) {
-            resultData.tiebreak_time = tbMin * 60 + tbSec;
         }
     }
 
