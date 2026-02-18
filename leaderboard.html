@@ -634,13 +634,14 @@ function renderOverall() {
     headerRow.innerHTML = `
         <th class="text-left py-3 px-4">Rang</th>
         <th class="text-left py-3 px-4">Participant</th>
-        <th class="text-center py-3 px-4 hidden md:table-cell">${isOpen ? 'Division' : 'Catégorie'}</th>
-        ${wods.map(w => `<th class="text-center py-3 px-2 hidden md:table-cell">WOD ${w.wod_number}</th>`).join('')}
+        ${!isOpen ? `<th class="text-center py-3 px-4 hidden sm:table-cell">Catégorie</th>` : ''}
+        ${wods.map(w => `<th class="text-center py-3 px-2 hidden sm:table-cell">WOD ${w.wod_number}</th>`).join('')}
         <th class="text-center py-3 px-4">Total</th>
     `;
 
+    const colSpan = (isOpen ? 2 : 3) + wods.length + 1;
     if (rankings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${3 + wods.length + 1}" class="text-center py-8 text-gray-500">Aucun résultat</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-8 text-gray-500">Aucun résultat</td></tr>`;
         return;
     }
 
@@ -648,33 +649,29 @@ function renderOverall() {
         const rank = index + 1;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
-        // For OPEN: show division from their first scored WOD (or registration level)
-        let displayLevel = r.participant.level;
-        if (isOpen) {
-            const firstScored = wods.map(w => r.wodScores[w.id]?.score).find(s => s && s.division);
-            if (firstScored) displayLevel = firstScored.division;
-        }
-
         const wodCells = wods.map(w => {
             const wodData = r.wodScores[w.id];
             const place = wodData?.rank || '-';
             const result = formatResult(wodData?.score, w);
             const divLabel = isOpen && wodData?.score ? `<div class="text-gray-500 text-xs">${levelLabel(wodData.score.division)}</div>` : '';
 
-            return `<td class="py-3 px-2 text-center text-xs hidden md:table-cell">
+            return `<td class="py-3 px-2 text-center text-xs hidden sm:table-cell">
                 <div class="font-mono font-semibold">${result}</div>
                 ${divLabel}
                 <div class="text-gray-500 text-xs mt-0.5">(${place})</div>
             </td>`;
         }).join('');
 
+        const categoryCell = !isOpen ? `
+                <td class="py-3 px-4 text-center hidden sm:table-cell">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(r.participant.level)}">${levelLabel(r.participant.level)}</span>
+                </td>` : '';
+
         return `
             <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-xl">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
-                <td class="py-3 px-4 text-center hidden md:table-cell">
-                    <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>
-                </td>
+                ${categoryCell}
                 ${wodCells}
                 <td class="py-3 px-4 text-center font-bold text-xl">${r.totalPoints}</td>
             </tr>
@@ -728,7 +725,7 @@ function renderSingleWod(wodId) {
     headerRow.innerHTML = `
         <th class="text-left py-3 px-4">Rang</th>
         <th class="text-left py-3 px-4">Participant</th>
-        <th class="text-center py-3 px-4 hidden md:table-cell">${isOpen ? 'Division' : 'Catégorie'}</th>
+        <th class="text-center py-3 px-4 hidden sm:table-cell">${isOpen ? 'Division' : 'Catégorie'}</th>
         <th class="text-center py-3 px-4">Résultat</th>
         <th class="text-center py-3 px-4">Points</th>
     `;
@@ -751,7 +748,7 @@ function renderSingleWod(wodId) {
             <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-lg">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
-                <td class="py-3 px-4 text-center hidden md:table-cell">
+                <td class="py-3 px-4 text-center hidden sm:table-cell">
                     <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>
                 </td>
                 <td class="py-3 px-4 text-center font-mono">${result}</td>

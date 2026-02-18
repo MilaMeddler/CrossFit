@@ -67,6 +67,26 @@
                     </select>
                 </div>
 
+                <!-- OPEN Division Selection -->
+                <div id="open-division-container" class="hidden">
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Division pour ce WOD</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="rx">
+                            <div class="text-gray-100">RX</div>
+                            <div class="text-xs text-gray-400 mt-1">Élite</div>
+                        </button>
+                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="scaled">
+                            <div class="text-gray-100">Scaled</div>
+                            <div class="text-xs text-gray-400 mt-1">Intermédiaire</div>
+                        </button>
+                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="foundations">
+                            <div class="text-gray-100">Found.</div>
+                            <div class="text-xs text-gray-400 mt-1">Débutant</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="selected-division" value="">
+                </div>
+
                 <!-- WOD Selection -->
                 <div>
                     <label class="block text-base font-semibold text-gray-200 mb-3">WOD</label>
@@ -200,6 +220,12 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('tournament-name').textContent = currentTournament.name;
 
+    if (currentTournament.is_open) {
+        document.getElementById('open-division-container').classList.remove('hidden');
+    } else {
+        document.getElementById('open-division-container').classList.add('hidden');
+    }
+
     loadAthletes();
     loadWODs();
 });
@@ -248,7 +274,7 @@ async function loadAthletes() {
     }
 
     participants.forEach(p => {
-        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)} (${escapeHtml(p.level)} - ${escapeHtml(p.athletes.gender)})</option>`;
+        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
     });
 }
 
@@ -307,6 +333,15 @@ async function preloadExistingScore() {
             existing.value_int ?? existing.value_decimal ?? '';
     }
     document.getElementById('result-notes').value = existing.notes || '';
+    if (existing.division) {
+        document.getElementById('selected-division').value = existing.division;
+        document.querySelectorAll('.division-btn').forEach(b => {
+            if (b.dataset.value === existing.division) {
+                b.classList.remove('border-gray-600', 'bg-gray-700');
+                b.classList.add('border-white', 'bg-gray-600');
+            }
+        });
+    }
     showStatus('Résultat existant chargé — modification en cours');
 }
 
@@ -361,6 +396,19 @@ document.getElementById('athlete-select').addEventListener('change', async () =>
     await preloadExistingScore();
 });
 
+// Division button selection
+document.querySelectorAll('.division-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.division-btn').forEach(b => {
+            b.classList.remove('border-white', 'bg-gray-600');
+            b.classList.add('border-gray-600', 'bg-gray-700');
+        });
+        btn.classList.remove('border-gray-600', 'bg-gray-700');
+        btn.classList.add('border-white', 'bg-gray-600');
+        document.getElementById('selected-division').value = btn.dataset.value;
+    });
+});
+
 // Toggle timecap
 document.getElementById('result-is-completed').addEventListener('change', (e) => {
     if (e.target.checked) {
@@ -401,6 +449,12 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         workout_id: wodId,
         athlete_id: athleteId
     };
+
+    if (currentTournament.is_open) {
+        const division = document.getElementById('selected-division').value;
+        if (!division) return alert('⚠️ Veuillez sélectionner une division (RX, Scaled ou Found.)');
+        resultData.division = division;
+    }
 
     if (isTimeWod) {
         const isCompleted = document.getElementById('result-is-completed').checked;
@@ -478,6 +532,11 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('result-is-completed').checked = true;
     document.getElementById('time-inputs-block').classList.remove('hidden');
     document.getElementById('timecap-reps-block').classList.add('hidden');
+    document.getElementById('selected-division').value = '';
+    document.querySelectorAll('.division-btn').forEach(b => {
+        b.classList.remove('border-white', 'bg-gray-600');
+        b.classList.add('border-gray-600', 'bg-gray-700');
+    });
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
