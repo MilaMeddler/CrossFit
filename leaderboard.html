@@ -386,10 +386,10 @@ function compareRegularScores(a, b, wod) {
         const repsB = b.value_int || b.value_decimal || 0;
         return repsB - repsA;
     }
-    // Generic fallback: lower = better
-    const aVal = a.value_time || a.value_int || a.value_decimal || 999999;
-    const bVal = b.value_time || b.value_int || b.value_decimal || 999999;
-    return aVal - bVal;
+    // Weight: higher = better
+    const aVal = a.value_int || a.value_decimal || 0;
+    const bVal = b.value_int || b.value_decimal || 0;
+    return bVal - aVal;
 }
 
 // Filter participants based on current filters
