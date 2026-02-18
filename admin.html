@@ -98,7 +98,7 @@
             </div>
             <div class="flex gap-3">
                 <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">🏠 Accueil</a>
-                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Déconnexion</button>
+                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🚪 Exit</button>
             </div>
         </div>
     </header>
@@ -1429,8 +1429,19 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
     }
 
     let saveError;
-    if(editingResultId) {
-        const { error } = await supabase.from('scores').update(data).eq('id', editingResultId);
+    // Always check DB for existing score — never rely solely on editingResultId
+    const [typeCheck, idStrCheck] = participant.split('-');
+    let checkQuery = supabase.from('scores').select('id').eq('workout_id', wodId);
+    if (typeCheck === 'athlete') {
+        checkQuery = checkQuery.eq('athlete_id', parseInt(idStrCheck));
+    } else {
+        checkQuery = checkQuery.eq('team_id', parseInt(idStrCheck));
+    }
+    const { data: existingCheck } = await checkQuery.maybeSingle();
+    const targetId = editingResultId || (existingCheck ? existingCheck.id : null);
+
+    if (targetId) {
+        const { error } = await supabase.from('scores').update(data).eq('id', targetId);
         saveError = error;
     } else {
         const { error } = await supabase.from('scores').insert(data);
@@ -1444,8 +1455,11 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
 
     showStatus(editingResultId ? '✅ Résultat modifié' : '✅ Résultat ajouté');
 
+    const savedTournamentId = parseInt(document.getElementById('result-tournament').value);
+    const savedWodId = wodId;
     clearResultForm();
     await loadResults();
+    window.open(`leaderboard.html?tournament=${savedTournamentId}&wod=${savedWodId}`, '_blank');
 });
 
 window.deleteResult = async (id) => {

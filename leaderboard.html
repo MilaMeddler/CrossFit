@@ -142,7 +142,19 @@ let scores = [];
 
 // Initialize
 async function init() {
-    await loadTournaments();
+    const params = new URLSearchParams(window.location.search);
+    const urlTournamentId = parseInt(params.get('tournament')) || null;
+    const urlWodId = params.get('wod') || null;
+
+    await loadTournaments(urlTournamentId);
+
+    if (urlWodId) {
+        currentWod = urlWodId;
+        const wodSelect = document.getElementById('wod-select');
+        wodSelect.value = urlWodId;
+        render();
+    }
+
     setupEventListeners();
     startAutoRefresh();
 }
@@ -170,7 +182,7 @@ function setupEventListeners() {
 }
 
 // Load tournaments
-async function loadTournaments() {
+async function loadTournaments(preferredTournamentId = null) {
     const {data} = await supabaseLeaderboard.from('tournaments').select('*').order('id', {ascending: false});
     tournaments = data || [];
 
@@ -185,7 +197,8 @@ async function loadTournaments() {
         return `<option value="${t.id}">${t.name} ${tag}</option>`;
     }).join('');
 
-    currentTournamentId = tournaments[0].id;
+    const preferred = preferredTournamentId && tournaments.find(t => t.id === preferredTournamentId);
+    currentTournamentId = preferred ? preferredTournamentId : tournaments[0].id;
     select.value = currentTournamentId;
 
     await loadTournamentData();
