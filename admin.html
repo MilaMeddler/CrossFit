@@ -1249,8 +1249,7 @@ document.getElementById('result-participant').addEventListener('change', async (
     await checkAndPreloadExistingScore();
 });
 
-document.getElementById('result-tournament').addEventListener('change', async (e) => {
-    const tid = parseInt(e.target.value);
+async function loadResultFormTournament(tid) {
     if(!tid) {
         document.getElementById('result-wod').innerHTML = '<option value="">WOD</option>';
         document.getElementById('result-participant').innerHTML = '<option value="">Athlète/Équipe</option>';
@@ -1262,7 +1261,7 @@ document.getElementById('result-tournament').addEventListener('change', async (e
 
     // Load WODs
     const {data:wodsData} = await supabase.from('workouts').select('*').eq('tournament_id',tid).order('wod_number');
-    wods = wodsData || []; // Store in global variable for later use
+    wods = wodsData || [];
     const wodSel = document.getElementById('result-wod');
     wodSel.innerHTML = '<option value="">Sélectionner un WOD</option>' +
         (wodsData||[]).map(w=>`<option value="${w.id}">WOD ${escapeHtml(String(w.wod_number))}</option>`).join('');
@@ -1291,6 +1290,10 @@ document.getElementById('result-tournament').addEventListener('change', async (e
         partSel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
             athletes.map(a=>`<option value="athlete-${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
     }
+}
+
+document.getElementById('result-tournament').addEventListener('change', async (e) => {
+    await loadResultFormTournament(parseInt(e.target.value));
 });
 
 function clearResultForm() {
@@ -1318,44 +1321,36 @@ window.editResult = async (id) => {
 
     if(s.workouts && s.workouts.tournament_id) {
         document.getElementById('result-tournament').value = s.workouts.tournament_id;
-        await document.getElementById('result-tournament').dispatchEvent(new Event('change'));
+        await loadResultFormTournament(s.workouts.tournament_id);
 
-        // Wait for selects to populate
-        setTimeout(() => {
-            document.getElementById('result-wod').value = s.workout_id;
-            updateResultInputType(); // Update input type based on WOD
+        document.getElementById('result-wod').value = s.workout_id;
+        updateResultInputType();
 
-            // Populate result based on type
-            const selectedWod = wods.find(w => w.id === s.workout_id);
-            if (selectedWod && selectedWod.wod_type === 'time') {
-                const isCompleted = s.is_completed !== false;
-                document.getElementById('result-is-completed').checked = isCompleted;
-                if (isCompleted && s.value_time) {
-                    const minutes = Math.floor(s.value_time / 60);
-                    const seconds = s.value_time % 60;
-                    document.getElementById('result-minutes').value = minutes;
-                    document.getElementById('result-seconds').value = seconds;
-                } else if (!isCompleted && s.value_int) {
-                    // Timecap: show reps block
-                    document.getElementById('admin-timecap-reps-block').classList.remove('hidden');
-                    document.getElementById('result-value-time').classList.add('hidden');
-                    document.getElementById('result-timecap-reps').value = s.value_int;
-                }
-            } else {
-                document.getElementById('result-value').value = s.value_int || s.value_decimal || '';
+        const selectedWod = wods.find(w => w.id === s.workout_id);
+        if (selectedWod && selectedWod.wod_type === 'time') {
+            const isCompleted = s.is_completed !== false;
+            document.getElementById('result-is-completed').checked = isCompleted;
+            if (isCompleted && s.value_time) {
+                document.getElementById('result-minutes').value = Math.floor(s.value_time / 60);
+                document.getElementById('result-seconds').value = s.value_time % 60;
+            } else if (!isCompleted && s.value_int) {
+                document.getElementById('admin-timecap-reps-block').classList.remove('hidden');
+                document.getElementById('result-value-time').classList.add('hidden');
+                document.getElementById('result-timecap-reps').value = s.value_int;
             }
+        } else {
+            document.getElementById('result-value').value = s.value_int || s.value_decimal || '';
+        }
 
-            // Division for OPEN
-            if (s.division) {
-                document.getElementById('result-division-select').value = s.division;
-            }
+        if (s.division) {
+            document.getElementById('result-division-select').value = s.division;
+        }
 
-            if(s.athlete_id) {
-                document.getElementById('result-participant').value = `athlete-${s.athlete_id}`;
-            } else if(s.team_id) {
-                document.getElementById('result-participant').value = `team-${s.team_id}`;
-            }
-        }, 300);
+        if(s.athlete_id) {
+            document.getElementById('result-participant').value = `athlete-${s.athlete_id}`;
+        } else if(s.team_id) {
+            document.getElementById('result-participant').value = `team-${s.team_id}`;
+        }
     }
 
     document.getElementById('result-judge').value = s.judge_id || '';
