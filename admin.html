@@ -98,7 +98,7 @@
             </div>
             <div class="flex gap-3">
                 <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">🏠 Accueil</a>
-                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Déconnexion</button>
+                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🚪 Exit</button>
             </div>
         </div>
     </header>
@@ -1455,8 +1455,11 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
 
     showStatus(editingResultId ? '✅ Résultat modifié' : '✅ Résultat ajouté');
 
+    const savedTournamentId = parseInt(document.getElementById('result-tournament').value);
+    const savedWodId = wodId;
     clearResultForm();
     await loadResults();
+    window.open(`leaderboard.html?tournament=${savedTournamentId}&wod=${savedWodId}`, '_blank');
 });
 
 window.deleteResult = async (id) => {
