@@ -1189,7 +1189,65 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
     }
 });
 
-document.getElementById('result-wod').addEventListener('change', updateResultInputType);
+// Auto-check for existing score and pre-fill the form
+async function checkAndPreloadExistingScore() {
+    const wodId = parseInt(document.getElementById('result-wod').value);
+    const participant = document.getElementById('result-participant').value;
+    if (!wodId || !participant) return;
+
+    const [type, idStr] = participant.split('-');
+    let query = supabase.from('scores').select('*').eq('workout_id', wodId);
+    if (type === 'athlete') {
+        query = query.eq('athlete_id', parseInt(idStr));
+    } else {
+        query = query.eq('team_id', parseInt(idStr));
+    }
+    const { data: existing } = await query.maybeSingle();
+
+    if (existing) {
+        editingResultId = existing.id;
+        document.getElementById('result-form-title').textContent = '✏️ Modifier un résultat';
+        document.getElementById('cancel-result-btn').classList.remove('hidden');
+
+        const selectedWod = wods.find(w => w.id === wodId);
+        if (selectedWod && selectedWod.wod_type === 'time') {
+            const isCompleted = existing.is_completed !== false;
+            document.getElementById('result-is-completed').checked = isCompleted;
+            if (isCompleted && existing.value_time) {
+                document.getElementById('result-value-time').classList.remove('hidden');
+                document.getElementById('admin-timecap-reps-block').classList.add('hidden');
+                document.getElementById('result-minutes').value = Math.floor(existing.value_time / 60);
+                document.getElementById('result-seconds').value = existing.value_time % 60;
+            } else if (!isCompleted) {
+                document.getElementById('result-value-time').classList.add('hidden');
+                document.getElementById('admin-timecap-reps-block').classList.remove('hidden');
+                document.getElementById('result-timecap-reps').value = existing.value_int || '';
+            }
+        } else {
+            document.getElementById('result-value').value =
+                existing.value_int ?? existing.value_decimal ?? '';
+        }
+
+        if (existing.division) {
+            document.getElementById('result-division-select').value = existing.division;
+        }
+        document.getElementById('result-notes').value = existing.notes || '';
+    } else {
+        // No existing score — clear editingResultId only if not in pencil-edit mode
+        editingResultId = null;
+        document.getElementById('result-form-title').textContent = '➕ Ajouter un résultat';
+        document.getElementById('cancel-result-btn').classList.add('hidden');
+    }
+}
+
+document.getElementById('result-wod').addEventListener('change', async () => {
+    updateResultInputType();
+    await checkAndPreloadExistingScore();
+});
+
+document.getElementById('result-participant').addEventListener('change', async () => {
+    await checkAndPreloadExistingScore();
+});
 
 document.getElementById('result-tournament').addEventListener('change', async (e) => {
     const tid = parseInt(e.target.value);
