@@ -237,7 +237,6 @@
                         <option value="time">⏱️ For Time</option>
                         <option value="reps">🔁 AMRAP</option>
                         <option value="weight">🏋️ Weight</option>
-                        <option value="complex">🔥 Complex</option>
                     </select>
                 </div>
                 <textarea id="wod-description" rows="3" placeholder="Description" class="w-full border rounded-lg px-4 py-2 mb-4"></textarea>
@@ -986,8 +985,7 @@ function renderWods() {
     const types = {
         time:'⏱️ For Time',
         reps:'🔁 AMRAP',
-        weight:'🏋️ Weight',
-        complex:'🔥 Complex'
+        weight:'🏋️ Weight'
     };
     tbody.innerHTML = wods.map(w=>`
         <tr class="hover:bg-gray-50">
