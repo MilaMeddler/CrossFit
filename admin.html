@@ -1335,12 +1335,10 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
         value_int: null,
         value_time: null,
         value_decimal: null,
-        notes: notes,
-        division: null,
-        is_completed: null
+        notes: notes
     };
 
-    // Division for OPEN tournaments
+    // Division for OPEN tournaments (only add if column exists and value is set)
     if (currentResultIsOpen) {
         const divVal = document.getElementById('result-division-select').value;
         if (!divVal) return alert('⚠️ Veuillez sélectionner une division');
@@ -1372,13 +1370,21 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
         }
     }
 
+    let saveError;
     if(editingResultId) {
-        await supabase.from('scores').update(data).eq('id',editingResultId);
-        showStatus('✅ Résultat modifié');
+        const { error } = await supabase.from('scores').update(data).eq('id', editingResultId);
+        saveError = error;
     } else {
-        await supabase.from('scores').insert(data);
-        showStatus('✅ Résultat ajouté');
+        const { error } = await supabase.from('scores').insert(data);
+        saveError = error;
     }
+
+    if (saveError) {
+        console.error('Save error:', saveError);
+        return showStatus('❌ Erreur: ' + (saveError.message || saveError.code || 'inconnue'), 5000);
+    }
+
+    showStatus(editingResultId ? '✅ Résultat modifié' : '✅ Résultat ajouté');
 
     clearResultForm();
     await loadResults();
