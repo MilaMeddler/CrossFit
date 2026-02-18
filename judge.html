@@ -312,7 +312,22 @@ async function preloadExistingScore() {
         .eq('athlete_id', athleteId)
         .maybeSingle();
 
-    if (!existing) return;
+    if (!existing) {
+        // Clear fields so previous athlete's data doesn't linger
+        document.getElementById('result-value').value = '';
+        document.getElementById('result-minutes').value = '';
+        document.getElementById('result-seconds').value = '';
+        document.getElementById('result-timecap-reps').value = '';
+        document.getElementById('result-is-completed').checked = true;
+        document.getElementById('time-inputs-block').classList.remove('hidden');
+        document.getElementById('timecap-reps-block').classList.add('hidden');
+        document.getElementById('selected-division').value = '';
+        document.querySelectorAll('.division-btn').forEach(b => {
+            b.classList.remove('border-white', 'bg-gray-600');
+            b.classList.add('border-gray-600', 'bg-gray-700');
+        });
+        return;
+    }
 
     const wod = wods.find(w => w.id === wodId);
     if (wod && wod.wod_type === 'time') {
@@ -332,7 +347,6 @@ async function preloadExistingScore() {
         document.getElementById('result-value').value =
             existing.value_int ?? existing.value_decimal ?? '';
     }
-    document.getElementById('result-notes').value = existing.notes || '';
     if (existing.division) {
         document.getElementById('selected-division').value = existing.division;
         document.querySelectorAll('.division-btn').forEach(b => {
