@@ -393,29 +393,44 @@ function compareRegularScores(a, b, wod) {
 }
 
 // Filter participants based on current filters
-// For OPEN tournaments, category filter is based on score.division (per-WOD)
-// For regular tournaments, category filter is based on participant.level
 function filterParticipants(participantList) {
     return participantList.filter(p => {
         if (currentGender !== 'all' && p.gender !== currentGender) return false;
-        // For regular tournaments, filter by registration level
-        if (currentCategory !== 'all' && currentTournament && !currentTournament.is_open) {
-            if (p.level !== currentCategory) return false;
+        if (currentCategory !== 'all' && currentTournament) {
+            if (currentTournament.is_open) {
+                // For OPEN: only include athletes whose ALL existing results are in selected division
+                // Athletes with no results yet are always included
+                const myScores = scores.filter(s =>
+                    p.type === 'team' ? s.team_id === p.teamId : s.athlete_id === p.athleteId
+                );
+                if (myScores.length > 0 && !myScores.every(s => s.division === currentCategory)) {
+                    return false;
+                }
+            } else {
+                if (p.level !== currentCategory) return false;
+            }
         }
         return true;
     });
 }
 
-// For OPEN: check if a participant has any score in the selected division
-function participantMatchesOpenCategory(participant, wodScoresList) {
-    if (currentCategory === 'all') return true;
-    // If any of their scores matches the division filter, include them
-    return wodScoresList.some(s => {
-        const isThisParticipant = participant.type === 'team'
-            ? s.team_id === participant.teamId
-            : s.athlete_id === participant.athleteId;
-        return isThisParticipant && s.division === currentCategory;
-    });
+// Get division profile for an athlete: 'rx'|'scaled'|'foundations'|'mixed'|null
+function athleteDivisionProfile(wodScoresData) {
+    const divisions = Object.values(wodScoresData)
+        .filter(d => d.score && d.score.division)
+        .map(d => d.score.division);
+    if (divisions.length === 0) return null;
+    const unique = [...new Set(divisions)];
+    return unique.length === 1 ? unique[0] : 'mixed';
+}
+
+// Colored dot for division profile (only for pure single-division)
+function divisionDot(profile) {
+    if (profile === 'rx')          return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-orange-400 mr-2 align-middle" title="RX"></span>';
+    if (profile === 'scaled')      return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-400 mr-2 align-middle" title="Scaled"></span>';
+    if (profile === 'foundations') return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-green-400 mr-2 align-middle" title="Foundations"></span>';
+    if (profile === 'mixed')       return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-500 mr-2 align-middle" title="Mixte"></span>';
+    return '';
 }
 
 // Calculate OPEN rankings (CrossFit Open algorithm)
@@ -672,7 +687,9 @@ function renderOverall() {
         return `
             <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-xl">${rank}</td>
-                <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
+                <td class="py-3 px-4 font-semibold">
+                    ${isOpen ? divisionDot(athleteDivisionProfile(r.wodScores)) : ''}${r.participant.name}
+                </td>
                 ${categoryCell}
                 ${wodCells}
                 <td class="py-3 px-4 text-center font-bold text-xl">${r.totalPoints}</td>
@@ -743,15 +760,18 @@ function renderSingleWod(wodId) {
 
         const result = formatResult(r.score, wod);
 
-        // For OPEN: show division from score; for regular: show registration level
-        const displayLevel = isOpen && r.score ? r.score.division : r.participant.level;
+        // For OPEN: show division from score only (never use registration level)
+        // For regular: show registration level
+        const displayLevel = isOpen ? (r.score ? r.score.division : null) : r.participant.level;
 
         return `
             <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-lg">${rank}</td>
                 <td class="py-3 px-4 font-semibold">${r.participant.name}</td>
                 <td class="py-3 px-4 text-center hidden sm:table-cell">
-                    <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>
+                    ${displayLevel
+                        ? `<span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(displayLevel)}">${levelLabel(displayLevel)}</span>`
+                        : '<span class="text-gray-600 text-xs">—</span>'}
                 </td>
                 <td class="py-3 px-4 text-center font-mono">${result}</td>
                 <td class="py-3 px-4 text-center font-bold text-xl">${rank}</td>
