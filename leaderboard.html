@@ -509,18 +509,35 @@ function calculateOpenRankings() {
             }
         });
 
+        const divProfile = athleteDivisionProfile(participantWodData);
         rankings.push({
             participant,
             wodScores: participantWodData,
             totalPoints,
-            wodRanks: [...wodRanks].sort((a, b) => a - b) // sorted for tiebreak
+            wodRanks: [...wodRanks].sort((a, b) => a - b), // sorted for tiebreak
+            divisionProfile: divProfile
         });
     });
 
-    // Sort: lower totalPoints = better; tiebreak = compare sorted WOD rank arrays
+    // Division profile priority for tiebreak (pure division beats mixed)
+    function divProfilePriority(profile) {
+        if (profile === 'rx') return 1;
+        if (profile === 'scaled') return 2;
+        if (profile === 'foundations') return 3;
+        if (profile === 'mixed') return 4;
+        return 5; // no results
+    }
+
+    // Sort: lower totalPoints = better;
+    // Tiebreak 1: pure division > mixed (RX > mixed, Scaled > mixed)
+    // Tiebreak 2: compare sorted WOD rank arrays
     rankings.sort((a, b) => {
         if (a.totalPoints !== b.totalPoints) return a.totalPoints - b.totalPoints;
-        // Tiebreak: compare sorted arrays element by element
+        // Tiebreak 1: division profile priority
+        const profA = divProfilePriority(a.divisionProfile);
+        const profB = divProfilePriority(b.divisionProfile);
+        if (profA !== profB) return profA - profB;
+        // Tiebreak 2: compare sorted arrays element by element
         for (let i = 0; i < Math.min(a.wodRanks.length, b.wodRanks.length); i++) {
             if (a.wodRanks[i] !== b.wodRanks[i]) return a.wodRanks[i] - b.wodRanks[i];
         }

@@ -139,6 +139,7 @@
                             </div>
                         </div>
                         <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
+                        <p id="timecap-hint" class="hidden text-sm text-amber-400 mt-2 font-semibold"></p>
                     </div>
 
                     <!-- Reps at time cap -->
@@ -408,6 +409,16 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
         document.getElementById('result-is-completed').checked = true;
         document.getElementById('time-inputs-block').classList.remove('hidden');
         document.getElementById('timecap-reps-block').classList.add('hidden');
+        // Show time cap limit if set
+        const timecapHint = document.getElementById('timecap-hint');
+        if (wod.time_cap) {
+            document.getElementById('result-minutes').max = wod.time_cap;
+            timecapHint.textContent = `⏱️ Time cap: ${wod.time_cap} min (max pour un résultat complété)`;
+            timecapHint.classList.remove('hidden');
+        } else {
+            document.getElementById('result-minutes').max = 999;
+            timecapHint.classList.add('hidden');
+        }
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
@@ -493,6 +504,12 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
             if (minutes === 0 && seconds === 0) return alert('Veuillez entrer un temps');
             if (seconds > 59) return alert('Les secondes doivent être entre 0 et 59');
+            // Time cap validation
+            if (wod && wod.time_cap) {
+                if (minutes > wod.time_cap || (minutes === wod.time_cap && seconds > 0)) {
+                    return alert(`⚠️ Le temps ne peut pas dépasser le time cap de ${wod.time_cap} minutes. Si l'athlète n'a pas terminé, décochez "Terminé dans le temps"`);
+                }
+            }
             resultData.value_time = minutes * 60 + seconds;
         } else {
             // Time cap — save reps as value_int
