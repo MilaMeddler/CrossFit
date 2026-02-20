@@ -424,12 +424,12 @@ function athleteDivisionProfile(wodScoresData) {
     return unique.length === 1 ? unique[0] : 'mixed';
 }
 
-// Colored dot for division profile (only for pure single-division)
+// Colored badge for division profile
 function divisionDot(profile) {
-    if (profile === 'rx')          return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-orange-400 mr-2 align-middle" title="RX"></span>';
-    if (profile === 'scaled')      return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-400 mr-2 align-middle" title="Scaled"></span>';
-    if (profile === 'foundations') return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-green-400 mr-2 align-middle" title="Foundations"></span>';
-    if (profile === 'mixed')       return '<span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-500 mr-2 align-middle" title="Mixte"></span>';
+    if (profile === 'rx')          return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-orange-500 text-white text-xs font-bold mr-2" title="RX">RX</span>';
+    if (profile === 'scaled')      return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-blue-500 text-white text-xs font-bold mr-2" title="Scaled">SC</span>';
+    if (profile === 'foundations') return '<span class="inline-flex items-center justify-center w-7 h-5 rounded-full bg-green-500 text-white text-xs font-bold mr-2" title="Foundations">F</span>';
+    if (profile === 'mixed')       return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-gray-500 text-white text-xs font-bold mr-2" title="Mixte">MX</span>';
     return '';
 }
 
