@@ -154,6 +154,11 @@
                         class="w-full bg-red-600 text-white py-5 rounded-lg font-bold text-xl hover:bg-red-700 transition-colors shadow-lg hidden">
                     Enregistrer le résultat
                 </button>
+                <!-- Delete Button (only when editing existing result) -->
+                <button id="delete-result-btn"
+                        class="w-full bg-gray-700 border-2 border-red-800 text-red-400 py-3 rounded-lg font-semibold text-base hover:bg-red-900 hover:text-red-200 transition-colors hidden">
+                    🗑 Supprimer ce résultat
+                </button>
             </div>
         </div>
     </div>
@@ -169,6 +174,7 @@ var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentTournament = null;
 let athletes = [];
 let wods = [];
+let existingScoreId = null;
 
 // UTILITY
 function escapeHtml(text) {
@@ -313,6 +319,8 @@ async function preloadExistingScore() {
         .maybeSingle();
 
     if (!existing) {
+        existingScoreId = null;
+        document.getElementById('delete-result-btn').classList.add('hidden');
         // Clear fields so previous athlete's data doesn't linger
         document.getElementById('result-value').value = '';
         document.getElementById('result-minutes').value = '';
@@ -328,6 +336,9 @@ async function preloadExistingScore() {
         });
         return;
     }
+
+    existingScoreId = existing.id;
+    document.getElementById('delete-result-btn').classList.remove('hidden');
 
     const wod = wods.find(w => w.id === wodId);
     if (wod && wod.wod_type === 'time') {
@@ -539,6 +550,45 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     }
 
     // Reset form
+    document.getElementById('result-value').value = '';
+    document.getElementById('result-minutes').value = '';
+    document.getElementById('result-seconds').value = '';
+    document.getElementById('result-timecap-reps').value = '';
+    document.getElementById('result-is-completed').checked = true;
+    document.getElementById('time-inputs-block').classList.remove('hidden');
+    document.getElementById('timecap-reps-block').classList.add('hidden');
+    document.getElementById('selected-division').value = '';
+    document.querySelectorAll('.division-btn').forEach(b => {
+        b.classList.remove('border-white', 'bg-gray-600');
+        b.classList.add('border-gray-600', 'bg-gray-700');
+    });
+    document.getElementById('athlete-select').value = '';
+    document.getElementById('wod-select').value = '';
+    document.getElementById('result-regular').classList.add('hidden');
+    document.getElementById('result-time').classList.add('hidden');
+    document.getElementById('wod-description').classList.add('hidden');
+    document.getElementById('submit-result-btn').classList.add('hidden');
+    document.getElementById('delete-result-btn').classList.add('hidden');
+    existingScoreId = null;
+});
+
+// DELETE RESULT
+document.getElementById('delete-result-btn').addEventListener('click', async () => {
+    if (!existingScoreId) return;
+    if (!confirm('⚠️ Supprimer ce résultat ?')) return;
+
+    const { error } = await supabase.from('scores').delete().eq('id', existingScoreId);
+
+    if (error) {
+        console.error('Error deleting result:', error);
+        return showStatus('Erreur lors de la suppression', true);
+    }
+
+    showStatus('✅ Résultat supprimé');
+
+    // Reset form
+    existingScoreId = null;
+    document.getElementById('delete-result-btn').classList.add('hidden');
     document.getElementById('result-value').value = '';
     document.getElementById('result-minutes').value = '';
     document.getElementById('result-seconds').value = '';
