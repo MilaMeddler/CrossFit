@@ -478,15 +478,11 @@ function calculateOpenRankings() {
                 return p && filterParticipants([p]).length > 0;
             });
 
-            // Determine which division to rank in
-            // If category filter is set, only rank among that division
-            // If 'all', rank within participant's own division (Open standard)
-            const myDivision = myScore ? myScore.division : null;
-
-            // Get competitors in same division
-            const divisionFilter = currentCategory !== 'all' ? currentCategory : myDivision;
-            const sameDiv = divisionFilter
-                ? wodScores.filter(s => s.division === divisionFilter)
+            // Determine ranking pool:
+            // - If category filter set: only athletes in that division
+            // - If 'all': ALL athletes together (compareOpenScores handles division priority: RX > Scaled > Found)
+            const sameDiv = currentCategory !== 'all'
+                ? wodScores.filter(s => s.division === currentCategory)
                 : wodScores;
 
             const totalInCategory = currentCategory !== 'all'
