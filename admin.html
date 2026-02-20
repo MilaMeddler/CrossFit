@@ -935,6 +935,18 @@ document.getElementById('add-participant-btn').addEventListener('click', async (
 
     if(!athleteId) return alert('⚠️ Sélectionnez un athlète');
 
+    // Check if already registered
+    const { data: existing } = await supabase
+        .from('tournament_participants')
+        .select('id')
+        .eq('tournament_id', currentTournamentId)
+        .eq('athlete_id', athleteId)
+        .maybeSingle();
+
+    if (existing) {
+        return alert('⚠️ Cet athlète est déjà inscrit pour ce tournoi');
+    }
+
     const {error} = await supabase.from('tournament_participants').insert({
         tournament_id: currentTournamentId,
         athlete_id: athleteId,
@@ -942,11 +954,7 @@ document.getElementById('add-participant-btn').addEventListener('click', async (
     });
 
     if(error) {
-        if(error.message.includes('unique')) {
-            alert('⚠️ Cet athlète est déjà inscrit pour ce tournoi');
-        } else {
-            alert('❌ Erreur: ' + error.message);
-        }
+        alert('❌ Erreur: ' + error.message);
         return;
     }
 
