@@ -458,7 +458,7 @@ emailInput.addEventListener('keypress', (e) => {
 document.getElementById('logout-btn').addEventListener('click', async () => {
     console.log('🚪 Logging out...');
     await supabase.auth.signOut();
-    location.reload();
+    window.location.href = 'index.html';
 });
 
 // Check session on page load

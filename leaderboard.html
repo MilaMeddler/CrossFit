@@ -646,7 +646,9 @@ function renderOverall() {
     }
 
     tbody.innerHTML = rankings.map((r, index) => {
-        const rank = index + 1;
+        // Calculate rank with tie handling: same totalPoints = same rank
+        const firstWithSamePoints = rankings.findIndex(rr => rr.totalPoints === r.totalPoints);
+        const rank = firstWithSamePoints + 1;
         const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
 
         const wodCells = wods.map(w => {

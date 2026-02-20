@@ -479,7 +479,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
     // Redirect to leaderboard after 1.5 seconds
     setTimeout(() => {
-        window.location.href = 'leaderboard.html';
+        window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}`;
     }, 1500);
 });
 
