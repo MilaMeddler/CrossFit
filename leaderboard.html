@@ -414,22 +414,29 @@ function filterParticipants(participantList) {
     });
 }
 
-// Get division profile for an athlete: 'rx'|'scaled'|'foundations'|'mixed'|null
+// Get division profile for an athlete
+// Returns: 'rx' | 'mixed_rx' | 'scaled' | 'mixed_scaled' | 'foundations' | null
 function athleteDivisionProfile(wodScoresData) {
     const divisions = Object.values(wodScoresData)
         .filter(d => d.score && d.score.division)
         .map(d => d.score.division);
     if (divisions.length === 0) return null;
     const unique = [...new Set(divisions)];
-    return unique.length === 1 ? unique[0] : 'mixed';
+    if (unique.length === 1) return unique[0]; // pure profile
+    // Mixed: ranked by the best (highest) division present
+    if (unique.includes('rx')) return 'mixed_rx';         // RX + anything → between RX and Scaled
+    if (unique.includes('scaled')) return 'mixed_scaled'; // Scaled + Foundations → between Scaled and Foundations
+    return 'mixed';
 }
 
 // Colored badge for division profile
 function divisionDot(profile) {
-    if (profile === 'rx')          return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-orange-500 text-white text-xs font-bold mr-2" title="RX">RX</span>';
-    if (profile === 'scaled')      return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-blue-500 text-white text-xs font-bold mr-2" title="Scaled">SC</span>';
-    if (profile === 'foundations') return '<span class="inline-flex items-center justify-center w-7 h-5 rounded-full bg-green-500 text-white text-xs font-bold mr-2" title="Foundations">F</span>';
-    if (profile === 'mixed')       return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-gray-500 text-white text-xs font-bold mr-2" title="Mixte">MX</span>';
+    if (profile === 'rx')           return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-orange-500 text-white text-xs font-bold mr-2" title="RX">RX</span>';
+    if (profile === 'mixed_rx')     return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-orange-400 text-white text-xs font-bold mr-2" title="Mixte RX">MX</span>';
+    if (profile === 'scaled')       return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-blue-500 text-white text-xs font-bold mr-2" title="Scaled">SC</span>';
+    if (profile === 'mixed_scaled') return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-blue-400 text-white text-xs font-bold mr-2" title="Mixte Scaled">MX</span>';
+    if (profile === 'foundations')  return '<span class="inline-flex items-center justify-center w-7 h-5 rounded-full bg-green-500 text-white text-xs font-bold mr-2" title="Foundations">F</span>';
+    if (profile === 'mixed')        return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-gray-500 text-white text-xs font-bold mr-2" title="Mixte">MX</span>';
     return '';
 }
 
@@ -519,13 +526,16 @@ function calculateOpenRankings() {
         });
     });
 
-    // Division profile priority for tiebreak (pure division beats mixed)
+    // Division profile priority for tiebreak
+    // Order: RX > Mixed-RX > Scaled > Mixed-Scaled > Foundations
     function divProfilePriority(profile) {
         if (profile === 'rx') return 1;
-        if (profile === 'scaled') return 2;
-        if (profile === 'foundations') return 3;
-        if (profile === 'mixed') return 4;
-        return 5; // no results
+        if (profile === 'mixed_rx') return 2;       // RX+Scaled or RX+Found → above Scaled
+        if (profile === 'scaled') return 3;
+        if (profile === 'mixed_scaled') return 4;   // Scaled+Found → above Foundations
+        if (profile === 'foundations') return 5;
+        if (profile === 'mixed') return 4;          // other mixes
+        return 6; // no results
     }
 
     // Sort: lower totalPoints = better;

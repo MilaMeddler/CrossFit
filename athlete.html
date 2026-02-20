@@ -173,6 +173,7 @@ let selectedTournamentId = null;
 let selectedAthleteId = null;
 let selectedWodId = null;
 let currentTournamentIsOpen = false;
+let currentWodTimeCap = null;
 
 // UTILITY
 function escapeHtml(text) {
@@ -357,10 +358,12 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         // Show time cap limit if set
         const timecapHint = document.getElementById('timecap-hint');
         if (wod.time_cap) {
+            currentWodTimeCap = wod.time_cap;
             document.getElementById('result-minutes').max = wod.time_cap;
-            timecapHint.textContent = `⏱️ Time cap: ${wod.time_cap} min`;
+            timecapHint.textContent = `⏱️ Time cap: ${wod.time_cap} min — max résultat complété ${wod.time_cap}:00`;
             timecapHint.classList.remove('hidden');
         } else {
+            currentWodTimeCap = null;
             document.getElementById('result-minutes').max = 999;
             timecapHint.classList.add('hidden');
         }
@@ -401,12 +404,28 @@ document.getElementById('result-is-completed').addEventListener('change', (e) =>
 // Seconds validation
 document.getElementById('result-seconds').addEventListener('input', (e) => {
     let value = parseInt(e.target.value);
+    if (value < 0) { e.target.value = 0; return; }
     if (value > 59) {
         e.target.value = 59;
         showStatus('Secondes: maximum 59', true);
+        return;
     }
-    if (value < 0) {
+    // If at time cap minutes, seconds must be 0
+    const minutes = parseInt(document.getElementById('result-minutes').value) || 0;
+    if (currentWodTimeCap && minutes >= currentWodTimeCap && value > 0) {
         e.target.value = 0;
+        showStatus(`⏱️ Limite time cap: ${currentWodTimeCap}:00`, true);
+    }
+});
+
+// Minutes validation (time cap)
+document.getElementById('result-minutes').addEventListener('input', (e) => {
+    let value = parseInt(e.target.value);
+    if (value < 0) { e.target.value = 0; return; }
+    if (currentWodTimeCap && value > currentWodTimeCap) {
+        e.target.value = currentWodTimeCap;
+        document.getElementById('result-seconds').value = 0;
+        showStatus(`⏱️ Limite time cap: ${currentWodTimeCap}:00`, true);
     }
 });
 
