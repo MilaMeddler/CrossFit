@@ -42,7 +42,7 @@
                     <p id="tournament-name" class="text-gray-300 text-lg mt-1"></p>
                 </div>
                 <div class="flex gap-3 flex-shrink-0">
-                    <a href="leaderboard.html" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
+                    <a id="leaderboard-link" href="leaderboard.html" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
                         Résultats
                     </a>
                     <button id="logout-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
@@ -225,6 +225,9 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     document.getElementById('login-modal').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('tournament-name').textContent = currentTournament.name;
+
+    // Update leaderboard link to include current tournament
+    document.getElementById('leaderboard-link').href = `leaderboard.html?tournament=${currentTournament.id}`;
 
     if (currentTournament.is_open) {
         document.getElementById('open-division-container').classList.remove('hidden');
@@ -523,6 +526,9 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         .eq('workout_id', wodId)
         .eq('athlete_id', athleteId)
         .maybeSingle();
+
+    console.log('Submitting result data:', resultData);
+    console.log('Existing score:', existing);
 
     if (existing) {
         // Update existing result
