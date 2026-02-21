@@ -239,6 +239,12 @@
                         <option value="weight">🏋️ Weight</option>
                     </select>
                 </div>
+                <div id="time-cap-container" class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">⏱️ Time cap (minutes) - optionnel</label>
+                    <input type="number" id="wod-time-cap" min="1" max="999" placeholder="Ex: 12"
+                           class="border rounded-lg px-4 py-2 w-full md:w-1/2">
+                    <p class="text-xs text-gray-500 mt-1">Temps maximum pour compléter le WOD (laissez vide si pas de limite)</p>
+                </div>
                 <textarea id="wod-description" rows="3" placeholder="Description" class="w-full border rounded-lg px-4 py-2 mb-4"></textarea>
                 <div class="flex gap-3">
                     <button id="add-wod-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Ajouter</button>
@@ -995,23 +1001,29 @@ function renderWods() {
         reps:'🔁 AMRAP',
         weight:'🏋️ Weight'
     };
-    tbody.innerHTML = wods.map(w=>`
+    tbody.innerHTML = wods.map(w=>{
+        const typeLabel = types[w.wod_type] || escapeHtml(w.wod_type);
+        const timecapLabel = w.time_cap ? ` <span class="text-xs text-gray-500">(cap: ${w.time_cap} min)</span>` : '';
+        return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-semibold">WOD ${escapeHtml(String(w.wod_number))}</td>
-            <td class="px-4 py-3">${types[w.wod_type]||escapeHtml(w.wod_type)}</td>
+            <td class="px-4 py-3">${typeLabel}${timecapLabel}</td>
             <td class="px-4 py-3 text-sm">${escapeHtml(w.description)||'-'}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="editWod(${w.id})" class="text-blue-600 hover:text-blue-800 mr-3 text-xl">✏️</button>
                 <button onclick="deleteWod(${w.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function clearWodForm() {
     document.getElementById('wod-number').value = '';
     document.getElementById('wod-type').value = 'time';
     document.getElementById('wod-description').value = '';
+    document.getElementById('wod-time-cap').value = '';
+    // Show time cap container for default "time" type
+    document.getElementById('time-cap-container').classList.remove('hidden');
     editingWodId = null;
     document.getElementById('wod-form-title').textContent = '➕ Ajouter un WOD';
     document.getElementById('add-wod-btn').textContent = 'Ajouter';
@@ -1021,11 +1033,20 @@ function clearWodForm() {
 window.editWod = (id) => {
     const w = wods.find(x => x.id === id);
     if(!w) return;
-    
+
     document.getElementById('wod-number').value = w.wod_number;
     document.getElementById('wod-type').value = w.wod_type;
     document.getElementById('wod-description').value = w.description || '';
-    
+    document.getElementById('wod-time-cap').value = w.time_cap || '';
+
+    // Show/hide time cap container based on type
+    const timecapContainer = document.getElementById('time-cap-container');
+    if (w.wod_type === 'time') {
+        timecapContainer.classList.remove('hidden');
+    } else {
+        timecapContainer.classList.add('hidden');
+    }
+
     editingWodId = id;
     document.getElementById('wod-form-title').textContent = '✏️ Modifier un WOD';
     document.getElementById('add-wod-btn').textContent = 'Enregistrer';
@@ -1034,16 +1055,31 @@ window.editWod = (id) => {
 
 document.getElementById('cancel-wod-btn').addEventListener('click', clearWodForm);
 
+// Toggle time cap field visibility based on WOD type
+document.getElementById('wod-type').addEventListener('change', (e) => {
+    const timecapContainer = document.getElementById('time-cap-container');
+    if (e.target.value === 'time') {
+        timecapContainer.classList.remove('hidden');
+    } else {
+        timecapContainer.classList.add('hidden');
+        document.getElementById('wod-time-cap').value = ''; // clear if switching away from time
+    }
+});
+
 document.getElementById('add-wod-btn').addEventListener('click', async () => {
     if(!currentTournamentId) return alert('⚠️ Sélectionnez un tournoi');
     const num = parseInt(document.getElementById('wod-number').value);
     if(!num) return alert('⚠️ Numéro de WOD requis');
     
+    const wodType = document.getElementById('wod-type').value;
+    const timecap = parseInt(document.getElementById('wod-time-cap').value);
+
     const data = {
         tournament_id: currentTournamentId,
         wod_number: num,
-        wod_type: document.getElementById('wod-type').value,
-        description: document.getElementById('wod-description').value.trim() || null
+        wod_type: wodType,
+        description: document.getElementById('wod-description').value.trim() || null,
+        time_cap: (wodType === 'time' && timecap > 0) ? timecap : null
     };
     
     if(editingWodId) {
