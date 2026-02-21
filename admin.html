@@ -337,11 +337,16 @@
             </div>
 
             <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold">📋 Résultats récents (100 derniers)</h3>
-                    <button id="delete-old-results-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
-                        🗑️ Supprimer > 30 jours
-                    </button>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-semibold">📋 Résultats du tournoi</h3>
+                    <div class="flex gap-3 items-center flex-wrap">
+                        <select id="results-list-tournament" class="border rounded-lg px-3 py-2 text-sm">
+                            <option value="">Tous les tournois</option>
+                        </select>
+                        <button id="delete-tournament-results-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm whitespace-nowrap">
+                            🗑️ Supprimer les résultats
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -605,6 +610,7 @@ async function loadTournaments() {
     tournaments = data || [];
     renderTournamentSelect();
     renderResultTournamentSelect();
+    renderResultListTournamentSelect();
     
     if(tournaments.length && !currentTournamentId) {
         currentTournamentId=tournaments[0].id;
@@ -1104,7 +1110,7 @@ window.deleteWod = async (id) => {
 // ============================================
 // RESULTS
 // ============================================
-async function loadResults() {
+async function loadResults(tournamentId = null) {
     const {data} = await supabase.from('scores').select(`
         *,
         athletes(id,first_name,last_name),
@@ -1116,9 +1122,20 @@ async function loadResults() {
         ),
         workouts(id,wod_number,tournament_id,tournaments(name)),
         judges(id,name)
-    `).order('id',{ascending:false}).limit(100);
-    scores = data || [];
+    `).order('id',{ascending:false}).limit(500);
+    let all = data || [];
+    if (tournamentId) {
+        all = all.filter(s => s.workouts && s.workouts.tournament_id === tournamentId);
+    }
+    scores = all;
     renderResults();
+}
+
+function renderResultListTournamentSelect() {
+    const sel = document.getElementById('results-list-tournament');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Tous les tournois</option>' +
+        tournaments.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
 }
 
 function renderResults() {
@@ -1329,8 +1346,17 @@ async function loadResultFormTournament(tid) {
                 }).join('');
         }
     } else {
-        partSel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
-            athletes.map(a=>`<option value="athlete-${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
+        const {data: participants} = await supabase
+            .from('tournament_participants')
+            .select('athlete_id, athletes(id, first_name, last_name)')
+            .eq('tournament_id', tid)
+            .order('athletes(last_name)');
+        if (!participants || participants.length === 0) {
+            partSel.innerHTML = '<option value="">Aucun participant inscrit</option>';
+        } else {
+            partSel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
+                participants.map(p=>`<option value="athlete-${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`).join('');
+        }
     }
 }
 
@@ -1449,6 +1475,14 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
             const seconds = parseInt(document.getElementById('result-seconds').value) || 0;
             if (minutes === 0 && seconds === 0) return alert('⚠️ Veuillez entrer un temps');
             if (seconds > 59) return alert('⚠️ Les secondes doivent être entre 0 et 59');
+            // Time cap validation
+            if (selectedWod.time_cap) {
+                const totalSeconds = minutes * 60 + seconds;
+                const capSeconds = selectedWod.time_cap * 60;
+                if (totalSeconds > capSeconds) {
+                    return alert(`⚠️ Temps invalide: ${minutes}:${seconds.toString().padStart(2, '0')}\n\nLe time cap est ${selectedWod.time_cap}:00 maximum.`);
+                }
+            }
             data.value_time = minutes * 60 + seconds;
         } else {
             const reps = parseInt(document.getElementById('result-timecap-reps').value) || 0;
@@ -1494,8 +1528,9 @@ document.getElementById('save-result-btn').addEventListener('click', async () =>
 
     const savedTournamentId = parseInt(document.getElementById('result-tournament').value);
     const savedWodId = wodId;
+    const resultsFilterTid = parseInt(document.getElementById('results-list-tournament').value) || null;
     clearResultForm();
-    await loadResults();
+    await loadResults(resultsFilterTid);
     window.open(`leaderboard.html?tournament=${savedTournamentId}&wod=${savedWodId}`, '_blank');
 });
 
@@ -1503,28 +1538,42 @@ window.deleteResult = async (id) => {
     if(!confirm('⚠️ Supprimer ce résultat?')) return;
     await supabase.from('scores').delete().eq('id',id);
     showStatus('✅ Résultat supprimé');
-    await loadResults();
+    const tid = parseInt(document.getElementById('results-list-tournament').value) || null;
+    await loadResults(tid);
 };
 
-// DELETE OLD RESULTS
-document.getElementById('delete-old-results-btn').addEventListener('click', async () => {
-    if(!confirm('⚠️ ATTENTION!\n\nSupprimer tous les résultats de plus de 30 jours?\n\nCette action est IRRÉVERSIBLE!')) return;
-    
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const { error, data } = await supabase
-        .from('scores')
-        .delete()
-        .lt('submitted_at', thirtyDaysAgo.toISOString());
-    
-    if(error) {
+// DELETE TOURNAMENT RESULTS
+document.getElementById('delete-tournament-results-btn').addEventListener('click', async () => {
+    const tid = parseInt(document.getElementById('results-list-tournament').value);
+    if (!tid) {
+        return alert('⚠️ Veuillez sélectionner un tournoi pour supprimer ses résultats');
+    }
+    const t = tournaments.find(x => x.id === tid);
+    if (!confirm(`⚠️ ATTENTION!\n\nSupprimer TOUS les résultats du tournoi "${t ? t.name : tid}"?\n\nCette action est IRRÉVERSIBLE!`)) return;
+
+    const {data: tournamentWods} = await supabase
+        .from('workouts').select('id').eq('tournament_id', tid);
+
+    if (!tournamentWods || tournamentWods.length === 0) {
+        return showStatus('ℹ️ Aucun résultat à supprimer', 2000);
+    }
+
+    const wodIds = tournamentWods.map(w => w.id);
+    const {error} = await supabase.from('scores').delete().in('workout_id', wodIds);
+
+    if (error) {
         console.error(error);
         showStatus('❌ Erreur: ' + error.message, 4000);
     } else {
-        showStatus('✅ Anciens résultats supprimés', 3000);
-        await loadResults();
+        showStatus('✅ Résultats supprimés', 3000);
+        await loadResults(tid);
     }
+});
+
+// Filter results by tournament
+document.getElementById('results-list-tournament').addEventListener('change', async (e) => {
+    const tid = parseInt(e.target.value) || null;
+    await loadResults(tid);
 });
 
 // ============================================
