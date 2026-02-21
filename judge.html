@@ -365,6 +365,11 @@ async function preloadExistingScore() {
     }
     if (existing.division) {
         document.getElementById('selected-division').value = existing.division;
+        // Reset ALL buttons first, then highlight the correct one
+        document.querySelectorAll('.division-btn').forEach(b => {
+            b.classList.remove('border-white', 'bg-gray-600');
+            b.classList.add('border-gray-600', 'bg-gray-700');
+        });
         document.querySelectorAll('.division-btn').forEach(b => {
             if (b.dataset.value === existing.division) {
                 b.classList.remove('border-gray-600', 'bg-gray-700');
@@ -531,11 +536,13 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
                 }
             }
             resultData.value_time = minutes * 60 + seconds;
+            resultData.value_int = null; // clear timecap reps if switching to completed
         } else {
             // Time cap — save reps as value_int
             const reps = parseInt(document.getElementById('result-timecap-reps').value) || 0;
             if (reps === 0) return alert('Veuillez entrer le nombre de répétitions au time cap');
             resultData.value_int = reps;
+            resultData.value_time = null; // clear time if switching to timecap
         }
     } else {
         const value = document.getElementById('result-value').value.trim();
@@ -568,10 +575,11 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     console.log('Existing score:', existing);
 
     if (existing) {
-        // Update existing result
+        // Update existing result — exclude FK fields that identify the record
+        const { workout_id: _w, athlete_id: _a, ...updateData } = resultData;
         const { error } = await supabase
             .from('scores')
-            .update(resultData)
+            .update(updateData)
             .eq('id', existing.id);
 
         if (error) {
