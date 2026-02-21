@@ -234,6 +234,12 @@ async function loadTournamentData() {
     const wodSelect = document.getElementById('wod-select');
     wodSelect.innerHTML = '<option value="overall">Classement Général</option>' +
         wods.map(w => `<option value="${w.id}">WOD ${w.wod_number}</option>`).join('');
+    // Restore current selection after rebuild (auto-refresh resets innerHTML)
+    wodSelect.value = currentWod;
+    if (!wodSelect.value) { // selected WOD no longer exists
+        currentWod = 'overall';
+        wodSelect.value = 'overall';
+    }
 
     // Load participants
     if (tournament.competition_type === 'team') {
