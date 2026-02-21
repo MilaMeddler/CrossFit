@@ -101,19 +101,25 @@
 
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
-                    <!-- Timecap checkbox (shown for all For Time WODs) -->
-                    <div id="open-completed-container" class="hidden mb-5 bg-gray-700 border-2 border-gray-500 rounded-xl p-4">
-                        <label class="flex items-center gap-4 cursor-pointer">
-                            <input type="checkbox" id="result-is-completed" checked
-                                   class="w-6 h-6 accent-white flex-shrink-0">
-                            <span class="text-white font-bold text-base">WOD terminé</span>
-                        </label>
-                        <p class="text-gray-400 text-sm mt-2 ml-10">Décochez si l'athlète a atteint le time cap</p>
+                    <!-- Toggle: WOD Terminé / Pas Terminé -->
+                    <div class="mb-5">
+                        <div class="grid grid-cols-2 rounded-xl overflow-hidden border-2 border-gray-600">
+                            <button type="button" id="toggle-completed-btn"
+                                    class="py-4 font-bold text-lg bg-green-700 text-white transition-all"
+                                    onclick="setWodCompleted(true)">
+                                ✓ WOD terminé
+                            </button>
+                            <button type="button" id="toggle-not-completed-btn"
+                                    class="py-4 font-bold text-lg bg-gray-700 text-gray-400 transition-all"
+                                    onclick="setWodCompleted(false)">
+                                ✗ Pas terminé
+                            </button>
+                        </div>
+                        <input type="checkbox" id="result-is-completed" checked class="sr-only">
                     </div>
 
                     <!-- Time inputs (when completed) -->
                     <div id="time-inputs-block">
-                        <label class="block text-base font-semibold text-gray-200 mb-3">Temps (For Time)</label>
                         <div class="flex gap-4 items-center">
                             <div class="flex-1">
                                 <input type="number" id="result-minutes" min="0" max="999" placeholder="00"
@@ -127,13 +133,12 @@
                                 <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
                             </div>
                         </div>
-                        <p class="text-sm text-gray-400 mt-3">Exemple: 12 minutes 34 secondes = 12:34</p>
-                        <p id="timecap-hint" class="hidden text-sm text-amber-400 mt-2 font-semibold"></p>
+                        <p id="timecap-hint" class="hidden text-sm text-amber-400 mt-3 font-semibold"></p>
                     </div>
 
-                    <!-- Reps at time cap (when NOT completed, OPEN only) -->
+                    <!-- Reps (when NOT completed) -->
                     <div id="timecap-reps-block" class="hidden">
-                        <label class="block text-base font-semibold text-gray-200 mb-3">Répétitions au time cap</label>
+                        <label class="block text-base font-semibold text-gray-200 mb-3">Nombre des Rep's</label>
                         <input type="number" id="result-timecap-reps" min="0" placeholder="0"
                                class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl text-center font-mono">
                     </div>
@@ -312,7 +317,6 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     const descriptionText = document.getElementById('wod-description-text');
     const submitBtn = document.getElementById('submit-result-btn');
     const openDivisionContainer = document.getElementById('open-division-container');
-    const openCompletedContainer = document.getElementById('open-completed-container');
 
     if (!selectedWodId) {
         regularInput.classList.add('hidden');
@@ -350,11 +354,7 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
-        // Always show timecap option for For Time WODs
-        openCompletedContainer.classList.remove('hidden');
-        document.getElementById('result-is-completed').checked = true;
-        document.getElementById('time-inputs-block').classList.remove('hidden');
-        document.getElementById('timecap-reps-block').classList.add('hidden');
+        setWodCompleted(true);
         // Show time cap limit if set
         const timecapHint = document.getElementById('timecap-hint');
         if (wod.time_cap) {
@@ -370,7 +370,6 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
-        openCompletedContainer.classList.add('hidden');
     }
 
     submitBtn.classList.remove('hidden');
@@ -390,16 +389,23 @@ document.querySelectorAll('.division-btn').forEach(btn => {
     });
 });
 
-// OPEN: Toggle completed/time-cap
-document.getElementById('result-is-completed').addEventListener('change', (e) => {
-    if (e.target.checked) {
+// Toggle completed/not completed
+function setWodCompleted(completed) {
+    document.getElementById('result-is-completed').checked = completed;
+    const btnDone = document.getElementById('toggle-completed-btn');
+    const btnNot = document.getElementById('toggle-not-completed-btn');
+    if (completed) {
+        btnDone.className = 'py-4 font-bold text-lg bg-green-700 text-white transition-all';
+        btnNot.className = 'py-4 font-bold text-lg bg-gray-700 text-gray-400 transition-all';
         document.getElementById('time-inputs-block').classList.remove('hidden');
         document.getElementById('timecap-reps-block').classList.add('hidden');
     } else {
+        btnDone.className = 'py-4 font-bold text-lg bg-gray-700 text-gray-400 transition-all';
+        btnNot.className = 'py-4 font-bold text-lg bg-red-700 text-white transition-all';
         document.getElementById('time-inputs-block').classList.add('hidden');
         document.getElementById('timecap-reps-block').classList.remove('hidden');
     }
-});
+}
 
 // Seconds validation
 document.getElementById('result-seconds').addEventListener('input', (e) => {
