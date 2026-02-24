@@ -291,17 +291,19 @@ document.getElementById('athlete-select').addEventListener('change', async (e) =
     const select = document.getElementById('wod-select');
     select.innerHTML = '<option value="">-- Sélectionner un WOD --</option>';
 
-    for (const w of wods) {
-        // Check if athlete already has result for this WOD
-        const { data: existingResult } = await supabase
-            .from('scores')
-            .select('id')
-            .eq('workout_id', w.id)
-            .eq('athlete_id', selectedAthleteId)
-            .maybeSingle();
+    // Fetch all existing scores for this athlete in one query (avoid N+1)
+    const { data: existingScores } = await supabase
+        .from('scores')
+        .select('id, workout_id')
+        .eq('athlete_id', selectedAthleteId)
+        .in('workout_id', wods.map(w => w.id));
 
-        const alreadyEntered = existingResult ? ' (déjà entré)' : '';
-        select.innerHTML += `<option value="${w.id}" ${existingResult ? 'disabled' : ''}>WOD ${w.wod_number} (${escapeHtml(w.wod_type)})${alreadyEntered}</option>`;
+    const existingScoreMap = {};
+    (existingScores || []).forEach(s => { existingScoreMap[s.workout_id] = true; });
+
+    for (const w of wods) {
+        const alreadyEntered = existingScoreMap[w.id] ? ' (déjà entré)' : '';
+        select.innerHTML += `<option value="${w.id}" ${existingScoreMap[w.id] ? 'disabled' : ''}>WOD ${w.wod_number} (${escapeHtml(w.wod_type)})${alreadyEntered}</option>`;
     }
 
     document.getElementById('wod-container').classList.remove('hidden');
@@ -527,40 +529,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
     showStatus('Résultat enregistré avec succès!');
 
-    // Check rank then redirect
-    setTimeout(() => { checkRankAndRedirect(); }, 1500);
-});
-
-async function checkRankAndRedirect() {
-    try {
-        const wod = wods.find(w => w.id === selectedWodId);
-        const { data: allScores } = await supabase
-            .from('scores').select('*').eq('workout_id', selectedWodId);
-
-        let rank = 999;
-        if (allScores && allScores.length > 0) {
-            let sorted;
-            if (wod && wod.wod_type === 'time') {
-                sorted = [...allScores].sort((a, b) => {
-                    if (a.is_completed && !b.is_completed) return -1;
-                    if (!a.is_completed && b.is_completed) return 1;
-                    if (a.is_completed && b.is_completed)
-                        return (a.value_time || 99999) - (b.value_time || 99999);
-                    return (b.value_int || 0) - (a.value_int || 0);
-                });
-            } else {
-                sorted = [...allScores].sort((a, b) =>
-                    (b.value_int || b.value_decimal || 0) - (a.value_int || a.value_decimal || 0));
-            }
-            rank = sorted.findIndex(s => s.athlete_id === selectedAthleteId) + 1;
-        }
-
-        const celebrate = rank >= 1 && rank <= 3 ? `&celebrate=${rank}` : '';
-        window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}${celebrate}`;
-    } catch (e) {
+    setTimeout(() => {
         window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}`;
-    }
-}
+    }, 1500);
+});
 
 // INIT
 loadTournaments();
