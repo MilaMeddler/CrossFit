@@ -140,6 +140,25 @@ let wods = [];
 let participants = [];
 let scores = [];
 
+// Initialize
+async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const urlTournamentId = parseInt(params.get('tournament')) || null;
+    const urlWodId = params.get('wod') || null;
+
+    await loadTournaments(urlTournamentId);
+
+    if (urlWodId) {
+        currentWod = urlWodId;
+        const wodSelect = document.getElementById('wod-select');
+        wodSelect.value = urlWodId;
+        render();
+    }
+
+    setupEventListeners();
+    startAutoRefresh();
+}
+
 function setupEventListeners() {
     document.getElementById('tournament-select').addEventListener('change', async (e) => {
         currentTournamentId = parseInt(e.target.value);
@@ -800,24 +819,6 @@ function startAutoRefresh() {
     setInterval(async () => {
         await loadTournamentData();
     }, 10000);
-}
-
-async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const urlTournamentId = parseInt(params.get('tournament')) || null;
-    const urlWodId = params.get('wod') || null;
-
-    await loadTournaments(urlTournamentId);
-
-    if (urlWodId) {
-        currentWod = urlWodId;
-        const wodSelect = document.getElementById('wod-select');
-        wodSelect.value = urlWodId;
-        render();
-    }
-
-    setupEventListeners();
-    startAutoRefresh();
 }
 
 init();
