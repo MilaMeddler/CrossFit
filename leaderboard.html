@@ -140,25 +140,6 @@ let wods = [];
 let participants = [];
 let scores = [];
 
-// Initialize
-async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const urlTournamentId = parseInt(params.get('tournament')) || null;
-    const urlWodId = params.get('wod') || null;
-
-    await loadTournaments(urlTournamentId);
-
-    if (urlWodId) {
-        currentWod = urlWodId;
-        const wodSelect = document.getElementById('wod-select');
-        wodSelect.value = urlWodId;
-        render();
-    }
-
-    setupEventListeners();
-    startAutoRefresh();
-}
-
 function setupEventListeners() {
     document.getElementById('tournament-select').addEventListener('change', async (e) => {
         currentTournamentId = parseInt(e.target.value);
@@ -821,7 +802,138 @@ function startAutoRefresh() {
     }, 10000);
 }
 
-init();
+// ============================================
+// CELEBRATION (top 3 after athlete submits)
+// ============================================
+function showCelebration(rank) {
+    const medals = ['🥇', '🥈', '🥉'];
+    const medal = medals[rank - 1];
+
+    // Canvas for fireworks
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9998;';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    // Medal badge
+    const medalEl = document.createElement('div');
+    medalEl.style.cssText = [
+        'position:fixed;top:42%;left:50%;',
+        'transform:translate(-50%,-50%) scale(0);',
+        'font-size:110px;z-index:9999;pointer-events:none;',
+        'text-align:center;line-height:1;',
+        'animation:celebMedalPop 0.65s cubic-bezier(0.175,0.885,0.32,1.275) forwards;'
+    ].join('');
+    medalEl.textContent = medal;
+
+    if (!document.getElementById('celebration-css')) {
+        const s = document.createElement('style');
+        s.id = 'celebration-css';
+        s.textContent = `
+            @keyframes celebMedalPop {
+                0%   { transform:translate(-50%,-50%) scale(0) rotate(-25deg); opacity:0; }
+                65%  { transform:translate(-50%,-50%) scale(1.25) rotate(6deg); opacity:1; }
+                100% { transform:translate(-50%,-50%) scale(1) rotate(0deg);   opacity:1; }
+            }`;
+        document.head.appendChild(s);
+    }
+    document.body.appendChild(medalEl);
+
+    // Particle system
+    const COLORS = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6BFF','#FFB347','#FF6B35','#C0FDFB','#FFFFFF'];
+    const particles = [];
+
+    function burst(x, y, n = 65) {
+        for (let i = 0; i < n; i++) {
+            const angle = (Math.PI * 2 / n) * i + Math.random() * 0.6;
+            const spd = Math.random() * 11 + 4;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd - 3,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                size: Math.random() * 7 + 3,
+                life: 1.0,
+                decay: Math.random() * 0.016 + 0.009,
+                rect: Math.random() > 0.5
+            });
+        }
+    }
+
+    const W = canvas.width, H = canvas.height;
+    // Fire bursts: sides → center → top
+    burst(0,           H * 0.65, 75);
+    burst(W,           H * 0.65, 75);
+    setTimeout(() => burst(W * 0.2,  H * 0.4,  55), 250);
+    setTimeout(() => burst(W * 0.8,  H * 0.4,  55), 350);
+    setTimeout(() => burst(W * 0.5,  H * 0.55, 65), 550);
+    setTimeout(() => burst(0,           H * 0.3,  50), 750);
+    setTimeout(() => burst(W,           H * 0.3,  50), 850);
+    setTimeout(() => burst(W * 0.5,  H * 0.2,  70), 1050);
+
+    function animate() {
+        ctx.clearRect(0, 0, W, H);
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x  += p.vx;
+            p.y  += p.vy;
+            p.vy += 0.28;
+            p.vx *= 0.99;
+            p.life -= p.decay;
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            if (p.rect) {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.life * 12);
+                ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                ctx.restore();
+            } else {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.globalAlpha = 1;
+        if (particles.length > 0) requestAnimationFrame(animate);
+        else canvas.remove();
+    }
+    animate();
+
+    // Fade medal out after 3.5s
+    setTimeout(() => {
+        medalEl.style.transition = 'opacity 0.7s ease-out, transform 0.7s ease-out';
+        medalEl.style.opacity = '0';
+        medalEl.style.transform = 'translate(-50%,-80%) scale(0.7)';
+        setTimeout(() => medalEl.remove(), 700);
+    }, 3500);
+}
+
+async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const urlTournamentId = parseInt(params.get('tournament')) || null;
+    const urlWodId = params.get('wod') || null;
+    const celebrateRank = parseInt(params.get('celebrate')) || null;
+
+    await loadTournaments(urlTournamentId);
+
+    if (urlWodId) {
+        currentWod = urlWodId;
+        const wodSelect = document.getElementById('wod-select');
+        wodSelect.value = urlWodId;
+        render();
+    }
+
+    setupEventListeners();
+    startAutoRefresh();
+
+    if (celebrateRank >= 1 && celebrateRank <= 3) {
+        setTimeout(() => showCelebration(celebrateRank), 600);
+    }
+}
 </script>
 
 </body>

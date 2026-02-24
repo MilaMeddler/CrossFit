@@ -527,11 +527,40 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
 
     showStatus('Résultat enregistré avec succès!');
 
-    // Redirect to leaderboard after 1.5 seconds
-    setTimeout(() => {
-        window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}`;
-    }, 1500);
+    // Check rank then redirect
+    setTimeout(() => { checkRankAndRedirect(); }, 1500);
 });
+
+async function checkRankAndRedirect() {
+    try {
+        const wod = wods.find(w => w.id === selectedWodId);
+        const { data: allScores } = await supabase
+            .from('scores').select('*').eq('workout_id', selectedWodId);
+
+        let rank = 999;
+        if (allScores && allScores.length > 0) {
+            let sorted;
+            if (wod && wod.wod_type === 'time') {
+                sorted = [...allScores].sort((a, b) => {
+                    if (a.is_completed && !b.is_completed) return -1;
+                    if (!a.is_completed && b.is_completed) return 1;
+                    if (a.is_completed && b.is_completed)
+                        return (a.value_time || 99999) - (b.value_time || 99999);
+                    return (b.value_int || 0) - (a.value_int || 0);
+                });
+            } else {
+                sorted = [...allScores].sort((a, b) =>
+                    (b.value_int || b.value_decimal || 0) - (a.value_int || a.value_decimal || 0));
+            }
+            rank = sorted.findIndex(s => s.athlete_id === selectedAthleteId) + 1;
+        }
+
+        const celebrate = rank >= 1 && rank <= 3 ? `&celebrate=${rank}` : '';
+        window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}${celebrate}`;
+    } catch (e) {
+        window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}`;
+    }
+}
 
 // INIT
 loadTournaments();
