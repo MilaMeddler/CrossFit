@@ -363,6 +363,10 @@ function compareOpenScores(a, b, wod) {
             const repsA = a.value_int || 0;
             const repsB = b.value_int || 0;
             if (repsA !== repsB) return repsB - repsA;
+            // If reps are equal, use tiebreak time (lower is better)
+            const tiebreakA = a.tiebreak_time || 999999;
+            const tiebreakB = b.tiebreak_time || 999999;
+            if (tiebreakA !== tiebreakB) return tiebreakA - tiebreakB;
         }
     }
 
@@ -383,7 +387,10 @@ function compareRegularScores(a, b, wod) {
             return (a.value_time || 999999) - (b.value_time || 999999);
         } else {
             // Both hit timecap: more reps = better
-            return (b.value_int || 0) - (a.value_int || 0);
+            const repsCompare = (b.value_int || 0) - (a.value_int || 0);
+            if (repsCompare !== 0) return repsCompare;
+            // If reps are equal, use tiebreak time (lower is better)
+            return (a.tiebreak_time || 999999) - (b.tiebreak_time || 999999);
         }
     }
     // AMRAP / reps: more = better
@@ -635,7 +642,14 @@ function formatResult(score, wod) {
     } else if (score.value_int !== null && score.value_int !== undefined) {
         // Check if this is a time-cap reps (is_completed = false)
         if (score.is_completed === false) {
-            return `${score.value_int} reps*`;
+            let result = `${score.value_int} reps*`;
+            // Add tiebreak time if available
+            if (score.tiebreak_time) {
+                const tbMinutes = Math.floor(score.tiebreak_time / 60);
+                const tbSeconds = score.tiebreak_time % 60;
+                result += ` (${tbMinutes}:${tbSeconds.toString().padStart(2, '0')})`;
+            }
+            return result;
         }
         return score.value_int.toString();
     } else if (score.value_decimal !== null && score.value_decimal !== undefined) {

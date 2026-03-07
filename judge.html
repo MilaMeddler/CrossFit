@@ -153,6 +153,21 @@
                         <label class="block text-base font-semibold text-gray-200 mb-3">Nombre des Rep's</label>
                         <input type="number" id="result-timecap-reps" min="0" placeholder="0"
                                class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl text-center font-mono">
+
+                        <label class="block text-base font-semibold text-gray-200 mb-3 mt-5">Tiebreak (temps au moment des reps)</label>
+                        <div class="flex gap-4 items-center">
+                            <div class="flex-1">
+                                <input type="number" id="tiebreak-minutes" min="0" max="999" placeholder="00"
+                                       class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                                <p class="text-sm text-gray-300 text-center mt-2">minutes</p>
+                            </div>
+                            <span class="text-4xl font-bold text-gray-400 pb-8">:</span>
+                            <div class="flex-1">
+                                <input type="number" id="tiebreak-seconds" min="0" max="59" placeholder="00"
+                                       class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-center text-3xl font-mono">
+                                <p class="text-sm text-gray-300 text-center mt-2">secondes</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -337,6 +352,8 @@ async function preloadExistingScore() {
         document.getElementById('result-minutes').value = '';
         document.getElementById('result-seconds').value = '';
         document.getElementById('result-timecap-reps').value = '';
+    document.getElementById('tiebreak-minutes').value = '';
+    document.getElementById('tiebreak-seconds').value = '';
         setWodCompleted(true);
         document.getElementById('selected-division').value = '';
         document.querySelectorAll('.division-btn').forEach(b => {
@@ -358,6 +375,10 @@ async function preloadExistingScore() {
             document.getElementById('result-seconds').value = existing.value_time % 60;
         } else if (!isCompleted) {
             document.getElementById('result-timecap-reps').value = existing.value_int || '';
+            if (existing.tiebreak_time) {
+                document.getElementById('tiebreak-minutes').value = Math.floor(existing.tiebreak_time / 60);
+                document.getElementById('tiebreak-seconds').value = existing.tiebreak_time % 60;
+            }
         }
     } else {
         document.getElementById('result-value').value =
@@ -489,6 +510,17 @@ document.getElementById('result-seconds').addEventListener('input', (e) => {
     }
 });
 
+// Tiebreak seconds validation
+document.getElementById('tiebreak-seconds').addEventListener('input', (e) => {
+    let value = parseInt(e.target.value);
+    if (value < 0) { e.target.value = 0; return; }
+    if (value > 59) {
+        e.target.value = 59;
+        showStatus('Secondes: maximum 59', true);
+        return;
+    }
+});
+
 // Minutes validation (time cap)
 document.getElementById('result-minutes').addEventListener('input', (e) => {
     let value = parseInt(e.target.value);
@@ -548,10 +580,29 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             resultData.value_time = minutes * 60 + seconds;
             resultData.value_int = null; // clear timecap reps if switching to completed
         } else {
-            // Time cap — save reps as value_int
+            // Time cap — save reps as value_int and tiebreak time
             const reps = parseInt(document.getElementById('result-timecap-reps').value) || 0;
             if (reps === 0) return alert('Veuillez entrer le nombre de répétitions au time cap');
+
+            const tiebreakMinutes = parseInt(document.getElementById('tiebreak-minutes').value) || 0;
+            const tiebreakSeconds = parseInt(document.getElementById('tiebreak-seconds').value) || 0;
+
+            if (tiebreakMinutes === 0 && tiebreakSeconds === 0) {
+                return alert('Veuillez entrer le temps tiebreak (temps au moment où l\'athlète a atteint ces répétitions)');
+            }
+            if (tiebreakSeconds > 59) return alert('Les secondes du tiebreak doivent être entre 0 et 59');
+
+            // Validate tiebreak time doesn't exceed time cap
+            if (wod?.time_cap) {
+                const tiebreakTotalSeconds = tiebreakMinutes * 60 + tiebreakSeconds;
+                const capSeconds = wod.time_cap * 60;
+                if (tiebreakTotalSeconds > capSeconds) {
+                    return alert(`⚠️ Temps tiebreak invalide: ${tiebreakMinutes}:${tiebreakSeconds.toString().padStart(2, '0')}\n\nLe time cap est ${wod.time_cap}:00 maximum.`);
+                }
+            }
+
             resultData.value_int = reps;
+            resultData.tiebreak_time = tiebreakMinutes * 60 + tiebreakSeconds;
             resultData.value_time = null; // clear time if switching to timecap
         }
     } else {
@@ -615,6 +666,8 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('result-minutes').value = '';
     document.getElementById('result-seconds').value = '';
     document.getElementById('result-timecap-reps').value = '';
+    document.getElementById('tiebreak-minutes').value = '';
+    document.getElementById('tiebreak-seconds').value = '';
     setWodCompleted(true);
     document.getElementById('selected-division').value = '';
     document.querySelectorAll('.division-btn').forEach(b => {
@@ -652,6 +705,8 @@ document.getElementById('delete-result-btn').addEventListener('click', async () 
     document.getElementById('result-minutes').value = '';
     document.getElementById('result-seconds').value = '';
     document.getElementById('result-timecap-reps').value = '';
+    document.getElementById('tiebreak-minutes').value = '';
+    document.getElementById('tiebreak-seconds').value = '';
     setWodCompleted(true);
     document.getElementById('selected-division').value = '';
     document.querySelectorAll('.division-btn').forEach(b => {
