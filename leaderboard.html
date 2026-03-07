@@ -578,7 +578,6 @@ function calculateRankings() {
     filtered.forEach(participant => {
         const participantScores = {};
         let totalPoints = 0;
-        const wodRanks = []; // for tiebreak
 
         wods.forEach(wod => {
             const score = scores.find(s => {
@@ -605,33 +604,21 @@ function calculateRankings() {
                 const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
                 participantScores[wod.id] = { rank, score };
                 totalPoints += rank;
-                wodRanks.push(rank);
             } else {
                 const lastPlace = filtered.length;
                 participantScores[wod.id] = { rank: lastPlace, score: null };
                 totalPoints += lastPlace;
-                wodRanks.push(lastPlace);
             }
         });
 
         rankings.push({
             participant,
             wodScores: participantScores,
-            totalPoints,
-            wodRanks: [...wodRanks].sort((a, b) => a - b) // sorted for tiebreak
+            totalPoints
         });
     });
 
-    // Sort: lower totalPoints = better
-    // Tiebreak: compare sorted WOD rank arrays element by element (lower ranks = better)
-    rankings.sort((a, b) => {
-        if (a.totalPoints !== b.totalPoints) return a.totalPoints - b.totalPoints;
-        // Tiebreak: compare sorted arrays element by element
-        for (let i = 0; i < Math.min(a.wodRanks.length, b.wodRanks.length); i++) {
-            if (a.wodRanks[i] !== b.wodRanks[i]) return a.wodRanks[i] - b.wodRanks[i];
-        }
-        return 0;
-    });
+    rankings.sort((a, b) => a.totalPoints - b.totalPoints);
     return rankings;
 }
 
