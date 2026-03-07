@@ -4,7 +4,7 @@
 -- This script sets up Row Level Security for all tables
 --
 -- Security Model:
--- - Public (anonymous): Can READ all data, Can INSERT scores
+-- - Public (anonymous): Can READ all data, Can INSERT/UPDATE scores
 -- - Authenticated admins: Can do everything (INSERT/UPDATE/DELETE)
 -- ============================================
 
@@ -47,6 +47,7 @@ DROP POLICY IF EXISTS "judges_delete_admin" ON judges;
 DROP POLICY IF EXISTS "scores_select_public" ON scores;
 DROP POLICY IF EXISTS "scores_insert_public" ON scores;
 DROP POLICY IF EXISTS "scores_update_admin" ON scores;
+DROP POLICY IF EXISTS "scores_update_public" ON scores;
 DROP POLICY IF EXISTS "scores_delete_admin" ON scores;
 
 -- ============================================
@@ -172,12 +173,13 @@ CREATE POLICY "scores_insert_public" ON scores
     FOR INSERT
     WITH CHECK (true);
 
--- Admin only: Update and Delete
-CREATE POLICY "scores_update_admin" ON scores
+-- Public: Can UPDATE scores (judges can modify results)
+CREATE POLICY "scores_update_public" ON scores
     FOR UPDATE
-    USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
+    USING (true)
+    WITH CHECK (true);
 
+-- Admin only: Delete
 CREATE POLICY "scores_delete_admin" ON scores
     FOR DELETE
     USING (auth.role() = 'authenticated');
@@ -198,15 +200,18 @@ CREATE POLICY "scores_delete_admin" ON scores
 -- ============================================
 -- 1. This setup allows:
 --    - Anyone (anon) can READ all data
---    - Anyone (anon) can INSERT scores (athlete self-entry)
---    - Only authenticated users can UPDATE/DELETE anything
---    - Only authenticated users can INSERT athletes, tournaments, etc.
+--    - Anyone (anon) can INSERT/UPDATE scores (athlete self-entry and judge modifications)
+--    - Only authenticated users can DELETE scores
+--    - Only authenticated users can INSERT/UPDATE/DELETE athletes, tournaments, etc.
 --
--- 2. The "scores_insert_public" policy allows athlete.html to work
---    but prevents UPDATE/DELETE without authentication
+-- 2. The "scores_insert_public" and "scores_update_public" policies allow:
+--    - athlete.html to work (INSERT scores)
+--    - judge.html to work (INSERT and UPDATE scores)
+--    - Only DELETE requires authentication
 --
 -- 3. After applying these policies:
 --    - athlete.html will work (INSERT scores)
+--    - judge.html will work (INSERT and UPDATE scores)
 --    - leaderboard.html will work (SELECT scores)
 --    - admin.html requires Supabase authentication
 --
