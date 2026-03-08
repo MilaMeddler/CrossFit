@@ -584,14 +584,28 @@ document.getElementById('save-athlete-btn').addEventListener('click', async () =
         level: document.getElementById('athlete-level').value
     };
     if(!data.first_name || !data.last_name) return alert('⚠️ Prénom et nom requis');
-    
+
+    let error;
     if(editingAthleteId) {
-        await supabase.from('athletes').update(data).eq('id',editingAthleteId);
-        showStatus('✅ Athlète modifié');
+        const result = await supabase.from('athletes').update(data).eq('id',editingAthleteId);
+        error = result.error;
+        if(!error) {
+            showStatus('✅ Athlète modifié');
+        }
     } else {
-        await supabase.from('athletes').insert(data);
-        showStatus('✅ Athlète ajouté');
+        const result = await supabase.from('athletes').insert(data);
+        error = result.error;
+        if(!error) {
+            showStatus('✅ Athlète ajouté');
+        }
     }
+
+    if(error) {
+        console.error('Athlete save error:', error);
+        alert(`❌ Erreur lors de l'enregistrement:\n\n${error.message}\n\nAssurez-vous que vous êtes connecté avec un compte administrateur.`);
+        return;
+    }
+
     clearAthleteForm();
     loadAthletes();
 });
