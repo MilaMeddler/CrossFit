@@ -126,11 +126,6 @@
                         <option value="M">Homme</option>
                         <option value="F">Femme</option>
                     </select>
-                    <select id="athlete-level" class="border rounded-lg px-4 py-2">
-                        <option value="RX">RX</option>
-                        <option value="INTER">INTER</option>
-                        <option value="SCALE">SCALE</option>
-                    </select>
                 </div>
                 <div class="flex gap-3">
                     <button id="save-athlete-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Ajouter</button>
@@ -145,7 +140,6 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Niveau</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Genre</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
                             </tr>
@@ -534,13 +528,6 @@ function renderAthletes() {
     tbody.innerHTML = athletes.map(a => `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</td>
-            <td class="px-4 py-3">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    a.level==='RX'?'bg-purple-100 text-purple-800':
-                    a.level==='INTER'?'bg-blue-100 text-blue-800':
-                    'bg-green-100 text-green-800'
-                }">${escapeHtml(a.level)}</span>
-            </td>
             <td class="px-4 py-3">${a.gender==='M'?'👨 Homme':'👩 Femme'}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="editAthlete(${a.id})" class="text-blue-600 hover:text-blue-800 mr-3 text-xl">✏️</button>
@@ -554,7 +541,6 @@ function clearAthleteForm() {
     document.getElementById('athlete-firstname').value='';
     document.getElementById('athlete-lastname').value='';
     document.getElementById('athlete-gender').value='M';
-    document.getElementById('athlete-level').value='RX';
     editingAthleteId=null;
     document.getElementById('athlete-form-title').textContent='➕ Ajouter un athlète';
     document.getElementById('save-athlete-btn').textContent='Ajouter';
@@ -567,7 +553,6 @@ window.editAthlete = (id) => {
     document.getElementById('athlete-firstname').value=a.first_name;
     document.getElementById('athlete-lastname').value=a.last_name;
     document.getElementById('athlete-gender').value=a.gender;
-    document.getElementById('athlete-level').value=a.level;
     editingAthleteId=id;
     document.getElementById('athlete-form-title').textContent='✏️ Modifier un athlète';
     document.getElementById('save-athlete-btn').textContent='Enregistrer';
@@ -580,8 +565,7 @@ document.getElementById('save-athlete-btn').addEventListener('click', async () =
     const data = {
         first_name: document.getElementById('athlete-firstname').value.trim(),
         last_name: document.getElementById('athlete-lastname').value.trim(),
-        gender: document.getElementById('athlete-gender').value,
-        level: document.getElementById('athlete-level').value
+        gender: document.getElementById('athlete-gender').value
     };
     if(!data.first_name || !data.last_name) return alert('⚠️ Prénom et nom requis');
 
@@ -932,10 +916,10 @@ function renderParticipants() {
             <td class="px-4 py-3 font-semibold">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</td>
             <td class="px-4 py-3">
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    p.level==='RX'?'bg-purple-100 text-purple-800':
-                    p.level==='INTER'?'bg-blue-100 text-blue-800':
+                    p.division==='RX'?'bg-purple-100 text-purple-800':
+                    p.division==='INTER'?'bg-blue-100 text-blue-800':
                     'bg-green-100 text-green-800'
-                }">${escapeHtml(p.level)}</span>
+                }">${escapeHtml(p.division)}</span>
             </td>
             <td class="px-4 py-3">${p.athletes.gender==='M'?'👨 Homme':'👩 Femme'}</td>
             <td class="px-4 py-3 text-center">
@@ -958,7 +942,7 @@ function updateParticipantSelect() {
 
 document.getElementById('add-participant-btn').addEventListener('click', async () => {
     const athleteId = parseInt(document.getElementById('participant-athlete').value);
-    const level = document.getElementById('participant-level').value;
+    const division = document.getElementById('participant-level').value;
 
     if(!athleteId) return alert('⚠️ Sélectionnez un athlète');
 
@@ -977,7 +961,7 @@ document.getElementById('add-participant-btn').addEventListener('click', async (
     const {error} = await supabase.from('tournament_participants').insert({
         tournament_id: currentTournamentId,
         athlete_id: athleteId,
-        level: level
+        division: division
     });
 
     if(error) {

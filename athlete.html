@@ -179,6 +179,26 @@
     </div>
 </div>
 
+<!-- Division Selection Modal (for regular tournaments) -->
+<div id="division-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-lg shadow-2xl max-w-lg w-full p-8">
+        <h2 class="text-2xl font-bold text-white mb-4">Sélectionnez votre catégorie</h2>
+        <p class="text-gray-300 mb-6">C'est votre premier résultat pour ce tournoi. Veuillez choisir votre catégorie.</p>
+
+        <div class="space-y-3 mb-6">
+            <button onclick="selectDivisionAndContinue('RX')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-lg transition-all text-lg">
+                RX (Élite)
+            </button>
+            <button onclick="selectDivisionAndContinue('INTER')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition-all text-lg">
+                INTER (Scaled)
+            </button>
+            <button onclick="selectDivisionAndContinue('SCALE')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg transition-all text-lg">
+                SCALE (Foundations)
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 // SUPABASE CONFIG
 const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
@@ -214,6 +234,67 @@ function showStatus(msg, isError = false) {
 
     setTimeout(() => div.remove(), 4000);
 }
+
+// CHECK AND SET DIVISION FOR REGULAR TOURNAMENTS
+async function checkAndSetDivision() {
+    // Check if athlete has division set for this tournament
+    const { data: participant } = await supabase
+        .from('tournament_participants')
+        .select('division')
+        .eq('tournament_id', selectedTournamentId)
+        .eq('athlete_id', selectedAthleteId)
+        .maybeSingle();
+
+    if (!participant) {
+        // Show modal to select division
+        document.getElementById('division-modal').classList.remove('hidden');
+    } else {
+        // Division already set, show submit button
+        document.getElementById('submit-result-btn').classList.remove('hidden');
+    }
+}
+
+// SELECT DIVISION AND CONTINUE
+window.selectDivisionAndContinue = async (division) => {
+    try {
+        // Check if record exists first
+        const { data: existing } = await supabase
+            .from('tournament_participants')
+            .select('id')
+            .eq('tournament_id', selectedTournamentId)
+            .eq('athlete_id', selectedAthleteId)
+            .maybeSingle();
+
+        if (existing) {
+            // Update existing record
+            const { error } = await supabase
+                .from('tournament_participants')
+                .update({ division: division })
+                .eq('id', existing.id);
+
+            if (error) throw error;
+        } else {
+            // Insert new record
+            const { error } = await supabase
+                .from('tournament_participants')
+                .insert({
+                    tournament_id: selectedTournamentId,
+                    athlete_id: selectedAthleteId,
+                    division: division
+                });
+
+            if (error) throw error;
+        }
+
+        // Hide modal and show submit button
+        document.getElementById('division-modal').classList.add('hidden');
+        document.getElementById('submit-result-btn').classList.remove('hidden');
+        showStatus('Catégorie enregistrée!');
+    } catch (error) {
+        console.error('Error saving division:', error);
+        showStatus('Erreur lors de l\'enregistrement de la catégorie', true);
+    }
+};
 
 // LOAD TOURNAMENTS
 async function loadTournaments() {
@@ -325,7 +406,7 @@ document.getElementById('athlete-select').addEventListener('change', async (e) =
 });
 
 // WOD CHANGE
-document.getElementById('wod-select').addEventListener('change', (e) => {
+document.getElementById('wod-select').addEventListener('change', async (e) => {
     selectedWodId = parseInt(e.target.value);
 
     const regularInput = document.getElementById('result-regular');
@@ -389,7 +470,12 @@ document.getElementById('wod-select').addEventListener('change', (e) => {
         timeInput.classList.add('hidden');
     }
 
-    submitBtn.classList.remove('hidden');
+    // For regular tournaments (not Open), check if athlete has division set
+    if (!currentTournamentIsOpen) {
+        await checkAndSetDivision();
+    } else {
+        submitBtn.classList.remove('hidden');
+    }
 });
 
 // OPEN: Division button styling

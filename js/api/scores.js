@@ -8,7 +8,7 @@ export const ScoresAPI = {
             .from("scores")
             .select(`
                 *,
-                athletes(id, first_name, last_name, gender, level),
+                athletes(id, first_name, last_name, gender),
                 workouts(id, wod_number, wod_type, tournament_id),
                 judges(id, name)
             `)
@@ -24,7 +24,7 @@ export const ScoresAPI = {
             .from("scores")
             .select(`
                 *,
-                athletes(id, first_name, last_name, gender, level),
+                athletes(id, first_name, last_name, gender),
                 workouts!inner(id, wod_number, wod_type, tournament_id),
                 judges(id, name)
             `)
@@ -41,7 +41,7 @@ export const ScoresAPI = {
             .from("scores")
             .select(`
                 *,
-                athletes(id, first_name, last_name, gender, level),
+                athletes(id, first_name, last_name, gender),
                 judges(id, name)
             `)
             .eq("workout_id", workout_id)
