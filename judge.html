@@ -70,19 +70,8 @@
                 <!-- OPEN Division Selection -->
                 <div id="open-division-container" class="hidden">
                     <label class="block text-base font-semibold text-gray-200 mb-3">Division pour ce WOD</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="rx">
-                            <div class="text-gray-100">RX</div>
-                            <div class="text-xs text-gray-400 mt-1">Élite</div>
-                        </button>
-                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="scaled">
-                            <div class="text-gray-100">Scaled</div>
-                            <div class="text-xs text-gray-400 mt-1">Intermédiaire</div>
-                        </button>
-                        <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="foundations">
-                            <div class="text-gray-100">Found.</div>
-                            <div class="text-xs text-gray-400 mt-1">Débutant</div>
-                        </button>
+                    <div id="division-buttons-grid" class="grid grid-cols-3 gap-3">
+                        <!-- Buttons will be generated dynamically based on active_divisions -->
                     </div>
                     <input type="hidden" id="selected-division" value="">
                 </div>
@@ -219,6 +208,59 @@ function showStatus(msg, isError = false) {
     setTimeout(() => div.remove(), 4000);
 }
 
+// Create division buttons based on tournament's active_divisions
+function createDivisionButtons() {
+    const container = document.getElementById('division-buttons-grid');
+    if (!container) return;
+
+    // Get active divisions from tournament or use defaults
+    const activeDivisions = currentTournament && currentTournament.active_divisions && currentTournament.active_divisions.length > 0
+        ? currentTournament.active_divisions
+        : ['rx', 'scaled', 'foundations'];
+
+    // Division config: label, subtitle, color
+    const divisionConfig = {
+        'elite': { label: 'Elite', subtitle: 'Élite', color: 'red' },
+        'rx': { label: 'RX', subtitle: 'Élite', color: 'orange' },
+        'intermediaire': { label: 'Inter', subtitle: 'Intermédiaire', color: 'purple' },
+        'inter': { label: 'Inter', subtitle: 'Intermédiaire', color: 'purple' },
+        'scaled': { label: 'Scaled', subtitle: 'Intermédiaire', color: 'blue' },
+        'scale': { label: 'Scaled', subtitle: 'Intermédiaire', color: 'blue' },
+        'foundations': { label: 'Found.', subtitle: 'Débutant', color: 'green' }
+    };
+
+    // Adjust grid columns based on number of divisions
+    const colsClass = activeDivisions.length === 5 ? 'grid-cols-5' :
+                      activeDivisions.length === 4 ? 'grid-cols-4' :
+                      activeDivisions.length === 2 ? 'grid-cols-2' :
+                      'grid-cols-3';
+    container.className = `grid ${colsClass} gap-3`;
+
+    // Generate buttons
+    container.innerHTML = activeDivisions.map(div => {
+        const config = divisionConfig[div.toLowerCase()] || { label: div, subtitle: '', color: 'gray' };
+        return `
+            <button type="button" class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="${div.toLowerCase()}">
+                <div class="text-gray-100">${config.label}</div>
+                ${config.subtitle ? `<div class="text-xs text-gray-400 mt-1">${config.subtitle}</div>` : ''}
+            </button>
+        `;
+    }).join('');
+
+    // Attach event listeners to new buttons
+    container.querySelectorAll('.division-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.division-btn').forEach(b => {
+                b.classList.remove('border-blue-500', 'bg-blue-900');
+                b.classList.add('border-gray-600', 'bg-gray-700');
+            });
+            btn.classList.remove('border-gray-600', 'bg-gray-700');
+            btn.classList.add('border-blue-500', 'bg-blue-900');
+            document.getElementById('selected-division').value = btn.dataset.value;
+        });
+    });
+}
+
 // LOGIN
 document.getElementById('judge-login-btn').addEventListener('click', async () => {
     const password = document.getElementById('judge-password-input').value.trim();
@@ -254,6 +296,7 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
 
     if (currentTournament.is_open) {
         document.getElementById('open-division-container').classList.remove('hidden');
+        createDivisionButtons(); // Generate division buttons based on active_divisions
     } else {
         document.getElementById('open-division-container').classList.add('hidden');
     }
@@ -355,11 +398,7 @@ async function preloadExistingScore() {
     document.getElementById('tiebreak-minutes').value = '';
     document.getElementById('tiebreak-seconds').value = '';
         setWodCompleted(true);
-        document.getElementById('selected-division').value = '';
-        document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-white', 'bg-gray-600');
-            b.classList.add('border-gray-600', 'bg-gray-700');
-        });
+        resetDivisionButtons();
         return;
     }
 
@@ -385,18 +424,7 @@ async function preloadExistingScore() {
             existing.value_int ?? existing.value_decimal ?? '';
     }
     if (existing.division) {
-        document.getElementById('selected-division').value = existing.division;
-        // Reset ALL buttons first, then highlight the correct one
-        document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-white', 'bg-gray-600');
-            b.classList.add('border-gray-600', 'bg-gray-700');
-        });
-        document.querySelectorAll('.division-btn').forEach(b => {
-            if (b.dataset.value === existing.division) {
-                b.classList.remove('border-gray-600', 'bg-gray-700');
-                b.classList.add('border-white', 'bg-gray-600');
-            }
-        });
+        highlightDivisionButton(existing.division);
     }
     showStatus('Résultat existant chargé — modification en cours');
 }
@@ -462,18 +490,27 @@ document.getElementById('athlete-select').addEventListener('change', async () =>
     await preloadExistingScore();
 });
 
-// Division button selection
-document.querySelectorAll('.division-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-white', 'bg-gray-600');
-            b.classList.add('border-gray-600', 'bg-gray-700');
-        });
-        btn.classList.remove('border-gray-600', 'bg-gray-700');
-        btn.classList.add('border-white', 'bg-gray-600');
-        document.getElementById('selected-division').value = btn.dataset.value;
+// Division button selection is now handled in createDivisionButtons() function
+
+// Helper functions for division buttons
+function resetDivisionButtons() {
+    document.querySelectorAll('.division-btn').forEach(b => {
+        b.classList.remove('border-blue-500', 'bg-blue-900');
+        b.classList.add('border-gray-600', 'bg-gray-700');
     });
-});
+    document.getElementById('selected-division').value = '';
+}
+
+function highlightDivisionButton(divisionValue) {
+    resetDivisionButtons();
+    document.querySelectorAll('.division-btn').forEach(b => {
+        if (b.dataset.value === divisionValue) {
+            b.classList.remove('border-gray-600', 'bg-gray-700');
+            b.classList.add('border-blue-500', 'bg-blue-900');
+        }
+    });
+    document.getElementById('selected-division').value = divisionValue;
+}
 
 // Toggle completed/not completed
 function setWodCompleted(completed) {
@@ -669,11 +706,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('tiebreak-minutes').value = '';
     document.getElementById('tiebreak-seconds').value = '';
     setWodCompleted(true);
-    document.getElementById('selected-division').value = '';
-    document.querySelectorAll('.division-btn').forEach(b => {
-        b.classList.remove('border-white', 'bg-gray-600');
-        b.classList.add('border-gray-600', 'bg-gray-700');
-    });
+    resetDivisionButtons();
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
@@ -708,11 +741,7 @@ document.getElementById('delete-result-btn').addEventListener('click', async () 
     document.getElementById('tiebreak-minutes').value = '';
     document.getElementById('tiebreak-seconds').value = '';
     setWodCompleted(true);
-    document.getElementById('selected-division').value = '';
-    document.querySelectorAll('.division-btn').forEach(b => {
-        b.classList.remove('border-white', 'bg-gray-600');
-        b.classList.add('border-gray-600', 'bg-gray-700');
-    });
+    resetDivisionButtons();
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');

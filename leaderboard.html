@@ -295,25 +295,36 @@ async function loadTournamentData() {
     updateLastUpdate();
 }
 
-// Update category filter based on tournament type
+// Update category filter based on tournament type and active_divisions
 function updateCategoryFilter(tournament) {
     const sel = document.getElementById('category-select');
     const savedValue = sel.value;
-    if (tournament && tournament.is_open) {
-        sel.innerHTML = `
-            <option value="all">Tous</option>
-            <option value="rx">RX (Élite)</option>
-            <option value="scaled">Scaled (Intermédiaire)</option>
-            <option value="foundations">Foundations (Débutant)</option>
-        `;
-    } else {
-        sel.innerHTML = `
-            <option value="all">Tous</option>
-            <option value="RX">RX</option>
-            <option value="INTER">Scaled</option>
-            <option value="SCALE">Foundations</option>
-        `;
-    }
+
+    // Get active divisions from tournament or use defaults
+    const activeDivisions = tournament && tournament.active_divisions && tournament.active_divisions.length > 0
+        ? tournament.active_divisions
+        : ['rx', 'scaled', 'foundations'];
+
+    // Division labels mapping
+    const divisionLabels = {
+        'elite': 'Elite',
+        'rx': 'RX',
+        'intermediaire': 'Intermédiaire',
+        'inter': 'Intermédiaire',
+        'scaled': 'Scaled',
+        'scale': 'Scaled',
+        'foundations': 'Foundations'
+    };
+
+    // Build options based on active divisions
+    let options = '<option value="all">Tous</option>';
+    activeDivisions.forEach(div => {
+        const label = divisionLabels[div.toLowerCase()] || div;
+        options += `<option value="${div.toLowerCase()}">${label}</option>`;
+    });
+
+    sel.innerHTML = options;
+
     // Restore selection if it still exists, else reset to 'all'
     if ([...sel.options].some(o => o.value === savedValue)) {
         sel.value = savedValue;
@@ -323,18 +334,24 @@ function updateCategoryFilter(tournament) {
     }
 }
 
-// Division priority for OPEN ranking (lower = better)
+// Division priority for ranking (lower = better)
+// Elite (1) > RX (2) > Intermédiaire (3) > Scaled (4) > Foundations (5)
 function divisionPriority(division) {
-    if (division === 'rx') return 1;
-    if (division === 'scaled') return 2;
-    if (division === 'foundations') return 3;
-    return 4;
+    if (!division) return 6;
+    const d = division.toLowerCase();
+    if (d === 'elite') return 1;
+    if (d === 'rx') return 2;
+    if (d === 'intermediaire' || d === 'inter') return 3;
+    if (d === 'scaled' || d === 'scale') return 4;
+    if (d === 'foundations') return 5;
+    return 6;
 }
 
-// Compare two scores for a WOD in OPEN format
+// Compare two scores for a WOD with division-based ranking
+// Used for both OPEN and regular tournaments with unified logic
 // Returns negative if a is better than b, positive if b is better
 function compareOpenScores(a, b, wod) {
-    // 1. Division priority (rx < scaled < foundations)
+    // 1. Division priority (elite < rx < intermediaire < scaled < foundations)
     const divA = divisionPriority(a.division);
     const divB = divisionPriority(b.division);
     if (divA !== divB) return divA - divB;
@@ -428,28 +445,37 @@ function filterParticipants(participantList) {
 }
 
 // Get division profile for an athlete
-// Returns: 'rx' | 'mixed_rx' | 'scaled' | 'mixed_scaled' | 'foundations' | null
+// Returns: 'elite' | 'rx' | 'intermediaire' | 'scaled' | 'foundations' | 'mixed_*' | null
 function athleteDivisionProfile(wodScoresData) {
     const divisions = Object.values(wodScoresData)
         .filter(d => d.score && d.score.division)
-        .map(d => d.score.division);
+        .map(d => d.score.division ? d.score.division.toLowerCase() : null)
+        .filter(Boolean);
     if (divisions.length === 0) return null;
     const unique = [...new Set(divisions)];
     if (unique.length === 1) return unique[0]; // pure profile
-    // Mixed: ranked by the best (highest) division present
-    if (unique.includes('rx')) return 'mixed_rx';         // RX + anything → between RX and Scaled
-    if (unique.includes('scaled')) return 'mixed_scaled'; // Scaled + Foundations → between Scaled and Foundations
+    // Mixed: ranked by the best (highest priority) division present
+    if (unique.includes('elite')) return 'mixed_elite';             // Elite + anything
+    if (unique.includes('rx')) return 'mixed_rx';                   // RX + anything (except Elite)
+    if (unique.includes('intermediaire') || unique.includes('inter')) return 'mixed_intermediaire'; // Inter + Scaled/Foundations
+    if (unique.includes('scaled') || unique.includes('scale')) return 'mixed_scaled'; // Scaled + Foundations
     return 'mixed';
 }
 
 // Colored badge for division profile
 function divisionDot(profile) {
-    if (profile === 'rx')           return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-orange-500 text-white text-xs font-bold mr-2" title="RX">RX</span>';
-    if (profile === 'mixed_rx')     return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-orange-400 text-white text-xs font-bold mr-2" title="Mixte RX">MX</span>';
-    if (profile === 'scaled')       return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-blue-500 text-white text-xs font-bold mr-2" title="Scaled">SC</span>';
-    if (profile === 'mixed_scaled') return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-blue-400 text-white text-xs font-bold mr-2" title="Mixte Scaled">MX</span>';
-    if (profile === 'foundations')  return '<span class="inline-flex items-center justify-center w-7 h-5 rounded-full bg-green-500 text-white text-xs font-bold mr-2" title="Foundations">F</span>';
-    if (profile === 'mixed')        return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-gray-500 text-white text-xs font-bold mr-2" title="Mixte">MX</span>';
+    if (!profile) return '';
+    const p = profile.toLowerCase();
+    if (p === 'elite')                return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-red-600 text-white text-xs font-bold mr-2" title="Elite">EL</span>';
+    if (p === 'mixed_elite')          return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-red-500 text-white text-xs font-bold mr-2" title="Mixte Elite">MX</span>';
+    if (p === 'rx')                   return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-orange-500 text-white text-xs font-bold mr-2" title="RX">RX</span>';
+    if (p === 'mixed_rx')             return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-orange-400 text-white text-xs font-bold mr-2" title="Mixte RX">MX</span>';
+    if (p === 'intermediaire' || p === 'inter') return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-purple-500 text-white text-xs font-bold mr-2" title="Intermédiaire">IN</span>';
+    if (p === 'mixed_intermediaire')  return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-purple-400 text-white text-xs font-bold mr-2" title="Mixte Inter">MX</span>';
+    if (p === 'scaled' || p === 'scale') return '<span class="inline-flex items-center justify-center w-8 h-5 rounded-full bg-blue-500 text-white text-xs font-bold mr-2" title="Scaled">SC</span>';
+    if (p === 'mixed_scaled')         return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-blue-400 text-white text-xs font-bold mr-2" title="Mixte Scaled">MX</span>';
+    if (p === 'foundations')          return '<span class="inline-flex items-center justify-center w-7 h-5 rounded-full bg-green-500 text-white text-xs font-bold mr-2" title="Foundations">F</span>';
+    if (p === 'mixed')                return '<span class="inline-flex items-center justify-center w-9 h-5 rounded-full bg-gray-500 text-white text-xs font-bold mr-2" title="Mixte">MX</span>';
     return '';
 }
 
@@ -536,15 +562,21 @@ function calculateOpenRankings() {
     });
 
     // Division profile priority for tiebreak
-    // Order: RX > Mixed-RX > Scaled > Mixed-Scaled > Foundations
+    // Order: Elite > Mixed-Elite > RX > Mixed-RX > Inter > Mixed-Inter > Scaled > Mixed-Scaled > Foundations
     function divProfilePriority(profile) {
-        if (profile === 'rx') return 1;
-        if (profile === 'mixed_rx') return 2;       // RX+Scaled or RX+Found → above Scaled
-        if (profile === 'scaled') return 3;
-        if (profile === 'mixed_scaled') return 4;   // Scaled+Found → above Foundations
-        if (profile === 'foundations') return 5;
-        if (profile === 'mixed') return 4;          // other mixes
-        return 6; // no results
+        if (!profile) return 11;
+        const p = profile.toLowerCase();
+        if (p === 'elite') return 1;
+        if (p === 'mixed_elite') return 2;
+        if (p === 'rx') return 3;
+        if (p === 'mixed_rx') return 4;
+        if (p === 'intermediaire' || p === 'inter') return 5;
+        if (p === 'mixed_intermediaire') return 6;
+        if (p === 'scaled' || p === 'scale') return 7;
+        if (p === 'mixed_scaled') return 8;
+        if (p === 'foundations') return 9;
+        if (p === 'mixed') return 10;
+        return 11; // no results
     }
 
     // Sort: lower totalPoints = better;
@@ -566,60 +598,120 @@ function calculateOpenRankings() {
     return rankings;
 }
 
-// Calculate regular rankings
+// Calculate regular rankings (now using unified Open-style logic)
 function calculateRankings() {
     if (currentTournament && currentTournament.is_open) {
         return calculateOpenRankings();
     }
 
+    // For regular tournaments: use unified Open logic
+    // Main difference: division comes from tournament_participants.division (not scores.division)
     const filtered = filterParticipants(participants);
     const rankings = [];
 
     filtered.forEach(participant => {
-        const participantScores = {};
+        const participantWodData = {};
         let totalPoints = 0;
+        const wodRanks = []; // for tiebreak
 
         wods.forEach(wod => {
-            const score = scores.find(s => {
-                const matchesWod = s.workout_id === wod.id;
-                if (participant.type === 'team') {
-                    return matchesWod && s.team_id === participant.teamId;
-                } else {
-                    return matchesWod && s.athlete_id === participant.athleteId;
-                }
+            // Get this participant's score for this WOD
+            const myScore = scores.find(s => {
+                if (s.workout_id !== wod.id) return false;
+                if (participant.type === 'team') return s.team_id === participant.teamId;
+                return s.athlete_id === participant.athleteId;
             });
 
-            const wodScores = scores.filter(s => s.workout_id === wod.id);
-            const filteredWodScores = wodScores.filter(s => {
-                const scoreParticipant = participants.find(p => {
-                    if (p.type === 'team') return s.team_id === p.teamId;
-                    return s.athlete_id === p.athleteId;
+            // For regular tournaments: rank with division priority
+            // Collect all scores for this WOD from gender-filtered participants
+            const wodScores = scores.filter(s => {
+                if (s.workout_id !== wod.id) return false;
+                const p = participants.find(pp => {
+                    if (pp.type === 'team') return s.team_id === pp.teamId;
+                    return s.athlete_id === pp.athleteId;
                 });
-                return scoreParticipant && filterParticipants([scoreParticipant]).length > 0;
+                return p && filterParticipants([p]).length > 0;
             });
 
-            filteredWodScores.sort((a, b) => compareRegularScores(a, b, wod));
+            // Attach division from participant registration to each score
+            const wodScoresWithDivision = wodScores.map(s => {
+                const p = participants.find(pp => {
+                    if (pp.type === 'team') return s.team_id === pp.teamId;
+                    return s.athlete_id === pp.athleteId;
+                });
+                return { ...s, division: p ? p.level : null };
+            });
 
-            if (score) {
-                const rank = filteredWodScores.findIndex(s => s.id === score.id) + 1;
-                participantScores[wod.id] = { rank, score };
+            // Determine ranking pool
+            const sameDiv = currentCategory !== 'all'
+                ? wodScoresWithDivision.filter(s => s.division && s.division.toLowerCase() === currentCategory.toLowerCase())
+                : wodScoresWithDivision;
+
+            const totalInCategory = currentCategory !== 'all'
+                ? filtered.filter(p => p.level && p.level.toLowerCase() === currentCategory.toLowerCase()).length
+                : filtered.length;
+
+            if (myScore && (currentCategory === 'all' || (participant.level && participant.level.toLowerCase() === currentCategory.toLowerCase()))) {
+                // Create score with division for comparison
+                const myScoreWithDiv = { ...myScore, division: participant.level };
+                // Sort using unified comparison (with division priority)
+                const sorted = [...sameDiv].sort((a, b) => compareOpenScores(a, b, wod));
+                const rank = sorted.findIndex(s => s.id === myScore.id) + 1;
+                participantWodData[wod.id] = { rank, score: myScore };
                 totalPoints += rank;
+                wodRanks.push(rank);
             } else {
-                const lastPlace = filtered.length;
-                participantScores[wod.id] = { rank: lastPlace, score: null };
+                // No score or wrong division: last place in category
+                const lastPlace = totalInCategory || filtered.length;
+                participantWodData[wod.id] = { rank: lastPlace, score: null };
                 totalPoints += lastPlace;
+                wodRanks.push(lastPlace);
             }
         });
 
+        // For regular tournaments, division profile is just the participant's division
+        const divProfile = participant.level ? participant.level.toLowerCase() : null;
         rankings.push({
             participant,
-            wodScores: participantScores,
-            totalPoints
+            wodScores: participantWodData,
+            totalPoints,
+            wodRanks: [...wodRanks].sort((a, b) => a - b), // sorted for tiebreak
+            divisionProfile: divProfile
         });
     });
 
-    rankings.sort((a, b) => a.totalPoints - b.totalPoints);
+    // Sort with tiebreakers (same as Open)
+    rankings.sort((a, b) => {
+        if (a.totalPoints !== b.totalPoints) return a.totalPoints - b.totalPoints;
+        // Tiebreak 1: division profile priority
+        const profA = divProfilePriority(a.divisionProfile);
+        const profB = divProfilePriority(b.divisionProfile);
+        if (profA !== profB) return profA - profB;
+        // Tiebreak 2: compare sorted arrays element by element
+        for (let i = 0; i < Math.min(a.wodRanks.length, b.wodRanks.length); i++) {
+            if (a.wodRanks[i] !== b.wodRanks[i]) return a.wodRanks[i] - b.wodRanks[i];
+        }
+        return 0;
+    });
+
     return rankings;
+
+    // Helper function for tiebreak (defined inline to access in both Open and regular)
+    function divProfilePriority(profile) {
+        if (!profile) return 11;
+        const p = profile.toLowerCase();
+        if (p === 'elite') return 1;
+        if (p === 'mixed_elite') return 2;
+        if (p === 'rx') return 3;
+        if (p === 'mixed_rx') return 4;
+        if (p === 'intermediaire' || p === 'inter') return 5;
+        if (p === 'mixed_intermediaire') return 6;
+        if (p === 'scaled' || p === 'scale') return 7;
+        if (p === 'mixed_scaled') return 8;
+        if (p === 'foundations') return 9;
+        if (p === 'mixed') return 10;
+        return 11;
+    }
 }
 
 // Render
@@ -662,14 +754,28 @@ function formatResult(score, wod) {
 // Get display label for level/division
 function levelLabel(level) {
     if (!level) return '-';
-    const map = { RX: 'RX', INTER: 'Scaled', SCALE: 'Foundations', rx: 'RX', scaled: 'Scaled', foundations: 'Foundations' };
-    return map[level] || level;
+    const l = level.toLowerCase ? level.toLowerCase() : level;
+    const map = {
+        'elite': 'Elite',
+        'rx': 'RX',
+        'inter': 'Intermédiaire',
+        'intermediaire': 'Intermédiaire',
+        'scaled': 'Scaled',
+        'scale': 'Scaled',
+        'foundations': 'Foundations'
+    };
+    return map[l] || level;
 }
 
 function levelBadgeClass(level) {
-    if (level === 'RX' || level === 'rx') return 'bg-orange-900 text-orange-300';
-    if (level === 'INTER' || level === 'scaled') return 'bg-blue-900 text-blue-300';
-    return 'bg-green-900 text-green-300';
+    if (!level) return 'bg-gray-900 text-gray-300';
+    const l = level.toLowerCase ? level.toLowerCase() : level;
+    if (l === 'elite') return 'bg-red-900 text-red-300';
+    if (l === 'rx') return 'bg-orange-900 text-orange-300';
+    if (l === 'inter' || l === 'intermediaire') return 'bg-purple-900 text-purple-300';
+    if (l === 'scaled' || l === 'scale') return 'bg-blue-900 text-blue-300';
+    if (l === 'foundations') return 'bg-green-900 text-green-300';
+    return 'bg-gray-900 text-gray-300';
 }
 
 // Get division label for OPEN score
@@ -727,11 +833,14 @@ function renderOverall() {
                     <span class="px-2 py-1 rounded text-xs font-semibold ${levelBadgeClass(r.participant.level)}">${levelLabel(r.participant.level)}</span>
                 </td>` : '';
 
+        // Show division profile badge for all tournaments (Open and regular)
+        const divBadge = r.divisionProfile ? divisionDot(r.divisionProfile) : (isOpen ? divisionDot(athleteDivisionProfile(r.wodScores)) : '');
+
         return `
             <tr class="border-b border-gray-700 ${rankClass}">
                 <td class="py-3 px-4 font-bold text-xl">${rank}</td>
                 <td class="py-3 px-4 font-semibold">
-                    ${isOpen ? divisionDot(athleteDivisionProfile(r.wodScores)) : ''}${r.participant.name}
+                    ${divBadge}${r.participant.name}
                 </td>
                 ${categoryCell}
                 ${wodCells}

@@ -46,6 +46,33 @@
                     <p class="text-xs text-gray-500">Les athlètes choisissent leur niveau (RX / Scaled / Foundations) à chaque WOD</p>
                 </div>
             </div>
+
+            <div class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Divisions actives (ordre fixe de priorité)</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="division-checkbox w-4 h-4 accent-blue-600" value="elite">
+                        <span class="text-sm">Elite (1 - Priorité maximale)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="division-checkbox w-4 h-4 accent-blue-600" value="rx" checked>
+                        <span class="text-sm">RX (2)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="division-checkbox w-4 h-4 accent-blue-600" value="intermediaire">
+                        <span class="text-sm">Intermédiaire (3)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="division-checkbox w-4 h-4 accent-blue-600" value="scaled" checked>
+                        <span class="text-sm">Scaled (4)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="division-checkbox w-4 h-4 accent-blue-600" value="foundations" checked>
+                        <span class="text-sm">Foundations (5)</span>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Par défaut: RX, Scaled, Foundations</p>
+            </div>
         </div>
 
         <div class="flex gap-3 mt-6">
@@ -730,11 +757,16 @@ document.getElementById('cancel-tournament-type').addEventListener('click', () =
 });
 
 async function createTournament(type) {
+    // Get selected divisions
+    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+        .map(cb => cb.value);
+
     await supabase.from('tournaments').insert({
         name: pendingTournamentName,
         competition_type: type,
         judge_password: pendingTournamentPassword,
-        is_open: pendingTournamentIsOpen
+        is_open: pendingTournamentIsOpen,
+        active_divisions: selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations']
     });
     showStatus('✅ Tournoi créé');
     pendingTournamentName = null;
@@ -756,6 +788,12 @@ document.getElementById('edit-tournament-btn').addEventListener('click', async (
     document.getElementById('tournament-judge-password-input').value = t.judge_password || '';
     document.getElementById('tournament-is-open-input').checked = t.is_open || false;
 
+    // Load active divisions
+    const activeDivisions = t.active_divisions || ['rx', 'scaled', 'foundations'];
+    document.querySelectorAll('.division-checkbox').forEach(cb => {
+        cb.checked = activeDivisions.includes(cb.value);
+    });
+
     // Show save button, hide continue button
     document.getElementById('continue-tournament-btn').classList.add('hidden');
     document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
@@ -775,11 +813,16 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
         return alert('⚠️ Veuillez entrer un mot de passe pour les juges');
     }
 
+    // Get selected divisions
+    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+        .map(cb => cb.value);
+
     await supabase.from('tournaments')
         .update({
             name: name,
             judge_password: password,
-            is_open: document.getElementById('tournament-is-open-input').checked
+            is_open: document.getElementById('tournament-is-open-input').checked,
+            active_divisions: selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations']
         })
         .eq('id', editingTournamentId);
 
@@ -903,6 +946,7 @@ async function loadParticipants() {
     tournamentParticipants = data || [];
     renderParticipants();
     updateParticipantSelect();
+    updateParticipantLevelSelect();
 }
 
 function renderParticipants() {
@@ -911,22 +955,38 @@ function renderParticipants() {
         tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun participant inscrit</td></tr>';
         return;
     }
-    tbody.innerHTML = tournamentParticipants.map(p => `
+
+    // Helper function to get badge color and label for division
+    function getDivisionBadge(division) {
+        if (!division) return { color: 'bg-gray-100 text-gray-800', label: '-' };
+        const d = division.toLowerCase();
+        const badges = {
+            'elite': { color: 'bg-red-100 text-red-800', label: 'Elite' },
+            'rx': { color: 'bg-orange-100 text-orange-800', label: 'RX' },
+            'inter': { color: 'bg-purple-100 text-purple-800', label: 'Intermédiaire' },
+            'intermediaire': { color: 'bg-purple-100 text-purple-800', label: 'Intermédiaire' },
+            'scaled': { color: 'bg-blue-100 text-blue-800', label: 'Scaled' },
+            'scale': { color: 'bg-blue-100 text-blue-800', label: 'Scaled' },
+            'foundations': { color: 'bg-green-100 text-green-800', label: 'Foundations' }
+        };
+        return badges[d] || { color: 'bg-gray-100 text-gray-800', label: division };
+    }
+
+    tbody.innerHTML = tournamentParticipants.map(p => {
+        const badge = getDivisionBadge(p.division);
+        return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-semibold">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</td>
             <td class="px-4 py-3">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    p.division==='RX'?'bg-purple-100 text-purple-800':
-                    p.division==='INTER'?'bg-blue-100 text-blue-800':
-                    'bg-green-100 text-green-800'
-                }">${escapeHtml(p.division)}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}">${escapeHtml(badge.label)}</span>
             </td>
             <td class="px-4 py-3">${p.athletes.gender==='M'?'👨 Homme':'👩 Femme'}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="deleteParticipant(${p.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function updateParticipantSelect() {
@@ -938,6 +998,31 @@ function updateParticipantSelect() {
 
     sel.innerHTML = '<option value="">Sélectionner un athlète</option>' +
         availableAthletes.map(a=>`<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
+}
+
+function updateParticipantLevelSelect() {
+    const sel = document.getElementById('participant-level');
+
+    // Get active divisions from current tournament or use defaults
+    const activeDivisions = currentTournament && currentTournament.active_divisions && currentTournament.active_divisions.length > 0
+        ? currentTournament.active_divisions
+        : ['rx', 'scaled', 'foundations'];
+
+    // Division labels mapping
+    const divisionLabels = {
+        'elite': 'Elite',
+        'rx': 'RX',
+        'intermediaire': 'Intermédiaire',
+        'inter': 'Intermédiaire',
+        'scaled': 'Scaled',
+        'scale': 'Scaled',
+        'foundations': 'Foundations'
+    };
+
+    sel.innerHTML = activeDivisions.map(div => {
+        const label = divisionLabels[div.toLowerCase()] || div;
+        return `<option value="${div.toLowerCase()}">${label}</option>`;
+    }).join('');
 }
 
 document.getElementById('add-participant-btn').addEventListener('click', async () => {
@@ -1307,6 +1392,33 @@ document.getElementById('result-participant').addEventListener('change', async (
     await checkAndPreloadExistingScore();
 });
 
+function updateResultDivisionSelect(tournament) {
+    const sel = document.getElementById('result-division-select');
+    if (!tournament) return;
+
+    // Get active divisions from tournament or use defaults
+    const activeDivisions = tournament.active_divisions && tournament.active_divisions.length > 0
+        ? tournament.active_divisions
+        : ['rx', 'scaled', 'foundations'];
+
+    // Division labels mapping
+    const divisionLabels = {
+        'elite': 'Elite',
+        'rx': 'RX (Élite)',
+        'intermediaire': 'Intermédiaire',
+        'inter': 'Intermédiaire',
+        'scaled': 'Scaled (Intermédiaire)',
+        'scale': 'Scaled (Intermédiaire)',
+        'foundations': 'Foundations (Débutant)'
+    };
+
+    sel.innerHTML = '<option value="">-- Sélectionner --</option>' +
+        activeDivisions.map(div => {
+            const label = divisionLabels[div.toLowerCase()] || div;
+            return `<option value="${div.toLowerCase()}">${label}</option>`;
+        }).join('');
+}
+
 async function loadResultFormTournament(tid) {
     if(!tid) {
         document.getElementById('result-wod').innerHTML = '<option value="">WOD</option>';
@@ -1316,6 +1428,11 @@ async function loadResultFormTournament(tid) {
 
     const t = tournaments.find(x=>x.id===tid);
     currentResultIsOpen = t ? (t.is_open || false) : false;
+
+    // Update division select based on tournament's active divisions
+    if (t) {
+        updateResultDivisionSelect(t);
+    }
 
     // Load WODs
     const {data:wodsData} = await supabase.from('workouts').select('*').eq('tournament_id',tid).order('wod_number');
