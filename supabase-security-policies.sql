@@ -15,6 +15,7 @@ ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE judges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tournament_participants ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- DROP EXISTING POLICIES (if any)
@@ -49,6 +50,11 @@ DROP POLICY IF EXISTS "scores_insert_public" ON scores;
 DROP POLICY IF EXISTS "scores_update_admin" ON scores;
 DROP POLICY IF EXISTS "scores_update_public" ON scores;
 DROP POLICY IF EXISTS "scores_delete_admin" ON scores;
+
+DROP POLICY IF EXISTS "tournament_participants_select_public" ON tournament_participants;
+DROP POLICY IF EXISTS "tournament_participants_insert_admin" ON tournament_participants;
+DROP POLICY IF EXISTS "tournament_participants_update_admin" ON tournament_participants;
+DROP POLICY IF EXISTS "tournament_participants_delete_admin" ON tournament_participants;
 
 -- ============================================
 -- ATHLETES TABLE
@@ -185,6 +191,28 @@ CREATE POLICY "scores_delete_admin" ON scores
     USING (auth.role() = 'authenticated');
 
 -- ============================================
+-- TOURNAMENT PARTICIPANTS TABLE
+-- ============================================
+-- Public: Can read all tournament participants
+CREATE POLICY "tournament_participants_select_public" ON tournament_participants
+    FOR SELECT
+    USING (true);
+
+-- Admin only: Insert, Update, Delete
+CREATE POLICY "tournament_participants_insert_admin" ON tournament_participants
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "tournament_participants_update_admin" ON tournament_participants
+    FOR UPDATE
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "tournament_participants_delete_admin" ON tournament_participants
+    FOR DELETE
+    USING (auth.role() = 'authenticated');
+
+-- ============================================
 -- VERIFICATION QUERIES
 -- ============================================
 -- Run these to verify the policies are active:
@@ -202,7 +230,7 @@ CREATE POLICY "scores_delete_admin" ON scores
 --    - Anyone (anon) can READ all data
 --    - Anyone (anon) can INSERT/UPDATE scores (athlete self-entry and judge modifications)
 --    - Only authenticated users can DELETE scores
---    - Only authenticated users can INSERT/UPDATE/DELETE athletes, tournaments, etc.
+--    - Only authenticated users can INSERT/UPDATE/DELETE athletes, tournaments, tournament_participants, etc.
 --
 -- 2. The "scores_insert_public" and "scores_update_public" policies allow:
 --    - athlete.html to work (INSERT scores)

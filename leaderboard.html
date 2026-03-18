@@ -247,8 +247,8 @@ async function loadTournamentData() {
             .from('teams')
             .select(`
                 *,
-                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name,gender,level),
-                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name,gender,level)
+                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name,gender),
+                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name,gender)
             `)
             .eq('tournament_id', currentTournamentId);
 
@@ -256,7 +256,7 @@ async function loadTournamentData() {
             id: `team-${t.id}`,
             teamId: t.id,
             name: t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`,
-            level: t.athlete1.level,
+            level: null, // Teams don't have level/division
             gender: 'TEAM',
             type: 'team'
         }));
@@ -275,7 +275,7 @@ async function loadTournamentData() {
             id: `athlete-${p.athletes.id}`,
             athleteId: p.athletes.id,
             name: `${p.athletes.first_name} ${p.athletes.last_name}`,
-            level: p.level, // Level from registration, not global athlete level
+            level: p.division, // Division from registration (renamed from level)
             gender: p.athletes.gender,
             type: 'athlete'
         }));
