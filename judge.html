@@ -181,6 +181,33 @@ const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
 var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// MAINTENANCE MODE CHECK
+// Check if maintenance mode is enabled and redirect if necessary
+(async function checkMaintenanceMode() {
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .maybeSingle();
+
+        // Fail-open: if error or no data, don't redirect
+        if (error || !data) {
+            console.log('ℹ️ Maintenance mode check: no restriction');
+            return;
+        }
+
+        // Redirect to maintenance page if enabled
+        if (data.value === 'true') {
+            console.log('🔧 Maintenance mode enabled, redirecting...');
+            window.location.href = 'maintenance.html';
+        }
+    } catch (err) {
+        // Fail-open: if check fails, allow access
+        console.warn('⚠️ Maintenance mode check failed, allowing access:', err);
+    }
+})();
+
 // STATE
 let currentTournament = null;
 let athletes = [];

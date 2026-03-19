@@ -123,7 +123,16 @@
                 <h1 class="text-2xl font-bold">🏋️ Administration</h1>
                 <p class="text-sm text-gray-500">Gestion des tournois CrossFit</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-3 items-center">
+                <!-- Maintenance Mode Toggle -->
+                <div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg">
+                    <span class="text-sm font-semibold text-gray-700">Mode maintenance</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="maintenance-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                    </label>
+                    <span id="maintenance-status" class="text-xs font-medium text-gray-500">OFF</span>
+                </div>
                 <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">🏠 Accueil</a>
                 <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🚪 Exit</button>
             </div>
@@ -392,6 +401,20 @@
 <div id="status-toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
     <span id="status-text"></span>
 </div>
+
+<style>
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+</style>
 
 <script>
 const SUPABASE_URL = 'https://gbdanipvnqrggjjoebtn.supabase.co';
@@ -1693,15 +1716,78 @@ document.getElementById('results-list-tournament').addEventListener('change', as
 });
 
 // ============================================
+// MAINTENANCE MODE
+// ============================================
+async function loadMaintenanceMode() {
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .maybeSingle();
+
+        if (error) {
+            console.warn('⚠️ Could not load maintenance mode:', error);
+            return;
+        }
+
+        const isEnabled = data && data.value === 'true';
+        document.getElementById('maintenance-toggle').checked = isEnabled;
+        updateMaintenanceStatus(isEnabled);
+    } catch (err) {
+        console.warn('⚠️ Maintenance mode check failed:', err);
+    }
+}
+
+function updateMaintenanceStatus(isEnabled) {
+    const statusEl = document.getElementById('maintenance-status');
+    if (isEnabled) {
+        statusEl.textContent = 'ON';
+        statusEl.className = 'text-xs font-bold text-orange-600';
+    } else {
+        statusEl.textContent = 'OFF';
+        statusEl.className = 'text-xs font-medium text-gray-500';
+    }
+}
+
+document.getElementById('maintenance-toggle').addEventListener('change', async (e) => {
+    const isEnabled = e.target.checked;
+    const newValue = isEnabled ? 'true' : 'false';
+
+    try {
+        const { error } = await supabase
+            .from('app_settings')
+            .upsert({
+                key: 'maintenance_mode',
+                value: newValue,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'key'
+            });
+
+        if (error) throw error;
+
+        updateMaintenanceStatus(isEnabled);
+        showStatus(isEnabled ? '🔧 Mode maintenance activé' : '✅ Mode maintenance désactivé', 2500);
+    } catch (err) {
+        console.error('❌ Failed to update maintenance mode:', err);
+        showStatus('❌ Erreur lors de la mise à jour', 3000);
+        // Revert toggle on error
+        e.target.checked = !isEnabled;
+    }
+});
+
+// ============================================
 // INIT
 // ============================================
 async function init() {
     showStatus('🔄 Chargement des données...', 5000);
     await Promise.all([
-        loadAthletes(), 
-        loadTournaments(), 
-        loadJudges(), 
-        loadResults()
+        loadAthletes(),
+        loadTournaments(),
+        loadJudges(),
+        loadResults(),
+        loadMaintenanceMode()
     ]);
     showStatus('✅ Prêt!', 1500);
 }

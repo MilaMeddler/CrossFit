@@ -130,6 +130,35 @@ try {
     alert('Erreur de connexion à la base de données');
 }
 
+// MAINTENANCE MODE CHECK
+// Check if maintenance mode is enabled and redirect if necessary
+(async function checkMaintenanceMode() {
+    try {
+        if (!supabaseLeaderboard) return; // Skip if no client
+
+        const { data, error } = await supabaseLeaderboard
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .maybeSingle();
+
+        // Fail-open: if error or no data, don't redirect
+        if (error || !data) {
+            console.log('ℹ️ Maintenance mode check: no restriction');
+            return;
+        }
+
+        // Redirect to maintenance page if enabled
+        if (data.value === 'true') {
+            console.log('🔧 Maintenance mode enabled, redirecting...');
+            window.location.href = 'maintenance.html';
+        }
+    } catch (err) {
+        // Fail-open: if check fails, allow access
+        console.warn('⚠️ Maintenance mode check failed, allowing access:', err);
+    }
+})();
+
 let tournaments = [];
 let currentTournamentId = null;
 let currentTournament = null;
