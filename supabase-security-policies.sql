@@ -16,6 +16,7 @@ ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE judges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tournament_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- DROP EXISTING POLICIES (if any)
@@ -55,6 +56,10 @@ DROP POLICY IF EXISTS "tournament_participants_select_public" ON tournament_part
 DROP POLICY IF EXISTS "tournament_participants_insert_admin" ON tournament_participants;
 DROP POLICY IF EXISTS "tournament_participants_update_admin" ON tournament_participants;
 DROP POLICY IF EXISTS "tournament_participants_delete_admin" ON tournament_participants;
+
+DROP POLICY IF EXISTS "app_settings_select_public" ON app_settings;
+DROP POLICY IF EXISTS "app_settings_insert_admin" ON app_settings;
+DROP POLICY IF EXISTS "app_settings_update_admin" ON app_settings;
 
 -- ============================================
 -- ATHLETES TABLE
@@ -213,6 +218,25 @@ CREATE POLICY "tournament_participants_delete_admin" ON tournament_participants
     USING (auth.role() = 'authenticated');
 
 -- ============================================
+-- APP_SETTINGS TABLE
+-- ============================================
+-- Public: Can read all settings (needed for maintenance mode check)
+CREATE POLICY "app_settings_select_public" ON app_settings
+    FOR SELECT
+    USING (true);
+
+-- Admin only: Can insert settings (for upsert operations)
+CREATE POLICY "app_settings_insert_admin" ON app_settings
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+-- Admin only: Can update settings
+CREATE POLICY "app_settings_update_admin" ON app_settings
+    FOR UPDATE
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
+
+-- ============================================
 -- VERIFICATION QUERIES
 -- ============================================
 -- Run these to verify the policies are active:
@@ -231,6 +255,7 @@ CREATE POLICY "tournament_participants_delete_admin" ON tournament_participants
 --    - Anyone (anon) can INSERT/UPDATE scores (athlete self-entry and judge modifications)
 --    - Only authenticated users can DELETE scores
 --    - Only authenticated users can INSERT/UPDATE/DELETE athletes, tournaments, tournament_participants, etc.
+--    - Only authenticated users can UPDATE app_settings (maintenance mode)
 --
 -- 2. The "scores_insert_public" and "scores_update_public" policies allow:
 --    - athlete.html to work (INSERT scores)
@@ -242,6 +267,7 @@ CREATE POLICY "tournament_participants_delete_admin" ON tournament_participants
 --    - judge.html will work (INSERT and UPDATE scores)
 --    - leaderboard.html will work (SELECT scores)
 --    - admin.html requires Supabase authentication
+--    - Maintenance mode toggle requires authentication
 --
 -- 4. IMPORTANT: Make sure to create admin users in Supabase Auth!
 --    Dashboard > Authentication > Users > Add user
