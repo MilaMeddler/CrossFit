@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <div class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div id="divisions-block" class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Divisions actives (ordre fixe de priorité)</label>
                 <div class="space-y-2">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -729,6 +729,16 @@ document.getElementById('new-tournament-btn').addEventListener('click', () => {
     document.getElementById('tournament-data-modal').classList.remove('hidden');
 });
 
+// Toggle divisions block visibility based on Format Open checkbox
+document.getElementById('tournament-is-open-input').addEventListener('change', (e) => {
+    const divisionsBlock = document.getElementById('divisions-block');
+    if (e.target.checked) {
+        divisionsBlock.classList.add('hidden');
+    } else {
+        divisionsBlock.classList.remove('hidden');
+    }
+});
+
 // CREATE TOURNAMENT - Step 2: Continue to type selection
 document.getElementById('continue-tournament-btn').addEventListener('click', () => {
     const name = document.getElementById('tournament-name-input').value.trim();
@@ -760,6 +770,8 @@ document.getElementById('cancel-tournament-data-btn').addEventListener('click', 
     document.getElementById('tournament-modal-title').textContent = '🏆 Nouveau Tournoi';
     document.getElementById('continue-tournament-btn').classList.remove('hidden');
     document.getElementById('save-tournament-edit-btn').classList.add('hidden');
+    // Reset divisions block visibility
+    document.getElementById('divisions-block').classList.remove('hidden');
 });
 
 // CREATE TOURNAMENT - Step 3: Select type and save
@@ -780,17 +792,32 @@ document.getElementById('cancel-tournament-type').addEventListener('click', () =
 });
 
 async function createTournament(type) {
-    // Get selected divisions
-    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
-        .map(cb => cb.value);
+    // Determine divisions: if Open format, use all divisions; otherwise use selected
+    let activeDivisions;
+    if (pendingTournamentIsOpen) {
+        // For Open format, save all divisions
+        activeDivisions = ['elite', 'rx', 'intermediaire', 'scaled', 'foundations'];
+    } else {
+        // For regular format, use selected divisions
+        const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+            .map(cb => cb.value);
+        activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
+    }
 
-    await supabase.from('tournaments').insert({
+    const { data, error } = await supabase.from('tournaments').insert({
         name: pendingTournamentName,
         competition_type: type,
         judge_password: pendingTournamentPassword,
         is_open: pendingTournamentIsOpen,
-        active_divisions: selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations']
+        active_divisions: activeDivisions
     });
+
+    if (error) {
+        console.error('Error creating tournament:', error);
+        alert(`❌ Erreur lors de la création du tournoi:\n${error.message}`);
+        return;
+    }
+
     showStatus('✅ Tournoi créé');
     pendingTournamentName = null;
     pendingTournamentPassword = null;
@@ -817,6 +844,14 @@ document.getElementById('edit-tournament-btn').addEventListener('click', async (
         cb.checked = activeDivisions.includes(cb.value);
     });
 
+    // Show/hide divisions block based on is_open
+    const divisionsBlock = document.getElementById('divisions-block');
+    if (t.is_open) {
+        divisionsBlock.classList.add('hidden');
+    } else {
+        divisionsBlock.classList.remove('hidden');
+    }
+
     // Show save button, hide continue button
     document.getElementById('continue-tournament-btn').classList.add('hidden');
     document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
@@ -836,18 +871,33 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
         return alert('⚠️ Veuillez entrer un mot de passe pour les juges');
     }
 
-    // Get selected divisions
-    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
-        .map(cb => cb.value);
+    // Determine divisions: if Open format, use all divisions; otherwise use selected
+    const isOpen = document.getElementById('tournament-is-open-input').checked;
+    let activeDivisions;
+    if (isOpen) {
+        // For Open format, save all divisions
+        activeDivisions = ['elite', 'rx', 'intermediaire', 'scaled', 'foundations'];
+    } else {
+        // For regular format, use selected divisions
+        const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+            .map(cb => cb.value);
+        activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
+    }
 
-    await supabase.from('tournaments')
+    const { data, error } = await supabase.from('tournaments')
         .update({
             name: name,
             judge_password: password,
-            is_open: document.getElementById('tournament-is-open-input').checked,
-            active_divisions: selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations']
+            is_open: isOpen,
+            active_divisions: activeDivisions
         })
         .eq('id', editingTournamentId);
+
+    if (error) {
+        console.error('Error updating tournament:', error);
+        alert(`❌ Erreur lors de la modification du tournoi:\n${error.message}`);
+        return;
+    }
 
     showStatus('✅ Tournoi modifié');
     document.getElementById('tournament-data-modal').classList.add('hidden');
@@ -857,6 +907,8 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
     document.getElementById('tournament-modal-title').textContent = '🏆 Nouveau Tournoi';
     document.getElementById('continue-tournament-btn').classList.remove('hidden');
     document.getElementById('save-tournament-edit-btn').classList.add('hidden');
+    // Reset divisions block visibility
+    document.getElementById('divisions-block').classList.remove('hidden');
 
     await loadTournaments();
 });
@@ -867,8 +919,15 @@ document.getElementById('delete-tournament-btn').addEventListener('click', async
     const t = tournaments.find(x => x.id === currentTournamentId);
     
     if(!confirm(`⚠️ ATTENTION!\n\nSupprimer le tournoi "${t.name}"?\n\nCela supprimera:\n• Tous les WODs\n• Toutes les équipes\n• Tous les résultats\n\nCette action est IRRÉVERSIBLE!`)) return;
-    
-    await supabase.from('tournaments').delete().eq('id', currentTournamentId);
+
+    const { data, error } = await supabase.from('tournaments').delete().eq('id', currentTournamentId);
+
+    if (error) {
+        console.error('Error deleting tournament:', error);
+        alert(`❌ Erreur lors de la suppression du tournoi:\n${error.message}`);
+        return;
+    }
+
     showStatus('✅ Tournoi supprimé');
     currentTournamentId = null;
     currentTournament = null;
