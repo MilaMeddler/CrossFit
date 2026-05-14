@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Выгрузка wod_results</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        h2 { color: #4ec9b0; border-bottom: 2px solid #4ec9b0; padding-bottom: 10px; }
+        pre { background: #252526; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #3e3e42; }
+        .loading { color: #ffd700; }
+        .error { color: #f48771; }
+        .success { color: #4ec9b0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; background: #252526; }
+        th, td { border: 1px solid #3e3e42; padding: 8px; text-align: left; }
+        th { background: #37373d; color: #4ec9b0; font-weight: bold; }
+        tr:hover { background: #2d2d30; }
+        .count { color: #ffd700; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>📊 Выгрузка данных wod_results</h1>
+
+    <div id="results"></div>
+
+    <script>
+        const { createClient } = supabase;
+        const supabaseUrl = 'https://gbdanipvnqrggjjoebtn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiZGFuaXB2bnFyZ2dqam9lYnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzNjYyNzUsImV4cCI6MjA4MDk0MjI3NX0.cRSuKatOSWgcbyhqAJ_5oWnENZK5sQZaZiGL15uytME';
+        const sb = createClient(supabaseUrl, supabaseKey);
+
+        const resultsDiv = document.getElementById('results');
+
+        async function executeQuery(title, query, description) {
+            resultsDiv.innerHTML += `<h2>${title}</h2><p>${description}</p><p class="loading">⏳ Выполнение запроса...</p>`;
+
+            try {
+                const { data, error } = await sb.rpc('execute_sql', { query_text: query });
+
+                if (error) {
+                    // Если RPC не работает, пробуем прямой запрос
+                    console.log('RPC error, trying direct query:', error);
+                    throw error;
+                }
+
+                resultsDiv.innerHTML = resultsDiv.innerHTML.replace('⏳ Выполнение запроса...', '');
+
+                if (!data || data.length === 0) {
+                    resultsDiv.innerHTML += `<p class="error">❌ Нет данных</p>`;
+                    return;
+                }
+
+                // Показываем результат
+                resultsDiv.innerHTML += `<p class="success">✅ Найдено записей: <span class="count">${data.length}</span></p>`;
+                resultsDiv.innerHTML += '<div style="overflow-x: auto;">';
+                resultsDiv.innerHTML += '<table>';
+
+                // Заголовки
+                resultsDiv.innerHTML += '<tr>';
+                Object.keys(data[0]).forEach(key => {
+                    resultsDiv.innerHTML += `<th>${key}</th>`;
+                });
+                resultsDiv.innerHTML += '</tr>';
+
+                // Данные
+                data.forEach(row => {
+                    resultsDiv.innerHTML += '<tr>';
+                    Object.values(row).forEach(value => {
+                        const displayValue = Array.isArray(value) ? JSON.stringify(value) : (value || '-');
+                        resultsDiv.innerHTML += `<td>${displayValue}</td>`;
+                    });
+                    resultsDiv.innerHTML += '</tr>';
+                });
+
+                resultsDiv.innerHTML += '</table></div>';
+
+                // Также выводим JSON для копирования
+                resultsDiv.innerHTML += '<details><summary>📋 JSON данные (для копирования)</summary>';
+                resultsDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                resultsDiv.innerHTML += '</details>';
+
+            } catch (error) {
+                resultsDiv.innerHTML = resultsDiv.innerHTML.replace('⏳ Выполнение запроса...', '');
+                resultsDiv.innerHTML += `<p class="error">❌ Ошибка: ${error.message}</p>`;
+                resultsDiv.innerHTML += `<p class="error">Используйте Supabase SQL Editor для выполнения этого запроса:</p>`;
+                resultsDiv.innerHTML += `<pre>${query}</pre>`;
+            }
+        }
+
+        async function runAllQueries() {
+            // Шаг 1
+            await executeQuery(
+                '📈 Шаг 1: Кто и сколько',
+                `SELECT
+                    u.email,
+                    u.id as user_id,
+                    COUNT(wr.id) as wod_count,
+                    MIN(wr.date) as first_entry,
+                    MAX(wr.date) as last_entry,
+                    array_agg(DISTINCT wr.wod_name ORDER BY wr.wod_name) as wod_names
+                FROM wod_results wr
+                JOIN auth.users u ON u.id = wr.user_id
+                GROUP BY u.email, u.id
+                ORDER BY wod_count DESC;`,
+                'Статистика по пользователям: количество записей, первая и последняя дата, список WOD'
+            );
+
+            // Шаг 2
+            await executeQuery(
+                '📋 Шаг 2: Полная выгрузка всех записей',
+                `SELECT
+                    u.email,
+                    wr.wod_name,
+                    wr.wod_type,
+                    wr.score,
+                    wr.rx,
+                    wr.notes,
+                    wr.description,
+                    wr.date
+                FROM wod_results wr
+                JOIN auth.users u ON u.id = wr.user_id
+                ORDER BY u.email, wr.date DESC;`,
+                'Все записи wod_results с email пользователей'
+            );
+
+            // Шаг 3
+            await executeQuery(
+                '📊 Шаг 3: Статистика по WOD названиям',
+                `SELECT
+                    wod_name,
+                    wod_type,
+                    COUNT(*) as total_entries,
+                    COUNT(DISTINCT user_id) as unique_users
+                FROM wod_results
+                GROUP BY wod_name, wod_type
+                ORDER BY total_entries DESC;`,
+                'Статистика по названиям WOD: общее количество и уникальные пользователи'
+            );
+        }
+
+        // Альтернативный метод через прямые запросы к таблице
+        async function runQueriesDirectly() {
+            resultsDiv.innerHTML = '<h2>⚠️ RPC не поддерживается, используем прямые запросы</h2>';
+
+            // Шаг 1: Получаем данные из wod_results
+            resultsDiv.innerHTML += '<h2>📈 Шаг 1: Данные wod_results</h2>';
+            resultsDiv.innerHTML += '<p class="loading">⏳ Загрузка...</p>';
+
+            try {
+                const { data: wodResults, error: wodError } = await sb
+                    .from('wod_results')
+                    .select('*');
+
+                if (wodError) throw wodError;
+
+                resultsDiv.innerHTML = resultsDiv.innerHTML.replace('⏳ Загрузка...', '');
+                resultsDiv.innerHTML += `<p class="success">✅ Найдено записей: <span class="count">${wodResults ? wodResults.length : 0}</span></p>`;
+
+                if (!wodResults || wodResults.length === 0) {
+                    resultsDiv.innerHTML += '<p class="error">❌ Таблица wod_results пуста</p>';
+                } else {
+                    // Группируем по user_id
+                    const userStats = {};
+                    wodResults.forEach(row => {
+                        if (!userStats[row.user_id]) {
+                            userStats[row.user_id] = {
+                                user_id: row.user_id,
+                                wod_count: 0,
+                                first_entry: row.date,
+                                last_entry: row.date,
+                                wod_names: new Set()
+                            };
+                        }
+                        userStats[row.user_id].wod_count++;
+                        userStats[row.user_id].wod_names.add(row.wod_name);
+                        if (row.date < userStats[row.user_id].first_entry) {
+                            userStats[row.user_id].first_entry = row.date;
+                        }
+                        if (row.date > userStats[row.user_id].last_entry) {
+                            userStats[row.user_id].last_entry = row.date;
+                        }
+                    });
+
+                    // Выводим статистику
+                    resultsDiv.innerHTML += '<table><tr><th>user_id</th><th>wod_count</th><th>first_entry</th><th>last_entry</th><th>wod_names</th></tr>';
+                    Object.values(userStats).sort((a, b) => b.wod_count - a.wod_count).forEach(stat => {
+                        resultsDiv.innerHTML += `<tr>
+                            <td>${stat.user_id}</td>
+                            <td>${stat.wod_count}</td>
+                            <td>${stat.first_entry}</td>
+                            <td>${stat.last_entry}</td>
+                            <td>${Array.from(stat.wod_names).join(', ')}</td>
+                        </tr>`;
+                    });
+                    resultsDiv.innerHTML += '</table>';
+
+                    // Шаг 2: Полный дамп
+                    resultsDiv.innerHTML += '<h2>📋 Шаг 2: Полная выгрузка</h2>';
+                    resultsDiv.innerHTML += '<details><summary>📋 Показать все записи</summary>';
+                    resultsDiv.innerHTML += '<table><tr><th>user_id</th><th>wod_name</th><th>wod_type</th><th>score</th><th>rx</th><th>notes</th><th>description</th><th>date</th></tr>';
+                    wodResults.forEach(row => {
+                        resultsDiv.innerHTML += `<tr>
+                            <td>${row.user_id}</td>
+                            <td>${row.wod_name || '-'}</td>
+                            <td>${row.wod_type || '-'}</td>
+                            <td>${row.score || '-'}</td>
+                            <td>${row.rx ? 'RX' : 'Scaled'}</td>
+                            <td>${row.notes || '-'}</td>
+                            <td>${row.description || '-'}</td>
+                            <td>${row.date}</td>
+                        </tr>`;
+                    });
+                    resultsDiv.innerHTML += '</table></details>';
+
+                    // Шаг 3: Статистика по WOD
+                    resultsDiv.innerHTML += '<h2>📊 Шаг 3: Статистика по WOD</h2>';
+                    const wodStats = {};
+                    wodResults.forEach(row => {
+                        const key = `${row.wod_name}_${row.wod_type}`;
+                        if (!wodStats[key]) {
+                            wodStats[key] = {
+                                wod_name: row.wod_name,
+                                wod_type: row.wod_type,
+                                total_entries: 0,
+                                unique_users: new Set()
+                            };
+                        }
+                        wodStats[key].total_entries++;
+                        wodStats[key].unique_users.add(row.user_id);
+                    });
+
+                    resultsDiv.innerHTML += '<table><tr><th>wod_name</th><th>wod_type</th><th>total_entries</th><th>unique_users</th></tr>';
+                    Object.values(wodStats).sort((a, b) => b.total_entries - a.total_entries).forEach(stat => {
+                        resultsDiv.innerHTML += `<tr>
+                            <td>${stat.wod_name || '-'}</td>
+                            <td>${stat.wod_type || '-'}</td>
+                            <td>${stat.total_entries}</td>
+                            <td>${stat.unique_users.size}</td>
+                        </tr>`;
+                    });
+                    resultsDiv.innerHTML += '</table>';
+
+                    // JSON для экспорта
+                    resultsDiv.innerHTML += '<h2>💾 Полный экспорт в JSON</h2>';
+                    resultsDiv.innerHTML += '<details><summary>📋 Скопировать JSON</summary>';
+                    resultsDiv.innerHTML += `<pre>${JSON.stringify(wodResults, null, 2)}</pre>`;
+                    resultsDiv.innerHTML += '</details>';
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML = resultsDiv.innerHTML.replace('⏳ Загрузка...', '');
+                resultsDiv.innerHTML += `<p class="error">❌ Ошибка: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+
+        // Запускаем прямые запросы (так как RPC обычно не настроен)
+        runQueriesDirectly();
+    </script>
+</body>
+</html>
