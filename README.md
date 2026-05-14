@@ -1,6 +1,11 @@
 # 🏋️ CrossFit Competition System
 
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-success?style=for-the-badge&logo=github)](https://milameddler.github.io/CrossFit/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=for-the-badge&logo=supabase)](https://supabase.com)
+
 Система управления турнирами CrossFit с поддержкой обычного формата и формата Open.
+
+**🔗 Прямая ссылка на приложение:** https://milameddler.github.io/CrossFit/
 
 ## 🌐 Прямые ссылки на сайт
 
