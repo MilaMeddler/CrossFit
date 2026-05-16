@@ -115,7 +115,6 @@
                     wr.score,
                     wr.rx,
                     wr.notes,
-                    wr.description,
                     wr.date
                 FROM wod_results wr
                 JOIN auth.users u ON u.id = wr.user_id
@@ -197,7 +196,7 @@
                     // Шаг 2: Полный дамп
                     resultsDiv.innerHTML += '<h2>📋 Шаг 2: Полная выгрузка</h2>';
                     resultsDiv.innerHTML += '<details><summary>📋 Показать все записи</summary>';
-                    resultsDiv.innerHTML += '<table><tr><th>user_id</th><th>wod_name</th><th>wod_type</th><th>score</th><th>rx</th><th>notes</th><th>description</th><th>date</th></tr>';
+                    resultsDiv.innerHTML += '<table><tr><th>user_id</th><th>wod_name</th><th>wod_type</th><th>score</th><th>rx</th><th>notes</th><th>date</th></tr>';
                     wodResults.forEach(row => {
                         resultsDiv.innerHTML += `<tr>
                             <td>${row.user_id}</td>
@@ -206,7 +205,6 @@
                             <td>${row.score || '-'}</td>
                             <td>${row.rx ? 'RX' : 'Scaled'}</td>
                             <td>${row.notes || '-'}</td>
-                            <td>${row.description || '-'}</td>
                             <td>${row.date}</td>
                         </tr>`;
                     });
