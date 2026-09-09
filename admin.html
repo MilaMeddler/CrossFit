@@ -145,17 +145,6 @@
                    class="w-full border rounded-lg px-4 py-2">
         </div>
 
-        <div class="mb-5 flex items-center gap-4">
-            <label class="text-sm font-semibold text-gray-700 whitespace-nowrap">Nombre d'athlètes:</label>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="changeTeamSize(-1)"
-                        class="w-9 h-9 rounded-full bg-gray-200 hover:bg-gray-300 text-xl font-bold leading-none">−</button>
-                <span id="team-size-display" class="w-8 text-center font-bold text-lg">4</span>
-                <button type="button" onclick="changeTeamSize(1)"
-                        class="w-9 h-9 rounded-full bg-gray-200 hover:bg-gray-300 text-xl font-bold leading-none">+</button>
-            </div>
-        </div>
-
         <div id="team-member-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5"></div>
 
         <div class="flex gap-3">
@@ -257,14 +246,6 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold">👥 Gestion des équipes</h3>
                     <button id="new-team-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-semibold">+ Nouvelle équipe</button>
-                </div>
-
-                <div class="flex items-center gap-3 mb-5 p-3 bg-gray-50 rounded-lg">
-                    <span class="text-sm font-semibold text-gray-700">Membres par équipe:</span>
-                    <button id="tournament-team-size-minus" class="w-8 h-8 rounded-full bg-gray-200 font-bold hover:bg-gray-300">−</button>
-                    <span id="tournament-team-size-display" class="w-8 text-center font-bold text-lg">4</span>
-                    <button id="tournament-team-size-plus" class="w-8 h-8 rounded-full bg-gray-200 font-bold hover:bg-gray-300">+</button>
-                    <button id="tournament-team-size-save" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">Enregistrer</button>
                 </div>
 
                 <h4 class="font-semibold mb-3">📋 Équipes du tournoi</h4>
@@ -764,8 +745,6 @@ async function onTournamentChange() {
         span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
         document.getElementById('teams-section').classList.remove('hidden');
         document.getElementById('participants-section').classList.add('hidden');
-        const teamSize = currentTournament.team_size || 4;
-        document.getElementById('tournament-team-size-display').textContent = teamSize;
         await loadTeams();
     } else {
         span.textContent = '👤 Tournoi individuel';
@@ -834,12 +813,21 @@ document.getElementById('team-size-plus-btn').addEventListener('click', () => {
     document.getElementById('pending-team-size-display').textContent = pendingTeamSize;
 });
 document.getElementById('confirm-team-size-btn').addEventListener('click', () => {
-    document.getElementById('team-size-creation-modal').classList.add('hidden');
-    document.getElementById('tournament-name-input').value = '';
-    document.getElementById('tournament-judge-password-input').value = '';
-    document.getElementById('tournament-is-open-input').checked = false;
-    document.getElementById('divisions-block').classList.remove('hidden');
-    document.getElementById('tournament-data-modal').classList.remove('hidden');
+    const modal = document.getElementById('team-size-creation-modal');
+    const isEditMode = modal.dataset.editMode === '1';
+    modal.dataset.editMode = '';
+    modal.classList.add('hidden');
+
+    if (isEditMode) {
+        const t = tournaments.find(x => x.id === currentTournamentId);
+        openEditDataModal(t);
+    } else {
+        document.getElementById('tournament-name-input').value = '';
+        document.getElementById('tournament-judge-password-input').value = '';
+        document.getElementById('tournament-is-open-input').checked = false;
+        document.getElementById('divisions-block').classList.remove('hidden');
+        document.getElementById('tournament-data-modal').classList.remove('hidden');
+    }
 });
 document.getElementById('back-team-size-btn').addEventListener('click', () => {
     document.getElementById('team-size-creation-modal').classList.add('hidden');
@@ -926,25 +914,18 @@ async function createTournament(type) {
 }
 
 // EDIT TOURNAMENT
-document.getElementById('edit-tournament-btn').addEventListener('click', async () => {
-    if(!currentTournamentId) return alert('⚠️ Sélectionnez un tournoi');
-    const t = tournaments.find(x => x.id === currentTournamentId);
-
-    editingTournamentId = currentTournamentId;
-
-    // Change modal title and buttons for editing
+function openEditDataModal(t) {
+    editingTournamentId = t.id;
     document.getElementById('tournament-modal-title').textContent = '✏️ Modifier le Tournoi';
     document.getElementById('tournament-name-input').value = t.name;
     document.getElementById('tournament-judge-password-input').value = t.judge_password || '';
     document.getElementById('tournament-is-open-input').checked = t.is_open || false;
 
-    // Load active divisions
     const activeDivisions = t.active_divisions || ['rx', 'scaled', 'foundations'];
     document.querySelectorAll('.division-checkbox').forEach(cb => {
         cb.checked = activeDivisions.includes(cb.value);
     });
 
-    // Show/hide divisions block based on is_open
     const divisionsBlock = document.getElementById('divisions-block');
     if (t.is_open) {
         divisionsBlock.classList.add('hidden');
@@ -952,11 +933,25 @@ document.getElementById('edit-tournament-btn').addEventListener('click', async (
         divisionsBlock.classList.remove('hidden');
     }
 
-    // Show save button, hide continue button
     document.getElementById('continue-tournament-btn').classList.add('hidden');
     document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
-
     document.getElementById('tournament-data-modal').classList.remove('hidden');
+}
+
+document.getElementById('edit-tournament-btn').addEventListener('click', () => {
+    if(!currentTournamentId) return alert('⚠️ Sélectionnez un tournoi');
+    const t = tournaments.find(x => x.id === currentTournamentId);
+
+    if (t.competition_type === 'team') {
+        // For team tournaments: first show team size modal, then data modal
+        pendingTeamSize = t.team_size || 4;
+        document.getElementById('pending-team-size-display').textContent = pendingTeamSize;
+        // Override confirm button to open edit modal instead of create modal
+        document.getElementById('team-size-creation-modal').dataset.editMode = '1';
+        document.getElementById('team-size-creation-modal').classList.remove('hidden');
+    } else {
+        openEditDataModal(t);
+    }
 });
 
 // Save tournament edit
@@ -984,13 +979,12 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
         activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
     }
 
+    const updateData = { name, judge_password: password, is_open: isOpen, active_divisions: activeDivisions };
+    const editedT = tournaments.find(x => x.id === editingTournamentId);
+    if (editedT && editedT.competition_type === 'team') updateData.team_size = pendingTeamSize;
+
     const { data, error } = await supabase.from('tournaments')
-        .update({
-            name: name,
-            judge_password: password,
-            is_open: isOpen,
-            active_divisions: activeDivisions
-        })
+        .update(updateData)
         .eq('id', editingTournamentId);
 
     if (error) {
@@ -1090,7 +1084,6 @@ function changeTeamSize(delta) {
 
 function openNewTeamModal() {
     currentTeamSize = (currentTournament && currentTournament.team_size) || 4;
-    document.getElementById('team-size-display').textContent = currentTeamSize;
     document.getElementById('team-name').value = '';
     renderTeamMemberFields();
     document.getElementById('new-team-modal').classList.remove('hidden');
@@ -1098,29 +1091,6 @@ function openNewTeamModal() {
 
 document.getElementById('new-team-btn').addEventListener('click', openNewTeamModal);
 
-// Tournament team size controls
-let tournamentTeamSizeTemp = 4;
-document.getElementById('tournament-team-size-minus').addEventListener('click', () => {
-    const display = document.getElementById('tournament-team-size-display');
-    tournamentTeamSizeTemp = Math.max(2, parseInt(display.textContent) - 1);
-    display.textContent = tournamentTeamSizeTemp;
-});
-document.getElementById('tournament-team-size-plus').addEventListener('click', () => {
-    const display = document.getElementById('tournament-team-size-display');
-    tournamentTeamSizeTemp = Math.min(10, parseInt(display.textContent) + 1);
-    display.textContent = tournamentTeamSizeTemp;
-});
-document.getElementById('tournament-team-size-save').addEventListener('click', async () => {
-    if (!currentTournamentId) return;
-    const newSize = parseInt(document.getElementById('tournament-team-size-display').textContent);
-    const { error } = await supabase.from('tournaments').update({ team_size: newSize }).eq('id', currentTournamentId);
-    if (error) {
-        alert('❌ Erreur: ' + error.message);
-    } else {
-        currentTournament.team_size = newSize;
-        showStatus(`✅ Taille des équipes mise à jour: ${newSize} membres`);
-    }
-});
 document.getElementById('cancel-new-team-btn').addEventListener('click', () => {
     document.getElementById('new-team-modal').classList.add('hidden');
 });
