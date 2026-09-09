@@ -49,6 +49,12 @@
             <div id="members-list" class="space-y-3"></div>
         </div>
 
+        <!-- Division (regular tournaments only) -->
+        <div id="division-block" class="bg-gray-800 rounded-lg p-6 hidden">
+            <h2 class="text-lg font-bold text-white mb-4">🏅 Division</h2>
+            <div id="division-buttons" class="flex flex-wrap gap-3"></div>
+        </div>
+
         <!-- Submit -->
         <button id="submit-btn"
                 class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-bold text-xl transition-colors shadow-lg">
@@ -90,6 +96,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentTournamentId = null;
 let currentTeamSize = 2;
+let currentTournamentIsOpen = false;
+
+const DIVISION_LABELS = { elite: 'Elite', rx: 'RX', intermediaire: 'Intermédiaire', scaled: 'Scaled', foundations: 'Foundations' };
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -138,7 +147,7 @@ function resetForm() {
 async function loadTournaments() {
     const { data, error } = await sb
         .from('tournaments')
-        .select('id, name, team_size')
+        .select('id, name, team_size, is_open, active_divisions')
         .eq('competition_type', 'team')
         .order('id', { ascending: false });
 
@@ -151,7 +160,7 @@ async function loadTournaments() {
     }
 
     select.innerHTML = '<option value="">-- Sélectionner un tournoi --</option>' +
-        data.map(t => `<option value="${t.id}" data-size="${t.team_size || 4}">${escapeHtml(t.name)}</option>`).join('');
+        data.map(t => `<option value="${t.id}" data-size="${t.team_size || 4}" data-open="${t.is_open ? '1' : '0'}" data-divisions='${JSON.stringify(t.active_divisions || ["rx","scaled","foundations"])}'>${escapeHtml(t.name)}</option>`).join('');
 }
 
 // Load registered teams for selected tournament
@@ -181,6 +190,27 @@ async function loadTeams(tournamentId) {
     }).join('');
 }
 
+function renderDivisionButtons(divisions) {
+    const block = document.getElementById('division-block');
+    const container = document.getElementById('division-buttons');
+    container.innerHTML = divisions.map(d => `
+        <button type="button" data-div="${d}"
+            class="reg-div-btn px-5 py-3 rounded-lg border-2 border-gray-600 text-white font-semibold hover:border-red-500 transition-colors">
+            ${DIVISION_LABELS[d] || d}
+        </button>`).join('');
+    container.querySelectorAll('.reg-div-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.reg-div-btn').forEach(b => {
+                b.classList.remove('border-red-500', 'bg-red-900');
+                b.classList.add('border-gray-600');
+            });
+            btn.classList.remove('border-gray-600');
+            btn.classList.add('border-red-500', 'bg-red-900');
+        });
+    });
+    block.classList.remove('hidden');
+}
+
 // Tournament selection
 document.getElementById('tournament-select').addEventListener('change', (e) => {
     const selected = e.target.options[e.target.selectedIndex];
@@ -188,13 +218,23 @@ document.getElementById('tournament-select').addEventListener('change', (e) => {
 
     if (currentTournamentId) {
         currentTeamSize = parseInt(selected.dataset.size) || 4;
+        currentTournamentIsOpen = selected.dataset.open === '1';
         resetForm();
+
+        if (!currentTournamentIsOpen) {
+            const divisions = JSON.parse(selected.dataset.divisions || '["rx","scaled","foundations"]');
+            renderDivisionButtons(divisions);
+        } else {
+            document.getElementById('division-block').classList.add('hidden');
+        }
+
         document.getElementById('registration-form').classList.remove('hidden');
         document.getElementById('success-block').classList.add('hidden');
         loadTeams(currentTournamentId);
     } else {
         document.getElementById('registration-form').classList.add('hidden');
         document.getElementById('teams-list-block').classList.add('hidden');
+        document.getElementById('division-block').classList.add('hidden');
     }
 });
 
@@ -208,6 +248,13 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
     if (!teamName) return showError('Veuillez entrer un nom d\'équipe');
     const emptyCount = members.filter(m => m === '').length;
     if (emptyCount > 0) return showError(`Veuillez remplir tous les ${currentTeamSize} champs membres`);
+
+    let division = null;
+    if (!currentTournamentIsOpen) {
+        const selectedDiv = document.querySelector('#division-buttons .reg-div-btn.border-red-500');
+        if (!selectedDiv) return showError('Veuillez sélectionner une division');
+        division = selectedDiv.dataset.div;
+    }
 
     // Check duplicate team name
     const { data: dupTeam } = await sb
@@ -227,7 +274,8 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
         const { error } = await sb.from('teams').insert({
             tournament_id: currentTournamentId,
             team_name: teamName,
-            member_names: members
+            member_names: members,
+            division: division
         });
 
         if (error) throw new Error(error.message);
