@@ -59,9 +59,9 @@
             <h2 class="text-2xl font-bold mb-6 text-white">Saisie de résultat</h2>
 
             <div class="space-y-6">
-                <!-- Athlete Selection -->
+                <!-- Athlete / Team Selection -->
                 <div>
-                    <label class="block text-base font-semibold text-gray-200 mb-3">Participant</label>
+                    <label id="participant-label" class="block text-base font-semibold text-gray-200 mb-3">Participant</label>
                     <select id="athlete-select" class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-lg">
                         <option value="">-- Sélectionner un participant --</option>
                     </select>
@@ -210,6 +210,7 @@ var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // STATE
 let currentTournament = null;
+let isTeamTournament = false;
 let athletes = [];
 let wods = [];
 let existingScoreId = null;
@@ -314,9 +315,11 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     }
 
     currentTournament = data[0];
+    isTeamTournament = currentTournament.competition_type === 'team';
     document.getElementById('login-modal').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('tournament-name').textContent = currentTournament.name;
+    document.getElementById('participant-label').textContent = isTeamTournament ? 'Équipe' : 'Participant';
 
     // Update leaderboard link to include current tournament
     document.getElementById('leaderboard-link').href = `leaderboard.html?tournament=${currentTournament.id}`;
@@ -348,36 +351,66 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     document.getElementById('login-error').classList.add('hidden');
 });
 
-// LOAD ATHLETES
+// LOAD ATHLETES / TEAMS
 async function loadAthletes() {
-    // Load registered participants for this tournament
-    const { data, error } = await supabase
-        .from('tournament_participants')
-        .select(`
-            *,
-            athletes(id,first_name,last_name,gender)
-        `)
-        .eq('tournament_id', currentTournament.id)
-        .order('athletes(last_name)');
-
-    if (error) {
-        console.error('Error loading participants:', error);
-        return showStatus('Erreur lors du chargement des participants', true);
-    }
-
-    const participants = data || [];
-
     const select = document.getElementById('athlete-select');
-    select.innerHTML = '<option value="">-- Sélectionner un participant --</option>';
 
-    if (participants.length === 0) {
-        select.innerHTML += '<option value="" disabled>Aucun participant inscrit</option>';
-        return;
+    if (isTeamTournament) {
+        const { data, error } = await supabase
+            .from('teams')
+            .select(`
+                id,
+                team_name,
+                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name),
+                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name)
+            `)
+            .eq('tournament_id', currentTournament.id)
+            .order('team_name');
+
+        if (error) {
+            console.error('Error loading teams:', error);
+            return showStatus('Erreur lors du chargement des équipes', true);
+        }
+
+        const teams = data || [];
+        select.innerHTML = '<option value="">-- Sélectionner une équipe --</option>';
+
+        if (teams.length === 0) {
+            select.innerHTML += '<option value="" disabled>Aucune équipe inscrite</option>';
+            return;
+        }
+
+        teams.forEach(t => {
+            const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
+            select.innerHTML += `<option value="${t.id}">${escapeHtml(name)}</option>`;
+        });
+    } else {
+        const { data, error } = await supabase
+            .from('tournament_participants')
+            .select(`
+                *,
+                athletes(id,first_name,last_name,gender)
+            `)
+            .eq('tournament_id', currentTournament.id)
+            .order('athletes(last_name)');
+
+        if (error) {
+            console.error('Error loading participants:', error);
+            return showStatus('Erreur lors du chargement des participants', true);
+        }
+
+        const participants = data || [];
+        select.innerHTML = '<option value="">-- Sélectionner un participant --</option>';
+
+        if (participants.length === 0) {
+            select.innerHTML += '<option value="" disabled>Aucun participant inscrit</option>';
+            return;
+        }
+
+        participants.forEach(p => {
+            select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
+        });
     }
-
-    participants.forEach(p => {
-        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
-    });
 }
 
 // LOAD WODS
@@ -402,17 +435,19 @@ async function loadWODs() {
     });
 }
 
-// Pre-fill form if athlete already has a result for the selected WOD
+// Pre-fill form if participant already has a result for the selected WOD
 async function preloadExistingScore() {
-    const athleteId = parseInt(document.getElementById('athlete-select').value);
+    const participantId = parseInt(document.getElementById('athlete-select').value);
     const wodId = parseInt(document.getElementById('wod-select').value);
-    if (!athleteId || !wodId) return;
+    if (!participantId || !wodId) return;
 
-    const { data: existing } = await supabase
-        .from('scores').select('*')
-        .eq('workout_id', wodId)
-        .eq('athlete_id', athleteId)
-        .maybeSingle();
+    let query = supabase.from('scores').select('*').eq('workout_id', wodId);
+    if (isTeamTournament) {
+        query = query.eq('team_id', participantId);
+    } else {
+        query = query.eq('athlete_id', participantId);
+    }
+    const { data: existing } = await query.maybeSingle();
 
     if (!existing) {
         existingScoreId = null;
@@ -599,10 +634,10 @@ document.getElementById('result-minutes').addEventListener('input', (e) => {
 
 // SUBMIT RESULT
 document.getElementById('submit-result-btn').addEventListener('click', async () => {
-    const athleteId = parseInt(document.getElementById('athlete-select').value);
+    const participantId = parseInt(document.getElementById('athlete-select').value);
     const wodId = parseInt(document.getElementById('wod-select').value);
 
-    if (!athleteId || !wodId) {
+    if (!participantId || !wodId) {
         return alert('Veuillez sélectionner un participant et un WOD');
     }
 
@@ -612,7 +647,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     // Prepare result data
     let resultData = {
         workout_id: wodId,
-        athlete_id: athleteId
+        ...(isTeamTournament ? { team_id: participantId } : { athlete_id: participantId })
     };
 
     if (currentTournament.is_open) {
@@ -689,19 +724,20 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     }
 
     // Check if result already exists
-    const { data: existing } = await supabase
-        .from('scores')
-        .select('id')
-        .eq('workout_id', wodId)
-        .eq('athlete_id', athleteId)
-        .maybeSingle();
+    let existingQuery = supabase.from('scores').select('id').eq('workout_id', wodId);
+    if (isTeamTournament) {
+        existingQuery = existingQuery.eq('team_id', participantId);
+    } else {
+        existingQuery = existingQuery.eq('athlete_id', participantId);
+    }
+    const { data: existing } = await existingQuery.maybeSingle();
 
     console.log('Submitting result data:', resultData);
     console.log('Existing score:', existing);
 
     if (existing) {
         // Update existing result — exclude FK fields that identify the record
-        const { workout_id: _w, athlete_id: _a, ...updateData } = resultData;
+        const { workout_id: _w, athlete_id: _a, team_id: _t, ...updateData } = resultData;
         const { error } = await supabase
             .from('scores')
             .update(updateData)
