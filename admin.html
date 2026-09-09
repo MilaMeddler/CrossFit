@@ -147,6 +147,11 @@
 
         <div id="team-member-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5"></div>
 
+        <div id="team-division-block" class="mb-5 hidden">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Division</label>
+            <div id="team-division-buttons" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <div class="flex gap-3">
             <button id="create-team-btn" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Créer l'équipe</button>
             <button id="cancel-new-team-btn" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
@@ -1082,10 +1087,40 @@ function changeTeamSize(delta) {
     renderTeamMemberFields();
 }
 
+function divisionLabel(d) {
+    return { elite: 'Elite', rx: 'RX', intermediaire: 'Intermédiaire', scaled: 'Scaled', foundations: 'Foundations' }[d] || d;
+}
+
 function openNewTeamModal() {
     currentTeamSize = (currentTournament && currentTournament.team_size) || 4;
     document.getElementById('team-name').value = '';
     renderTeamMemberFields();
+
+    const divBlock = document.getElementById('team-division-block');
+    const divButtons = document.getElementById('team-division-buttons');
+
+    if (currentTournament && !currentTournament.is_open) {
+        const divisions = currentTournament.active_divisions || ['rx', 'scaled', 'foundations'];
+        divButtons.innerHTML = divisions.map(d => `
+            <button type="button" data-div="${d}"
+                class="team-div-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-sm font-semibold hover:border-blue-500 transition-colors">
+                ${divisionLabel(d)}
+            </button>`).join('');
+        divButtons.querySelectorAll('.team-div-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                divButtons.querySelectorAll('.team-div-btn').forEach(b => {
+                    b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700');
+                    b.classList.add('border-gray-300');
+                });
+                btn.classList.remove('border-gray-300');
+                btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700');
+            });
+        });
+        divBlock.classList.remove('hidden');
+    } else {
+        divBlock.classList.add('hidden');
+    }
+
     document.getElementById('new-team-modal').classList.remove('hidden');
 }
 
@@ -1105,11 +1140,19 @@ document.getElementById('create-team-btn').addEventListener('click', async () =>
 
     if(!name) return alert('⚠️ Entrez un nom d\'équipe');
     if(memberNames.length < 2) return alert('⚠️ Entrez au moins 2 noms d\'athlètes');
-    
+
+    let division = null;
+    if (currentTournament && !currentTournament.is_open) {
+        const selectedDiv = document.querySelector('#team-division-buttons .team-div-btn.border-blue-600');
+        if (!selectedDiv) return alert('⚠️ Veuillez sélectionner une division');
+        division = selectedDiv.dataset.div;
+    }
+
     const {error} = await supabase.from('teams').insert({
         tournament_id: currentTournamentId,
         team_name: name,
-        member_names: memberNames
+        member_names: memberNames,
+        division: division
     });
 
     if(error) {
