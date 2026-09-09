@@ -222,8 +222,7 @@ async function loadTournaments(preferredTournamentId = null) {
     }
 
     select.innerHTML = tournaments.map(t => {
-        const tag = t.competition_type === 'team' ? '(Équipes)' : (t.is_open ? '[OPEN]' : '(Individuel)');
-        return `<option value="${t.id}">${t.name} ${tag}</option>`;
+        return `<option value="${t.id}">${t.name}</option>`;
     }).join('');
 
     const preferred = preferredTournamentId && tournaments.find(t => t.id === preferredTournamentId);
