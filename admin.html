@@ -105,7 +105,7 @@
                     <span class="text-2xl mr-3">🏅</span>
                     <div>
                         <div class="font-bold">Équipes</div>
-                        <div class="text-sm opacity-90">Compétition par paires (2 athlètes)</div>
+                        <div class="text-sm opacity-90">Compétition par équipes</div>
                     </div>
                 </div>
             </button>
@@ -207,8 +207,14 @@
                 <h3 class="text-lg font-semibold mb-4">👥 Gestion des équipes</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <input type="text" id="team-name" placeholder="Nom de l'équipe" class="border rounded-lg px-4 py-2">
-                    <input type="text" id="team-members" placeholder="Membres (séparés par virgule)" class="border rounded-lg px-4 py-2">
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm text-gray-600 whitespace-nowrap">Nombre d'athlètes:</label>
+                        <input type="number" id="team-size" min="2" max="10" value="4"
+                               class="border rounded-lg px-3 py-2 w-20 text-center"
+                               oninput="updateTeamMemberFields()">
+                    </div>
                 </div>
+                <div id="team-member-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
                 <button id="create-team-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 mb-6">Créer l'équipe</button>
                 
                 <h4 class="font-semibold mb-3">📋 Équipes du tournoi</h4>
@@ -706,6 +712,7 @@ async function onTournamentChange() {
         span.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
         document.getElementById('teams-section').classList.remove('hidden');
         document.getElementById('participants-section').classList.add('hidden');
+        updateTeamMemberFields();
         await loadTeams();
     } else {
         span.textContent = '👤 Tournoi individuel';
@@ -965,13 +972,37 @@ function renderTeams() {
     }).join('');
 }
 
+function updateTeamMemberFields() {
+    const size = parseInt(document.getElementById('team-size').value) || 4;
+    const container = document.getElementById('team-member-fields');
+    const current = container.querySelectorAll('input').length;
+    // Add missing fields
+    for (let i = current + 1; i <= size; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `team-member-${i}`;
+        input.placeholder = `Athlète ${i} (Prénom Nom)`;
+        input.className = 'border rounded-lg px-4 py-2';
+        container.appendChild(input);
+    }
+    // Remove extra fields
+    const inputs = container.querySelectorAll('input');
+    for (let i = inputs.length; i > size; i--) {
+        inputs[i - 1].remove();
+    }
+}
+
 document.getElementById('create-team-btn').addEventListener('click', async () => {
     const name = document.getElementById('team-name').value.trim();
-    const membersRaw = document.getElementById('team-members').value.trim();
-    const memberNames = membersRaw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    const size = parseInt(document.getElementById('team-size').value) || 4;
+    const memberNames = [];
+    for (let i = 1; i <= size; i++) {
+        const val = (document.getElementById(`team-member-${i}`)?.value || '').trim();
+        if (val) memberNames.push(val);
+    }
 
     if(!name) return alert('⚠️ Entrez un nom d\'équipe');
-    if(memberNames.length < 2) return alert('⚠️ Entrez au moins 2 membres (séparés par virgule)');
+    if(memberNames.length < 2) return alert('⚠️ Entrez au moins 2 noms d\'athlètes');
     
     const {error} = await supabase.from('teams').insert({
         tournament_id: currentTournamentId,
@@ -986,7 +1017,7 @@ document.getElementById('create-team-btn').addEventListener('click', async () =>
 
     showStatus('✅ Équipe créée');
     document.getElementById('team-name').value='';
-    document.getElementById('team-members').value='';
+    document.querySelectorAll('#team-member-fields input').forEach(i => i.value = '');
     await loadTeams();
 });
 
