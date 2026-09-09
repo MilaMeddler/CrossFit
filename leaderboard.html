@@ -273,14 +273,14 @@ async function loadTournamentData() {
     if (tournament.competition_type === 'team') {
         const {data: teamsData} = await supabaseLeaderboard
             .from('teams')
-            .select('id, team_name, member_names')
+            .select('id, team_name, member_names, division')
             .eq('tournament_id', currentTournamentId);
 
         participants = (teamsData || []).map(t => ({
             id: `team-${t.id}`,
             teamId: t.id,
             name: t.team_name || (t.member_names || []).join(' & ') || 'Équipe',
-            level: null,
+            level: t.division || null,
             gender: 'TEAM',
             type: 'team'
         }));
@@ -299,7 +299,7 @@ async function loadTournamentData() {
             id: `athlete-${p.athletes.id}`,
             athleteId: p.athletes.id,
             name: `${p.athletes.first_name} ${p.athletes.last_name}`,
-            level: p.division, // Division from registration (renamed from level)
+            level: p.division,
             gender: p.athletes.gender,
             type: 'athlete'
         }));
@@ -314,6 +314,9 @@ async function loadTournamentData() {
         `)
         .eq('workouts.tournament_id', currentTournamentId);
     scores = scoresData || [];
+
+    // Refresh category filter using actual data (overrides DB active_divisions if wrong)
+    updateCategoryFilterFromData(tournament);
 
     render();
     updateLastUpdate();
@@ -355,6 +358,35 @@ function updateCategoryFilter(tournament) {
     } else {
         sel.value = 'all';
         currentCategory = 'all';
+    }
+}
+
+// Update category filter using actual loaded data (called after data load)
+// For Open tournaments: derives divisions from actual scores
+// For non-Open team tournaments: derives divisions from teams.division
+// Falls back to tournament.active_divisions if no data yet
+function updateCategoryFilterFromData(tournament) {
+    if (!tournament) return;
+
+    const divisionOrder = ['elite', 'rx', 'intermediaire', 'scaled', 'foundations'];
+    let derivedDivisions = null;
+
+    if (tournament.is_open) {
+        // Open format: division is per score — collect unique divisions from scores
+        const fromScores = [...new Set(scores.map(s => s.division).filter(Boolean).map(d => d.toLowerCase()))];
+        if (fromScores.length > 0) {
+            derivedDivisions = divisionOrder.filter(d => fromScores.includes(d));
+        }
+    } else if (tournament.competition_type === 'team') {
+        // Non-open team: division is per team — collect unique divisions from participants
+        const fromTeams = [...new Set(participants.map(p => p.level).filter(Boolean).map(d => d.toLowerCase()))];
+        if (fromTeams.length > 0) {
+            derivedDivisions = divisionOrder.filter(d => fromTeams.includes(d));
+        }
+    }
+
+    if (derivedDivisions && derivedDivisions.length > 0) {
+        updateCategoryFilter({ ...tournament, active_divisions: derivedDivisions });
     }
 }
 
