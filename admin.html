@@ -159,6 +159,31 @@
     </div>
 </div>
 
+<!-- EDIT TEAM MODAL -->
+<div id="edit-team-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-screen overflow-y-auto">
+        <h2 class="text-xl font-bold mb-5">✏️ Modifier l'équipe</h2>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Nom de l'équipe</label>
+            <input type="text" id="edit-team-name" placeholder="Ex: Les Invincibles"
+                   class="w-full border rounded-lg px-4 py-2">
+        </div>
+
+        <div id="edit-team-division-block" class="mb-5 hidden">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Division</label>
+            <div id="edit-team-division-buttons" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div id="edit-team-member-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5"></div>
+
+        <div class="flex gap-3">
+            <button id="save-team-edit-btn" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">Enregistrer</button>
+            <button id="cancel-edit-team-btn" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300">Annuler</button>
+        </div>
+    </div>
+</div>
+
 <!-- MAIN CONTENT -->
 <div id="main-content" class="hidden">
     <header class="bg-white shadow-sm">
@@ -259,6 +284,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Division</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Membres</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
                             </tr>
@@ -1049,17 +1075,20 @@ async function loadTeams() {
 function renderTeams() {
     const tbody = document.getElementById('teams-tbody');
     if(!teams.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">Aucune équipe pour ce tournoi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucune équipe pour ce tournoi</td></tr>';
         return;
     }
     tbody.innerHTML = teams.map(t => {
         const members = (t.member_names || []).join(', ');
+        const divLabel = t.division ? (divisionLabel(t.division) || t.division) : '—';
         return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-semibold">${escapeHtml(t.team_name)}</td>
-            <td class="px-4 py-3 text-gray-600">${escapeHtml(members)}</td>
-            <td class="px-4 py-3 text-center">
-                <button onclick="deleteTeam(${t.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
+            <td class="px-4 py-3 text-gray-600 text-sm">${escapeHtml(divLabel)}</td>
+            <td class="px-4 py-3 text-gray-600 text-sm">${escapeHtml(members)}</td>
+            <td class="px-4 py-3 text-center flex gap-3 justify-center">
+                <button onclick="editTeam(${t.id})" class="text-blue-600 hover:text-blue-800 text-xl" title="Modifier">✏️</button>
+                <button onclick="deleteTeam(${t.id})" class="text-red-600 hover:text-red-800 text-xl" title="Supprimer">🗑️</button>
             </td>
         </tr>
         `;
@@ -1171,6 +1200,99 @@ window.deleteTeam = async (id) => {
     showStatus('✅ Équipe supprimée');
     await loadTeams();
 };
+
+let editingTeamId = null;
+
+window.editTeam = (id) => {
+    const team = teams.find(t => t.id === id);
+    if (!team) return;
+    editingTeamId = id;
+
+    document.getElementById('edit-team-name').value = team.team_name || '';
+
+    // Division block
+    const divBlock = document.getElementById('edit-team-division-block');
+    const divButtons = document.getElementById('edit-team-division-buttons');
+    if (currentTournament && !currentTournament.is_open) {
+        const divisions = currentTournament.active_divisions || ['rx', 'scaled', 'foundations'];
+        divButtons.innerHTML = divisions.map(d => `
+            <button type="button" data-div="${d}"
+                class="edit-div-btn px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-colors
+                       ${team.division === d ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-500'}">
+                ${divisionLabel(d)}
+            </button>`).join('');
+        divButtons.querySelectorAll('.edit-div-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                divButtons.querySelectorAll('.edit-div-btn').forEach(b => {
+                    b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700');
+                    b.classList.add('border-gray-300');
+                });
+                btn.classList.remove('border-gray-300');
+                btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700');
+            });
+        });
+        divBlock.classList.remove('hidden');
+    } else {
+        divBlock.classList.add('hidden');
+    }
+
+    // Member fields
+    const size = (currentTournament && currentTournament.team_size) || 4;
+    const memberFields = document.getElementById('edit-team-member-fields');
+    memberFields.innerHTML = '';
+    for (let i = 1; i <= size; i++) {
+        const val = (team.member_names || [])[i - 1] || '';
+        const div = document.createElement('div');
+        div.innerHTML = `<input type="text" id="edit-member-${i}" value="${escapeHtml(val)}"
+            placeholder="Athlète ${i} (Prénom Nom)"
+            class="w-full border rounded-lg px-4 py-2">`;
+        memberFields.appendChild(div);
+    }
+
+    document.getElementById('edit-team-modal').classList.remove('hidden');
+};
+
+document.getElementById('cancel-edit-team-btn').addEventListener('click', () => {
+    document.getElementById('edit-team-modal').classList.add('hidden');
+    editingTeamId = null;
+});
+
+document.getElementById('save-team-edit-btn').addEventListener('click', async () => {
+    if (!editingTeamId) return;
+    const name = document.getElementById('edit-team-name').value.trim();
+    if (!name) return alert('⚠️ Entrez un nom d\'équipe');
+
+    const size = (currentTournament && currentTournament.team_size) || 4;
+    const memberNames = [];
+    for (let i = 1; i <= size; i++) {
+        const val = (document.getElementById(`edit-member-${i}`)?.value || '').trim();
+        if (val) memberNames.push(val);
+    }
+    if (memberNames.length < 2) return alert('⚠️ Entrez au moins 2 noms d\'athlètes');
+
+    let division = null;
+    if (currentTournament && !currentTournament.is_open) {
+        const selectedDiv = document.querySelector('#edit-team-division-buttons .edit-div-btn.border-blue-600');
+        if (!selectedDiv) return alert('⚠️ Veuillez sélectionner une division');
+        division = selectedDiv.dataset.div;
+    }
+
+    const { error } = await supabase.from('teams').update({
+        team_name: name,
+        member_names: memberNames,
+        division: division
+    }).eq('id', editingTeamId);
+
+    if (error) {
+        alert('❌ Erreur: ' + error.message);
+        return;
+    }
+
+    showStatus('✅ Équipe modifiée');
+    document.getElementById('edit-team-modal').classList.add('hidden');
+    editingTeamId = null;
+    await loadTeams();
+});
 
 // ============================================
 // TOURNAMENT PARTICIPANTS
