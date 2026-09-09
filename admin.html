@@ -942,7 +942,12 @@ function openEditDataModal(t) {
         cb.checked = activeDivisions.includes(cb.value);
     });
 
-    document.getElementById('divisions-block').classList.remove('hidden');
+    const divisionsBlock = document.getElementById('divisions-block');
+    if (t.is_open) {
+        divisionsBlock.classList.add('hidden');
+    } else {
+        divisionsBlock.classList.remove('hidden');
+    }
 
     document.getElementById('continue-tournament-btn').classList.add('hidden');
     document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
