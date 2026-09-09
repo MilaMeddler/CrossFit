@@ -1,6 +1,37 @@
 # 🏋️ CrossFit Competition System
 
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-success?style=for-the-badge&logo=github)](https://milameddler.github.io/CrossFit/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=for-the-badge&logo=supabase)](https://supabase.com)
+
 Система управления турнирами CrossFit с поддержкой обычного формата и формата Open.
+
+**🔗 Прямая ссылка на приложение:** https://milameddler.github.io/CrossFit/
+
+## 🌐 Прямые ссылки на сайт
+
+После включения GitHub Pages, сайт доступен по адресу:
+
+**🏠 Главная страница:**  
+https://milameddler.github.io/CrossFit/
+
+**📊 Турнирная таблица (Leaderboard):**  
+https://milameddler.github.io/CrossFit/leaderboard.html
+
+**👤 Личный кабинет спортсмена:**  
+https://milameddler.github.io/CrossFit/athlete.html
+
+**⚖️ Интерфейс судьи:**  
+https://milameddler.github.io/CrossFit/judge.html
+
+**🔐 Админ-панель:**  
+https://milameddler.github.io/CrossFit/admin.html
+
+> **Примечание:** Для работы сайта необходимо:
+> 1. Включить GitHub Pages в настройках репозитория (Settings → Pages → Deploy from main branch)
+> 2. Настроить `config.js` с данными Supabase
+> 3. Применить RLS политики в Supabase
+
+---
 
 ## 🎯 Основные возможности
 

@@ -205,10 +205,9 @@
             <!-- TEAMS SECTION -->
             <div id="teams-section" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
                 <h3 class="text-lg font-semibold mb-4">👥 Gestion des équipes</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <select id="team-athlete1" class="border rounded-lg px-4 py-2"></select>
-                    <select id="team-athlete2" class="border rounded-lg px-4 py-2"></select>
-                    <input type="text" id="team-name" placeholder="Nom (optionnel)" class="border rounded-lg px-4 py-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="team-name" placeholder="Nom de l'équipe" class="border rounded-lg px-4 py-2">
+                    <input type="text" id="team-members" placeholder="Membres (séparés par virgule)" class="border rounded-lg px-4 py-2">
                 </div>
                 <button id="create-team-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 mb-6">Créer l'équipe</button>
                 
@@ -565,7 +564,6 @@ async function loadAthletes() {
     const {data} = await supabase.from('athletes').select('*').order('last_name');
     athletes = data || [];
     renderAthletes();
-    updateTeamSelects();
     updateParticipantSelect();
 }
 
@@ -939,11 +937,10 @@ document.getElementById('delete-tournament-btn').addEventListener('click', async
 // ============================================
 async function loadTeams() {
     if(!currentTournamentId) return;
-    const {data} = await supabase.from('teams').select(`
-        *,
-        athlete1:athletes!teams_athlete1_id_fkey(id,first_name,last_name),
-        athlete2:athletes!teams_athlete2_id_fkey(id,first_name,last_name)
-    `).eq('tournament_id', currentTournamentId);
+    const {data} = await supabase.from('teams')
+        .select('id, team_name, member_names')
+        .eq('tournament_id', currentTournamentId)
+        .order('team_name');
     teams = data || [];
     renderTeams();
 }
@@ -955,12 +952,11 @@ function renderTeams() {
         return;
     }
     tbody.innerHTML = teams.map(t => {
-        const name = t.team_name || `${escapeHtml(t.athlete1.first_name)} & ${escapeHtml(t.athlete2.first_name)}`;
-        const members = `${escapeHtml(t.athlete1.first_name)} ${escapeHtml(t.athlete1.last_name)}, ${escapeHtml(t.athlete2.first_name)} ${escapeHtml(t.athlete2.last_name)}`;
+        const members = (t.member_names || []).join(', ');
         return `
         <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-semibold">${t.team_name ? escapeHtml(t.team_name) : name}</td>
-            <td class="px-4 py-3">${members}</td>
+            <td class="px-4 py-3 font-semibold">${escapeHtml(t.team_name)}</td>
+            <td class="px-4 py-3 text-gray-600">${escapeHtml(members)}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="deleteTeam(${t.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
             </td>
@@ -969,43 +965,28 @@ function renderTeams() {
     }).join('');
 }
 
-function updateTeamSelects() {
-    ['team-athlete1','team-athlete2'].forEach(id => {
-        const sel = document.getElementById(id);
-        const num = id.slice(-1);
-        sel.innerHTML = `<option value="">Athlète ${num}</option>` +
-            athletes.map(a=>`<option value="${a.id}">${escapeHtml(a.first_name)} ${escapeHtml(a.last_name)}</option>`).join('');
-    });
-}
-
 document.getElementById('create-team-btn').addEventListener('click', async () => {
-    const a1 = parseInt(document.getElementById('team-athlete1').value);
-    const a2 = parseInt(document.getElementById('team-athlete2').value);
-    const name = document.getElementById('team-name').value.trim() || null;
-    
-    if(!a1 || !a2) return alert('⚠️ Sélectionnez 2 athlètes');
-    if(a1===a2) return alert('⚠️ Choisissez des athlètes différents');
+    const name = document.getElementById('team-name').value.trim();
+    const membersRaw = document.getElementById('team-members').value.trim();
+    const memberNames = membersRaw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    if(!name) return alert('⚠️ Entrez un nom d\'équipe');
+    if(memberNames.length < 2) return alert('⚠️ Entrez au moins 2 membres (séparés par virgule)');
     
     const {error} = await supabase.from('teams').insert({
         tournament_id: currentTournamentId,
-        athlete1_id: a1,
-        athlete2_id: a2,
-        team_name: name
+        team_name: name,
+        member_names: memberNames
     });
-    
+
     if(error) {
-        if(error.message.includes('unique')) {
-            alert('⚠️ Un des athlètes est déjà dans une équipe pour ce tournoi');
-        } else {
-            alert('❌ Erreur: ' + error.message);
-        }
+        alert('❌ Erreur: ' + error.message);
         return;
     }
-    
+
     showStatus('✅ Équipe créée');
     document.getElementById('team-name').value='';
-    document.getElementById('team-athlete1').value='';
-    document.getElementById('team-athlete2').value='';
+    document.getElementById('team-members').value='';
     await loadTeams();
 });
 
@@ -1280,12 +1261,7 @@ async function loadResults(tournamentId = null) {
     const {data} = await supabase.from('scores').select(`
         *,
         athletes(id,first_name,last_name),
-        teams(
-            id,
-            team_name,
-            athlete1:athletes!teams_athlete1_id_fkey(first_name),
-            athlete2:athletes!teams_athlete2_id_fkey(first_name)
-        ),
+        teams(id, team_name, member_names),
         workouts(id,wod_number,tournament_id,tournaments(name)),
         judges(id,name)
     `).order('id',{ascending:false}).limit(500);
@@ -1315,9 +1291,7 @@ function renderResults() {
         if(s.athletes) {
             participant = `${escapeHtml(s.athletes.first_name)} ${escapeHtml(s.athletes.last_name)}`;
         } else if(s.teams) {
-            participant = s.teams.team_name
-                ? escapeHtml(s.teams.team_name)
-                : `${escapeHtml(s.teams.athlete1.first_name)} & ${escapeHtml(s.teams.athlete2.first_name)}`;
+            participant = escapeHtml(s.teams.team_name || (s.teams.member_names || []).join(' & ') || 'Équipe');
         } else {
             participant = 'Inconnu';
         }
@@ -1526,21 +1500,17 @@ async function loadResultFormTournament(tid) {
     // Load participants
     const partSel = document.getElementById('result-participant');
     if(t.competition_type === 'team') {
-        const {data:teamsData} = await supabase.from('teams').select(`
-            *,
-            athlete1:athletes!teams_athlete1_id_fkey(first_name),
-            athlete2:athletes!teams_athlete2_id_fkey(first_name)
-        `).eq('tournament_id',tid);
+        const {data:teamsData} = await supabase.from('teams')
+            .select('id, team_name, member_names')
+            .eq('tournament_id',tid);
 
         if(!teamsData || teamsData.length === 0) {
             partSel.innerHTML = '<option value="">Aucune équipe créée</option>';
         } else {
             partSel.innerHTML = '<option value="">Sélectionner une équipe</option>' +
                 teamsData.map(t=>{
-                    const name = t.team_name
-                        ? escapeHtml(t.team_name)
-                        : `${escapeHtml(t.athlete1.first_name)} & ${escapeHtml(t.athlete2.first_name)}`;
-                    return `<option value="team-${t.id}">${name}</option>`;
+                    const name = t.team_name || (t.member_names || []).join(' & ') || 'Équipe';
+                    return `<option value="team-${t.id}">${escapeHtml(name)}</option>`;
                 }).join('');
         }
     } else {
