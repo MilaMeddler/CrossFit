@@ -831,13 +831,13 @@ async function createTournament(type) {
         activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
     }
 
-    const { data, error } = await supabase.from('tournaments').insert({
+    const { data: newTournament, error } = await supabase.from('tournaments').insert({
         name: pendingTournamentName,
         competition_type: type,
         judge_password: pendingTournamentPassword,
         is_open: pendingTournamentIsOpen,
         active_divisions: activeDivisions
-    });
+    }).select().single();
 
     if (error) {
         console.error('Error creating tournament:', error);
@@ -850,6 +850,12 @@ async function createTournament(type) {
     pendingTournamentPassword = null;
     pendingTournamentIsOpen = false;
     await loadTournaments();
+    if (newTournament) {
+        currentTournamentId = newTournament.id;
+        currentTournament = newTournament;
+        document.getElementById('tournament-select').value = newTournament.id;
+        await onTournamentChange();
+    }
 }
 
 // EDIT TOURNAMENT
