@@ -68,32 +68,10 @@
                     <p id="wod-description-text" class="text-lg text-gray-100 whitespace-pre-wrap font-medium leading-relaxed"></p>
                 </div>
 
-                <!-- OPEN: Division selector -->
+                <!-- OPEN: Division selector (dynamic) -->
                 <div id="open-division-container" class="hidden">
                     <label class="block text-base font-semibold text-gray-200 mb-3">Mon niveau pour ce WOD</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="division" value="rx" class="sr-only" id="div-rx">
-                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="rx">
-                                <div class="text-gray-100">RX</div>
-                                <div class="text-xs text-gray-400 mt-1">Élite</div>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="division" value="scaled" class="sr-only" id="div-scaled">
-                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="scaled">
-                                <div class="text-gray-100">Scaled</div>
-                                <div class="text-xs text-gray-400 mt-1">Intermédiaire</div>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="division" value="foundations" class="sr-only" id="div-foundations">
-                            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="foundations">
-                                <div class="text-gray-100">Found.</div>
-                                <div class="text-xs text-gray-400 mt-1">Débutant</div>
-                            </div>
-                        </label>
-                    </div>
+                    <div id="open-division-buttons" class="grid gap-3"></div>
                 </div>
 
                 <!-- Regular Result Input -->
@@ -495,15 +473,14 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
         descriptionBlock.classList.add('hidden');
     }
 
-    // OPEN format: show division selector
+    // OPEN format: show division selector with tournament's active_divisions
     if (currentTournamentIsOpen) {
+        const t = tournaments.find(x => x.id === selectedTournamentId);
+        const divisions = (t && t.active_divisions && t.active_divisions.length > 0)
+            ? t.active_divisions
+            : ['rx', 'scaled', 'foundations'];
+        renderOpenDivisionButtons(divisions);
         openDivisionContainer.classList.remove('hidden');
-        // Reset division selection
-        document.querySelectorAll('input[name="division"]').forEach(r => r.checked = false);
-        document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-white', 'bg-gray-600');
-            b.classList.add('border-gray-600', 'bg-gray-700');
-        });
     } else {
         openDivisionContainer.classList.add('hidden');
     }
@@ -538,19 +515,43 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
     }
 });
 
-// OPEN: Division button styling
-document.querySelectorAll('.division-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const value = btn.dataset.value;
-        document.querySelectorAll('.division-btn').forEach(b => {
-            b.classList.remove('border-white', 'bg-gray-600');
-            b.classList.add('border-gray-600', 'bg-gray-700');
+const DIV_LABELS = {
+    elite: { name: 'Elite', sub: 'Meilleur niveau' },
+    rx: { name: 'RX', sub: 'Élite' },
+    intermediaire: { name: 'Intermédiaire', sub: 'Intermédiaire' },
+    scaled: { name: 'Scaled', sub: 'Intermédiaire' },
+    foundations: { name: 'Foundations', sub: 'Débutant' }
+};
+
+function renderOpenDivisionButtons(activeDivisions) {
+    const container = document.getElementById('open-division-buttons');
+    const cols = Math.min(activeDivisions.length, 4);
+    container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    container.innerHTML = activeDivisions.map(d => {
+        const lbl = DIV_LABELS[d] || { name: d, sub: '' };
+        return `
+        <label class="cursor-pointer">
+            <input type="radio" name="division" value="${d}" class="sr-only open-div-radio">
+            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="${d}">
+                <div class="text-gray-100">${lbl.name}</div>
+                <div class="text-xs text-gray-400 mt-1">${lbl.sub}</div>
+            </div>
+        </label>`;
+    }).join('');
+
+    container.querySelectorAll('.division-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.division-btn').forEach(b => {
+                b.classList.remove('border-white', 'bg-gray-600');
+                b.classList.add('border-gray-600', 'bg-gray-700');
+            });
+            btn.classList.remove('border-gray-600', 'bg-gray-700');
+            btn.classList.add('border-white', 'bg-gray-600');
+            const radio = container.querySelector(`input[value="${btn.dataset.value}"]`);
+            if (radio) radio.checked = true;
         });
-        btn.classList.remove('border-gray-600', 'bg-gray-700');
-        btn.classList.add('border-white', 'bg-gray-600');
-        document.getElementById(`div-${value}`).checked = true;
     });
-});
+}
 
 // Toggle completed/not completed
 function setWodCompleted(completed) {
@@ -636,7 +637,7 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     let division = null;
     if (currentTournamentIsOpen) {
         const divInput = document.querySelector('input[name="division"]:checked');
-        if (!divInput) return alert('Veuillez sélectionner votre niveau (RX / Scaled / Foundations)');
+        if (!divInput) return alert('Veuillez sélectionner votre niveau');
         division = divInput.value;
     }
 
