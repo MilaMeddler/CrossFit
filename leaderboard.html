@@ -274,18 +274,14 @@ async function loadTournamentData() {
     if (tournament.competition_type === 'team') {
         const {data: teamsData} = await supabaseLeaderboard
             .from('teams')
-            .select(`
-                *,
-                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name,gender),
-                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name,gender)
-            `)
+            .select('id, team_name, member_names')
             .eq('tournament_id', currentTournamentId);
 
         participants = (teamsData || []).map(t => ({
             id: `team-${t.id}`,
             teamId: t.id,
-            name: t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`,
-            level: null, // Teams don't have level/division
+            name: t.team_name || (t.member_names || []).join(' & ') || 'Équipe',
+            level: null,
             gender: 'TEAM',
             type: 'team'
         }));

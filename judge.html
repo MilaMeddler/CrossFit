@@ -358,12 +358,7 @@ async function loadAthletes() {
     if (isTeamTournament) {
         const { data, error } = await supabase
             .from('teams')
-            .select(`
-                id,
-                team_name,
-                athlete1:athletes!teams_athlete1_id_fkey(first_name,last_name),
-                athlete2:athletes!teams_athlete2_id_fkey(first_name,last_name)
-            `)
+            .select('id, team_name, member_names')
             .eq('tournament_id', currentTournament.id)
             .order('team_name');
 
@@ -381,7 +376,7 @@ async function loadAthletes() {
         }
 
         teams.forEach(t => {
-            const name = t.team_name || `${t.athlete1.first_name} & ${t.athlete2.first_name}`;
+            const name = t.team_name || (t.member_names || []).join(' & ') || 'Équipe';
             select.innerHTML += `<option value="${t.id}">${escapeHtml(name)}</option>`;
         });
     } else {
