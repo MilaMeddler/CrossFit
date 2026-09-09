@@ -801,14 +801,7 @@ document.getElementById('new-tournament-btn').addEventListener('click', () => {
 });
 
 // Toggle divisions block visibility based on Format Open checkbox
-document.getElementById('tournament-is-open-input').addEventListener('change', (e) => {
-    const divisionsBlock = document.getElementById('divisions-block');
-    if (e.target.checked) {
-        divisionsBlock.classList.add('hidden');
-    } else {
-        divisionsBlock.classList.remove('hidden');
-    }
-});
+// Divisions block always visible — applies to both Open and regular formats
 
 // CREATE TOURNAMENT - Step 2: Choose type → go to team size (team) or data modal (individual)
 document.getElementById('select-individual').addEventListener('click', () => {
@@ -900,17 +893,9 @@ document.getElementById('cancel-tournament-data-btn').addEventListener('click', 
 });
 
 async function createTournament(type) {
-    // Determine divisions: if Open format, use all divisions; otherwise use selected
-    let activeDivisions;
-    if (pendingTournamentIsOpen) {
-        // For Open format, save all divisions
-        activeDivisions = ['elite', 'rx', 'intermediaire', 'scaled', 'foundations'];
-    } else {
-        // For regular format, use selected divisions
-        const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
-            .map(cb => cb.value);
-        activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
-    }
+    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+        .map(cb => cb.value);
+    const activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
 
     const insertData = {
         name: pendingTournamentName,
@@ -997,18 +982,10 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
         return alert('⚠️ Veuillez entrer un mot de passe pour les juges');
     }
 
-    // Determine divisions: if Open format, use all divisions; otherwise use selected
     const isOpen = document.getElementById('tournament-is-open-input').checked;
-    let activeDivisions;
-    if (isOpen) {
-        // For Open format, save all divisions
-        activeDivisions = ['elite', 'rx', 'intermediaire', 'scaled', 'foundations'];
-    } else {
-        // For regular format, use selected divisions
-        const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
-            .map(cb => cb.value);
-        activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
-    }
+    const selectedDivisions = Array.from(document.querySelectorAll('.division-checkbox:checked'))
+        .map(cb => cb.value);
+    const activeDivisions = selectedDivisions.length > 0 ? selectedDivisions : ['rx', 'scaled', 'foundations'];
 
     const updateData = { name, judge_password: password, is_open: isOpen, active_divisions: activeDivisions };
     const editedT = tournaments.find(x => x.id === editingTournamentId);
