@@ -41,9 +41,9 @@
                     </select>
                 </div>
 
-                <!-- Athlete Selection -->
+                <!-- Athlete / Team Selection -->
                 <div id="athlete-container" class="hidden">
-                    <label class="block text-base font-semibold text-gray-200 mb-3">Je suis...</label>
+                    <label id="athlete-label" class="block text-base font-semibold text-gray-200 mb-3">Je suis...</label>
                     <select id="athlete-select" class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-lg">
                         <option value="">-- Sélectionner votre nom --</option>
                     </select>
@@ -211,8 +211,10 @@ let wods = [];
 let tournaments = [];
 let selectedTournamentId = null;
 let selectedAthleteId = null;
+let selectedTeamId = null;
 let selectedWodId = null;
 let currentTournamentIsOpen = false;
+let isTeamTournament = false;
 let currentWodTimeCap = null;
 
 // UTILITY
@@ -315,62 +317,89 @@ async function loadTournaments() {
     select.innerHTML = '<option value="">-- Sélectionner un tournoi --</option>';
 
     tournaments.forEach(t => {
-        const openTag = t.is_open ? ' [OPEN]' : '';
-        select.innerHTML += `<option value="${t.id}">${escapeHtml(t.name)}${openTag}</option>`;
+        select.innerHTML += `<option value="${t.id}">${escapeHtml(t.name)}</option>`;
     });
 }
 
-// TOURNAMENT CHANGE - Load athletes
+// TOURNAMENT CHANGE - Load athletes or teams
 document.getElementById('tournament-select').addEventListener('change', async (e) => {
     selectedTournamentId = parseInt(e.target.value);
+    selectedAthleteId = null;
+    selectedTeamId = null;
     const t = tournaments.find(x => x.id === selectedTournamentId);
     currentTournamentIsOpen = t ? (t.is_open || false) : false;
+    isTeamTournament = t ? (t.competition_type === 'team') : false;
 
-    if (!selectedTournamentId) {
-        document.getElementById('athlete-container').classList.add('hidden');
-        document.getElementById('wod-container').classList.add('hidden');
-        return;
-    }
+    document.getElementById('wod-container').classList.add('hidden');
+    document.getElementById('athlete-container').classList.add('hidden');
 
-    // Load registered participants for this tournament
-    const { data, error } = await supabase
-        .from('tournament_participants')
-        .select(`
-            *,
-            athletes(id,first_name,last_name,gender)
-        `)
-        .eq('tournament_id', selectedTournamentId)
-        .order('athletes(last_name)');
-
-    if (error) {
-        console.error('Error loading participants:', error);
-        showStatus('Erreur lors du chargement des participants', true);
-        return;
-    }
-
-    const participants = data || [];
+    if (!selectedTournamentId) return;
 
     const select = document.getElementById('athlete-select');
-    select.innerHTML = '<option value="">-- Sélectionner votre nom --</option>';
+    const label = document.getElementById('athlete-label');
 
-    if (participants.length === 0) {
-        select.innerHTML += '<option value="" disabled>Aucun participant inscrit</option>';
-        document.getElementById('athlete-container').classList.remove('hidden');
-        return;
+    if (isTeamTournament) {
+        label.textContent = 'Mon équipe...';
+        select.innerHTML = '<option value="">-- Sélectionner votre équipe --</option>';
+
+        const { data: teams, error } = await supabase
+            .from('teams')
+            .select('id, team_name, member_names')
+            .eq('tournament_id', selectedTournamentId)
+            .order('team_name');
+
+        if (error) {
+            showStatus('Erreur lors du chargement des équipes', true);
+            return;
+        }
+
+        if (!teams || teams.length === 0) {
+            select.innerHTML += '<option value="" disabled>Aucune équipe inscrite</option>';
+        } else {
+            teams.forEach(team => {
+                select.innerHTML += `<option value="${team.id}">${escapeHtml(team.team_name)}</option>`;
+            });
+        }
+    } else {
+        label.textContent = 'Je suis...';
+        select.innerHTML = '<option value="">-- Sélectionner votre nom --</option>';
+
+        const { data, error } = await supabase
+            .from('tournament_participants')
+            .select('*, athletes(id,first_name,last_name,gender)')
+            .eq('tournament_id', selectedTournamentId)
+            .order('athletes(last_name)');
+
+        if (error) {
+            showStatus('Erreur lors du chargement des participants', true);
+            return;
+        }
+
+        const participants = data || [];
+        if (participants.length === 0) {
+            select.innerHTML += '<option value="" disabled>Aucun participant inscrit</option>';
+        } else {
+            participants.forEach(p => {
+                select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
+            });
+        }
     }
-
-    participants.forEach(p => {
-        select.innerHTML += `<option value="${p.athletes.id}">${escapeHtml(p.athletes.first_name)} ${escapeHtml(p.athletes.last_name)}</option>`;
-    });
 
     document.getElementById('athlete-container').classList.remove('hidden');
 });
 
-// ATHLETE CHANGE
+// ATHLETE / TEAM CHANGE
 document.getElementById('athlete-select').addEventListener('change', async (e) => {
-    selectedAthleteId = parseInt(e.target.value);
+    const val = parseInt(e.target.value);
+    if (isTeamTournament) {
+        selectedTeamId = val || null;
+        selectedAthleteId = null;
+    } else {
+        selectedAthleteId = val || null;
+        selectedTeamId = null;
+    }
 
-    if (!selectedAthleteId) {
+    if (!val) {
         document.getElementById('wod-container').classList.add('hidden');
         return;
     }
@@ -387,13 +416,19 @@ document.getElementById('athlete-select').addEventListener('change', async (e) =
     const select = document.getElementById('wod-select');
     select.innerHTML = '<option value="">-- Sélectionner un WOD --</option>';
 
-    // Fetch all existing scores for this athlete in one query (avoid N+1)
-    const { data: existingScores } = await supabase
+    // Fetch existing scores for this participant
+    const scoreQuery = supabase
         .from('scores')
         .select('id, workout_id')
-        .eq('athlete_id', selectedAthleteId)
         .in('workout_id', wods.map(w => w.id));
 
+    if (isTeamTournament) {
+        scoreQuery.eq('team_id', selectedTeamId);
+    } else {
+        scoreQuery.eq('athlete_id', selectedAthleteId);
+    }
+
+    const { data: existingScores } = await scoreQuery;
     const existingScoreMap = {};
     (existingScores || []).forEach(s => { existingScoreMap[s.workout_id] = true; });
 
@@ -470,11 +505,11 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
         timeInput.classList.add('hidden');
     }
 
-    // For regular tournaments (not Open), check if athlete has division set
-    if (!currentTournamentIsOpen) {
-        await checkAndSetDivision();
-    } else {
+    // For team tournaments or Open: show submit directly; for regular individual: check division
+    if (isTeamTournament || currentTournamentIsOpen) {
         submitBtn.classList.remove('hidden');
+    } else {
+        await checkAndSetDivision();
     }
 });
 
@@ -551,7 +586,8 @@ document.getElementById('result-minutes').addEventListener('input', (e) => {
 
 // SUBMIT RESULT
 document.getElementById('submit-result-btn').addEventListener('click', async () => {
-    if (!selectedTournamentId || !selectedAthleteId || !selectedWodId) {
+    const participantId = isTeamTournament ? selectedTeamId : selectedAthleteId;
+    if (!selectedTournamentId || !participantId || !selectedWodId) {
         return alert('Veuillez remplir tous les champs');
     }
 
@@ -562,12 +598,10 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     console.log('Submit validation - time_cap:', wod?.time_cap);
 
     // Check if already exists
-    const { data: existing } = await supabase
-        .from('scores')
-        .select('id')
-        .eq('workout_id', selectedWodId)
-        .eq('athlete_id', selectedAthleteId)
-        .maybeSingle();
+    const existingQuery = supabase.from('scores').select('id').eq('workout_id', selectedWodId);
+    if (isTeamTournament) existingQuery.eq('team_id', selectedTeamId);
+    else existingQuery.eq('athlete_id', selectedAthleteId);
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
         return alert('Vous avez déjà entré un résultat pour ce WOD. Contactez un juge pour le modifier.');
@@ -584,8 +618,8 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     // Prepare result data
     let resultData = {
         workout_id: selectedWodId,
-        athlete_id: selectedAthleteId,
-        division: division
+        division: division,
+        ...(isTeamTournament ? { team_id: selectedTeamId } : { athlete_id: selectedAthleteId })
     };
 
     if (isTimeWod) {
