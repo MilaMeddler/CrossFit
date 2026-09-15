@@ -473,12 +473,14 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
         descriptionBlock.classList.add('hidden');
     }
 
-    // OPEN format: show division selector with tournament's active_divisions
+    // OPEN format: show division selector — only Open-valid divisions
     if (currentTournamentIsOpen) {
         const t = tournaments.find(x => x.id === selectedTournamentId);
-        const divisions = (t && t.active_divisions && t.active_divisions.length > 0)
-            ? t.active_divisions
-            : ['rx', 'scaled', 'foundations'];
+        const openDivisions = ['rx', 'scaled', 'foundations'];
+        const stored = t && t.active_divisions && t.active_divisions.length > 0
+            ? t.active_divisions.filter(d => openDivisions.includes(d.toLowerCase()))
+            : [];
+        const divisions = stored.length > 0 ? stored : openDivisions;
         renderOpenDivisionButtons(divisions);
         openDivisionContainer.classList.remove('hidden');
     } else {
