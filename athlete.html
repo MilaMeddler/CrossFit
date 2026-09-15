@@ -329,7 +329,7 @@ document.getElementById('tournament-select').addEventListener('change', async (e
 
         const { data: teams, error } = await supabase
             .from('teams')
-            .select('id, team_name, member_names')
+            .select('id, team_name, member_names, division, gender')
             .eq('tournament_id', selectedTournamentId)
             .order('team_name');
 

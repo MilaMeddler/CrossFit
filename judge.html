@@ -361,7 +361,7 @@ async function loadAthletes() {
     if (isTeamTournament) {
         const { data, error } = await supabase
             .from('teams')
-            .select('id, team_name, member_names')
+            .select('id, team_name, member_names, division, gender')
             .eq('tournament_id', currentTournament.id)
             .order('team_name');
 
