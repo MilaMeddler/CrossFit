@@ -257,11 +257,8 @@ function createDivisionButtons() {
         'foundations': { label: 'Found.', subtitle: 'Débutant', color: 'green' }
     };
 
-    // Adjust grid columns based on number of divisions
-    const colsClass = activeDivisions.length === 5 ? 'grid-cols-5' :
-                      activeDivisions.length === 4 ? 'grid-cols-4' :
-                      activeDivisions.length === 2 ? 'grid-cols-2' :
-                      'grid-cols-3';
+    // Responsive grid: max 3 cols on mobile, wrap if more
+    const colsClass = activeDivisions.length <= 2 ? 'grid-cols-2' : 'grid-cols-3';
     container.className = `grid ${colsClass} gap-3`;
 
     // Generate buttons
