@@ -249,7 +249,6 @@ async function loadTournamentData() {
 
     // Update category filter options based on tournament type
     updateCategoryFilter(tournament);
-    updateGenderFilter(tournament);
 
     // Load WODs
     const {data: wodsData} = await supabaseLeaderboard
@@ -321,18 +320,6 @@ async function loadTournamentData() {
 
     render();
     updateLastUpdate();
-}
-
-// Show/hide gender filter depending on tournament type
-function updateGenderFilter(tournament) {
-    const block = document.getElementById('gender-filter-block');
-    if (tournament && tournament.competition_type === 'team') {
-        block.classList.add('hidden');
-        currentGender = 'all';
-        document.getElementById('gender-select').value = 'all';
-    } else {
-        block.classList.remove('hidden');
-    }
 }
 
 // Update category filter based on tournament type and active_divisions
