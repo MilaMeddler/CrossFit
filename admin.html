@@ -182,6 +182,11 @@
                    class="w-full border rounded-lg px-4 py-2">
         </div>
 
+        <div id="team-gender-select-block" class="mb-5 hidden">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
+            <div id="team-gender-select-buttons" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <div id="team-member-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5"></div>
 
         <div id="team-division-block" class="mb-5 hidden">
@@ -205,6 +210,11 @@
             <label class="block text-sm font-semibold text-gray-700 mb-1">Nom de l'équipe</label>
             <input type="text" id="edit-team-name" placeholder="Ex: Les Invincibles"
                    class="w-full border rounded-lg px-4 py-2">
+        </div>
+
+        <div id="edit-team-gender-block" class="mb-5 hidden">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
+            <div id="edit-team-gender-buttons" class="flex flex-wrap gap-2"></div>
         </div>
 
         <div id="edit-team-division-block" class="mb-5 hidden">
@@ -1202,10 +1212,41 @@ function divisionLabel(d) {
     return { elite: 'Elite', rx: 'RX', intermediaire: 'Intermédiaire', scaled: 'Scaled', foundations: 'Foundations' }[d] || d;
 }
 
+const TEAM_GENDER_LABELS = { mixte: 'Mixte', hommes: 'Hommes', femmes: 'Femmes' };
+
+function renderTeamGenderButtons(containerId, blockId, teamGenders, currentGender) {
+    const block = document.getElementById(blockId);
+    const container = document.getElementById(containerId);
+    if (!teamGenders || teamGenders.length <= 1) {
+        block.classList.add('hidden');
+        return;
+    }
+    container.innerHTML = teamGenders.map(g => `
+        <button type="button" data-gender="${g}"
+            class="${containerId}-btn px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-colors
+                   ${currentGender === g ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-500'}">
+            ${TEAM_GENDER_LABELS[g] || g}
+        </button>`).join('');
+    container.querySelectorAll(`.${containerId}-btn`).forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll(`.${containerId}-btn`).forEach(b => {
+                b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700');
+                b.classList.add('border-gray-300');
+            });
+            btn.classList.remove('border-gray-300');
+            btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700');
+        });
+    });
+    block.classList.remove('hidden');
+}
+
 function openNewTeamModal() {
     currentTeamSize = (currentTournament && currentTournament.team_size) || 4;
     document.getElementById('team-name').value = '';
     renderTeamMemberFields();
+
+    const teamGenders = (currentTournament && currentTournament.team_genders) || ['mixte'];
+    renderTeamGenderButtons('team-gender-select-buttons', 'team-gender-select-block', teamGenders, null);
 
     const divBlock = document.getElementById('team-division-block');
     const divButtons = document.getElementById('team-division-buttons');
@@ -1259,11 +1300,22 @@ document.getElementById('create-team-btn').addEventListener('click', async () =>
         division = selectedDiv.dataset.div;
     }
 
+    const teamGendersNew = (currentTournament && currentTournament.team_genders) || ['mixte'];
+    let teamGenderNew = null;
+    if (teamGendersNew.length > 1) {
+        const selGender = document.querySelector('#team-gender-select-buttons .team-gender-select-buttons-btn.border-blue-600');
+        if (!selGender) return alert('⚠️ Veuillez sélectionner une catégorie');
+        teamGenderNew = selGender.dataset.gender;
+    } else {
+        teamGenderNew = teamGendersNew[0] || null;
+    }
+
     const {error} = await supabase.from('teams').insert({
         tournament_id: currentTournamentId,
         team_name: name,
         member_names: memberNames,
-        division: division
+        division: division,
+        gender: teamGenderNew
     });
 
     if(error) {
@@ -1318,6 +1370,9 @@ window.editTeam = (id) => {
         divBlock.classList.add('hidden');
     }
 
+    const editTeamGenders = (currentTournament && currentTournament.team_genders) || ['mixte'];
+    renderTeamGenderButtons('edit-team-gender-buttons', 'edit-team-gender-block', editTeamGenders, team.gender || null);
+
     // Member fields
     const size = (currentTournament && currentTournament.team_size) || 4;
     const memberFields = document.getElementById('edit-team-member-fields');
@@ -1359,10 +1414,21 @@ document.getElementById('save-team-edit-btn').addEventListener('click', async ()
         division = selectedDiv.dataset.div;
     }
 
+    const editSaveGenders = (currentTournament && currentTournament.team_genders) || ['mixte'];
+    let editSaveGender = null;
+    if (editSaveGenders.length > 1) {
+        const selG = document.querySelector('#edit-team-gender-buttons .edit-team-gender-buttons-btn.border-blue-600');
+        if (!selG) return alert('⚥ Veuillez sélectionner une catégorie');
+        editSaveGender = selG.dataset.gender;
+    } else {
+        editSaveGender = editSaveGenders[0] || null;
+    }
+
     const { error } = await supabase.from('teams').update({
         team_name: name,
         member_names: memberNames,
-        division: division
+        division: division,
+        gender: editSaveGender
     }).eq('id', editingTeamId);
 
     if (error) {
