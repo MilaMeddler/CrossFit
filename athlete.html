@@ -525,16 +525,17 @@ const DIV_LABELS = {
 
 function renderOpenDivisionButtons(activeDivisions) {
     const container = document.getElementById('open-division-buttons');
-    const cols = Math.min(activeDivisions.length, 4);
+    // Max 3 columns on mobile — 4+ divisions wrap to next row
+    const cols = activeDivisions.length <= 2 ? 2 : 3;
     container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     container.innerHTML = activeDivisions.map(d => {
         const lbl = DIV_LABELS[d] || { name: d, sub: '' };
         return `
         <label class="cursor-pointer">
             <input type="radio" name="division" value="${d}" class="sr-only open-div-radio">
-            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-4 text-center font-bold text-lg transition-all hover:border-gray-400" data-value="${d}">
-                <div class="text-gray-100">${lbl.name}</div>
-                <div class="text-xs text-gray-400 mt-1">${lbl.sub}</div>
+            <div class="division-btn border-2 border-gray-600 bg-gray-700 rounded-lg py-3 text-center font-bold transition-all hover:border-gray-400" data-value="${d}">
+                <div class="text-gray-100 text-base">${lbl.name}</div>
+                <div class="text-xs text-gray-400 mt-0.5">${lbl.sub}</div>
             </div>
         </label>`;
     }).join('');
