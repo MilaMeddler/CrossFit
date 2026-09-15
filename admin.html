@@ -800,8 +800,14 @@ document.getElementById('new-tournament-btn').addEventListener('click', () => {
     document.getElementById('tournament-type-modal').classList.remove('hidden');
 });
 
-// Toggle divisions block visibility based on Format Open checkbox
-// Divisions block always visible — applies to both Open and regular formats
+// When Open format is checked, auto-select only rx/scaled/foundations
+document.getElementById('tournament-is-open-input').addEventListener('change', function() {
+    if (this.checked) {
+        document.querySelectorAll('.division-checkbox').forEach(cb => {
+            cb.checked = ['rx', 'scaled', 'foundations'].includes(cb.value);
+        });
+    }
+});
 
 // CREATE TOURNAMENT - Step 2: Choose type → go to team size (team) or data modal (individual)
 document.getElementById('select-individual').addEventListener('click', () => {
