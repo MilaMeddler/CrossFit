@@ -302,6 +302,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Catégorie</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Division</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Membres</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
@@ -1082,7 +1083,7 @@ document.getElementById('delete-tournament-btn').addEventListener('click', async
 async function loadTeams() {
     if(!currentTournamentId) return;
     const {data} = await supabase.from('teams')
-        .select('id, team_name, member_names')
+        .select('id, team_name, member_names, division, gender')
         .eq('tournament_id', currentTournamentId)
         .order('team_name');
     teams = data || [];
@@ -1092,15 +1093,18 @@ async function loadTeams() {
 function renderTeams() {
     const tbody = document.getElementById('teams-tbody');
     if(!teams.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucune équipe pour ce tournoi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Aucune équipe pour ce tournoi</td></tr>';
         return;
     }
     tbody.innerHTML = teams.map(t => {
         const members = (t.member_names || []).join(', ');
         const divLabel = t.division ? (divisionLabel(t.division) || t.division) : '—';
+        const genderLabels = { mixte: 'Mixte', hommes: 'Hommes', femmes: 'Femmes' };
+        const genderLabel = t.gender ? (genderLabels[t.gender] || t.gender) : '—';
         return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-semibold">${escapeHtml(t.team_name)}</td>
+            <td class="px-4 py-3 text-gray-600 text-sm">${escapeHtml(genderLabel)}</td>
             <td class="px-4 py-3 text-gray-600 text-sm">${escapeHtml(divLabel)}</td>
             <td class="px-4 py-3 text-gray-600 text-sm">${escapeHtml(members)}</td>
             <td class="px-4 py-3 text-center flex gap-3 justify-center">
@@ -1815,7 +1819,7 @@ async function loadResultFormTournament(tid) {
     const partSel = document.getElementById('result-participant');
     if(t.competition_type === 'team') {
         const {data:teamsData} = await supabase.from('teams')
-            .select('id, team_name, member_names')
+            .select('id, team_name, member_names, division, gender')
             .eq('tournament_id',tid);
 
         if(!teamsData || teamsData.length === 0) {
