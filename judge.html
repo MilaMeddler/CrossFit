@@ -241,10 +241,16 @@ function createDivisionButtons() {
     const container = document.getElementById('division-buttons-grid');
     if (!container) return;
 
-    // Get active divisions from tournament or use defaults
-    const activeDivisions = currentTournament && currentTournament.active_divisions && currentTournament.active_divisions.length > 0
+    // For Open format: only rx/scaled/foundations are valid divisions
+    const openDivisions = ['rx', 'scaled', 'foundations'];
+    const stored = currentTournament && currentTournament.active_divisions && currentTournament.active_divisions.length > 0
         ? currentTournament.active_divisions
-        : ['rx', 'scaled', 'foundations'];
+        : [];
+    const activeDivisions = currentTournament && currentTournament.is_open
+        ? (stored.filter(d => openDivisions.includes(d.toLowerCase())).length > 0
+            ? stored.filter(d => openDivisions.includes(d.toLowerCase()))
+            : openDivisions)
+        : (stored.length > 0 ? stored : openDivisions);
 
     // Division config: label, subtitle, color
     const divisionConfig = {
