@@ -249,6 +249,7 @@ async function loadTournamentData() {
 
     // Update category filter options based on tournament type
     updateCategoryFilter(tournament);
+    updateGenderFilter(tournament);
 
     // Load WODs
     const {data: wodsData} = await supabaseLeaderboard
@@ -273,7 +274,7 @@ async function loadTournamentData() {
     if (tournament.competition_type === 'team') {
         const {data: teamsData} = await supabaseLeaderboard
             .from('teams')
-            .select('id, team_name, member_names, division')
+            .select('id, team_name, member_names, division, gender')
             .eq('tournament_id', currentTournamentId);
 
         participants = (teamsData || []).map(t => ({
@@ -281,7 +282,7 @@ async function loadTournamentData() {
             teamId: t.id,
             name: t.team_name || (t.member_names || []).join(' & ') || 'Équipe',
             level: t.division || null,
-            gender: 'TEAM',
+            gender: t.gender || null,
             type: 'team'
         }));
     } else {
@@ -320,6 +321,42 @@ async function loadTournamentData() {
 
     render();
     updateLastUpdate();
+}
+
+// Update gender filter based on tournament type and team_genders
+function updateGenderFilter(tournament) {
+    const block = document.getElementById('gender-filter-block');
+    const sel = document.getElementById('gender-select');
+
+    if (tournament && tournament.competition_type === 'team') {
+        const genders = tournament.team_genders || [];
+        if (genders.length <= 1) {
+            // Single gender type — hide filter, reset
+            block.classList.add('hidden');
+            currentGender = 'all';
+            sel.value = 'all';
+            return;
+        }
+        // Multiple gender types — show filter with tournament's options
+        block.classList.remove('hidden');
+        const labels = { mixte: 'Mixte', hommes: 'Hommes', femmes: 'Femmes' };
+        sel.innerHTML = '<option value="all">Tous</option>' +
+            genders.map(g => `<option value="${g}">${labels[g] || g}</option>`).join('');
+        if (![...sel.options].some(o => o.value === currentGender)) {
+            currentGender = 'all';
+            sel.value = 'all';
+        }
+    } else {
+        // Individual tournament — standard M/F filter
+        block.classList.remove('hidden');
+        sel.innerHTML = `<option value="all">Tous</option>
+            <option value="M">Hommes</option>
+            <option value="F">Femmes</option>`;
+        if (!['all','M','F'].includes(currentGender)) {
+            currentGender = 'all';
+            sel.value = 'all';
+        }
+    }
 }
 
 // Update category filter based on tournament type and active_divisions
