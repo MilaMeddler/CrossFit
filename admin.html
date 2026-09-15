@@ -839,14 +839,27 @@ document.getElementById('new-tournament-btn').addEventListener('click', () => {
     document.getElementById('tournament-type-modal').classList.remove('hidden');
 });
 
-// When Open format is checked, auto-select only rx/scaled/foundations
+// When Open format is checked, lock divisions to rx/scaled/foundations
 document.getElementById('tournament-is-open-input').addEventListener('change', function() {
-    if (this.checked) {
-        document.querySelectorAll('.division-checkbox').forEach(cb => {
-            cb.checked = ['rx', 'scaled', 'foundations'].includes(cb.value);
-        });
-    }
+    setDivisionsLocked(this.checked);
 });
+
+function setDivisionsLocked(locked) {
+    document.querySelectorAll('.division-checkbox').forEach(cb => {
+        if (locked) {
+            cb.checked = ['rx', 'scaled', 'foundations'].includes(cb.value);
+            cb.disabled = true;
+        } else {
+            cb.disabled = false;
+        }
+    });
+    const block = document.getElementById('divisions-block');
+    if (locked) {
+        block.classList.add('opacity-60');
+    } else {
+        block.classList.remove('opacity-60');
+    }
+}
 
 // CREATE TOURNAMENT - Step 2: Choose type → go to team size (team) or data modal (individual)
 document.getElementById('select-individual').addEventListener('click', () => {
@@ -856,6 +869,7 @@ document.getElementById('select-individual').addEventListener('click', () => {
     document.getElementById('tournament-judge-password-input').value = '';
     document.getElementById('tournament-is-open-input').checked = false;
     document.getElementById('divisions-block').classList.remove('hidden');
+    setDivisionsLocked(false);
     document.getElementById('tournament-data-modal').classList.remove('hidden');
 });
 
@@ -922,6 +936,7 @@ document.getElementById('confirm-team-genders-btn').addEventListener('click', ()
         document.getElementById('tournament-judge-password-input').value = '';
         document.getElementById('tournament-is-open-input').checked = false;
         document.getElementById('divisions-block').classList.remove('hidden');
+        setDivisionsLocked(false);
         document.getElementById('tournament-data-modal').classList.remove('hidden');
     }
 });
@@ -1026,6 +1041,7 @@ function openEditDataModal(t) {
     });
 
     document.getElementById('divisions-block').classList.remove('hidden');
+    setDivisionsLocked(t.is_open || false);
 
     // For team tournaments: pre-load team_genders into pendingTeamGenders
     if (t.competition_type === 'team') {
