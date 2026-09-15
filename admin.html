@@ -47,6 +47,24 @@
                 </div>
             </div>
 
+            <div id="team-genders-block" class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 hidden">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Catégories d'équipes</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="team-gender-checkbox w-4 h-4 accent-purple-600" value="mixte" checked>
+                        <span class="text-sm">Mixte</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="team-gender-checkbox w-4 h-4 accent-blue-600" value="hommes">
+                        <span class="text-sm">Hommes</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="team-gender-checkbox w-4 h-4 accent-pink-600" value="femmes">
+                        <span class="text-sm">Femmes</span>
+                    </label>
+                </div>
+            </div>
+
             <div id="divisions-block" class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
                 <label class="block text-sm font-semibold text-gray-700 mb-3">Divisions actives (ordre fixe de priorité)</label>
                 <div class="space-y-2">
@@ -817,6 +835,7 @@ document.getElementById('select-individual').addEventListener('click', () => {
     document.getElementById('tournament-judge-password-input').value = '';
     document.getElementById('tournament-is-open-input').checked = false;
     document.getElementById('divisions-block').classList.remove('hidden');
+    document.getElementById('team-genders-block').classList.add('hidden');
     document.getElementById('tournament-data-modal').classList.remove('hidden');
 });
 
@@ -856,6 +875,7 @@ document.getElementById('confirm-team-size-btn').addEventListener('click', () =>
         document.getElementById('tournament-judge-password-input').value = '';
         document.getElementById('tournament-is-open-input').checked = false;
         document.getElementById('divisions-block').classList.remove('hidden');
+        document.getElementById('team-genders-block').classList.remove('hidden');
         document.getElementById('tournament-data-modal').classList.remove('hidden');
     }
 });
@@ -910,7 +930,11 @@ async function createTournament(type) {
         is_open: pendingTournamentIsOpen,
         active_divisions: activeDivisions
     };
-    if (type === 'team') insertData.team_size = pendingTeamSize;
+    if (type === 'team') {
+        insertData.team_size = pendingTeamSize;
+        const tg = Array.from(document.querySelectorAll('.team-gender-checkbox:checked')).map(cb => cb.value);
+        insertData.team_genders = tg.length > 0 ? tg : ['mixte'];
+    }
 
     const { data: newTournament, error } = await supabase.from('tournaments').insert(insertData).select().single();
 
@@ -949,6 +973,17 @@ function openEditDataModal(t) {
     });
 
     document.getElementById('divisions-block').classList.remove('hidden');
+
+    const teamGendersBlock = document.getElementById('team-genders-block');
+    if (t.competition_type === 'team') {
+        teamGendersBlock.classList.remove('hidden');
+        const tg = t.team_genders || ['mixte'];
+        document.querySelectorAll('.team-gender-checkbox').forEach(cb => {
+            cb.checked = tg.includes(cb.value);
+        });
+    } else {
+        teamGendersBlock.classList.add('hidden');
+    }
 
     document.getElementById('continue-tournament-btn').classList.add('hidden');
     document.getElementById('save-tournament-edit-btn').classList.remove('hidden');
@@ -990,7 +1025,11 @@ document.getElementById('save-tournament-edit-btn').addEventListener('click', as
 
     const updateData = { name, judge_password: password, is_open: isOpen, active_divisions: activeDivisions };
     const editedT = tournaments.find(x => x.id === editingTournamentId);
-    if (editedT && editedT.competition_type === 'team') updateData.team_size = pendingTeamSize;
+    if (editedT && editedT.competition_type === 'team') {
+        updateData.team_size = pendingTeamSize;
+        const tg = Array.from(document.querySelectorAll('.team-gender-checkbox:checked')).map(cb => cb.value);
+        updateData.team_genders = tg.length > 0 ? tg : ['mixte'];
+    }
 
     const { data, error } = await supabase.from('tournaments')
         .update(updateData)
