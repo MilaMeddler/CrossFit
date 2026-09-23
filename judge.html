@@ -557,8 +557,8 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
 
     const wod = wods.find(w => w.id === wodId);
 
-    // Show description
-    if (wod && wod.description) {
+    // Show description only for published WODs
+    if (wod && wod.description && wod.published) {
         descriptionText.textContent = wod.description;
         descriptionBlock.classList.remove('hidden');
     } else {
