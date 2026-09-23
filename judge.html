@@ -417,6 +417,7 @@ async function loadWODs() {
         .from('workouts')
         .select('*')
         .eq('tournament_id', currentTournament.id)
+        .eq('published', true)
         .order('wod_number');
 
     if (error) {

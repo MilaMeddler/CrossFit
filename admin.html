@@ -406,6 +406,7 @@
                                 <th class="px-4 py-3 text-left text-sm font-semibold">N°</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Type</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Description</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Visible</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Actions</th>
                             </tr>
                         </thead>
@@ -1591,7 +1592,7 @@ async function loadWods() {
 function renderWods() {
     const tbody = document.getElementById('wods-tbody');
     if(!wods.length) {
-        tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun WOD pour ce tournoi</td></tr>';
+        tbody.innerHTML='<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Aucun WOD pour ce tournoi</td></tr>';
         return;
     }
     const types = {
@@ -1602,11 +1603,18 @@ function renderWods() {
     tbody.innerHTML = wods.map(w=>{
         const typeLabel = types[w.wod_type] || escapeHtml(w.wod_type);
         const timecapLabel = w.time_cap ? ` <span class="text-xs text-gray-500">(cap: ${w.time_cap} min)</span>` : '';
+        const pub = !!w.published;
         return `
         <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-semibold">WOD ${escapeHtml(String(w.wod_number))}</td>
             <td class="px-4 py-3">${typeLabel}${timecapLabel}</td>
             <td class="px-4 py-3 text-sm">${escapeHtml(w.description)||'-'}</td>
+            <td class="px-4 py-3 text-center">
+                <button onclick="toggleWodPublished(${w.id}, ${pub})" title="${pub ? 'Скрыть' : 'Опубликовать'}"
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pub ? 'bg-green-500' : 'bg-gray-300'}">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${pub ? 'translate-x-6' : 'translate-x-1'}"></span>
+                </button>
+            </td>
             <td class="px-4 py-3 text-center">
                 <button onclick="editWod(${w.id})" class="text-blue-600 hover:text-blue-800 mr-3 text-xl">✏️</button>
                 <button onclick="deleteWod(${w.id})" class="text-red-600 hover:text-red-800 text-xl">🗑️</button>
@@ -1691,6 +1699,14 @@ document.getElementById('add-wod-btn').addEventListener('click', async () => {
     clearWodForm();
     await loadWods();
 });
+
+window.toggleWodPublished = async (id, currentPublished) => {
+    const newVal = !currentPublished;
+    const { error } = await supabase.from('workouts').update({ published: newVal }).eq('id', id);
+    if (error) { showStatus('❌ Erreur: ' + error.message); return; }
+    showStatus(newVal ? '✅ WOD visible' : '🔒 WOD masqué');
+    await loadWods();
+};
 
 window.deleteWod = async (id) => {
     if(!confirm('⚠️ Supprimer ce WOD?\n\nTous les résultats associés seront supprimés.')) return;
