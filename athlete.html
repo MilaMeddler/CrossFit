@@ -63,9 +63,9 @@
                 </div>
 
                 <!-- WOD Description (prominent position) -->
-                <div id="wod-description" class="hidden bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-red-600 p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-white mb-4 text-xl">Description du WOD</h3>
-                    <p id="wod-description-text" class="text-lg text-gray-100 whitespace-pre-wrap font-medium leading-relaxed"></p>
+                <div id="wod-description" class="hidden bg-gray-700 border border-gray-600 p-4 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Description</p>
+                    <p id="wod-description-text" class="text-base text-gray-200 whitespace-pre-wrap leading-relaxed"></p>
                 </div>
 
                 <!-- OPEN: Division selector (dynamic) -->
@@ -407,11 +407,12 @@ document.getElementById('athlete-select').addEventListener('change', async (e) =
         teamInfoBlock.classList.add('hidden');
     }
 
-    // Load WODs for this tournament
+    // Load WODs for this tournament (only published ones)
     const { data } = await supabase
         .from('workouts')
         .select('*')
         .eq('tournament_id', selectedTournamentId)
+        .eq('published', true)
         .order('wod_number');
 
     wods = data || [];
