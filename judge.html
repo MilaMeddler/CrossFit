@@ -45,6 +45,9 @@
                     <a id="leaderboard-link" href="leaderboard.html" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
                         Résultats
                     </a>
+                    <a id="display-link" href="display.html" target="_blank" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
+                        📺 Écran
+                    </a>
                     <button id="logout-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
                         🚪 Exit
                     </button>
@@ -334,8 +337,9 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     document.getElementById('tournament-name').textContent = currentTournament.name;
     document.getElementById('participant-label').textContent = isTeamTournament ? 'Équipe' : 'Participant';
 
-    // Update leaderboard link to include current tournament
+    // Update leaderboard and display links to include current tournament
     document.getElementById('leaderboard-link').href = `leaderboard.html?tournament=${currentTournament.id}`;
+    document.getElementById('display-link').href = `display.html?tournament=${currentTournament.id}`;
 
     if (currentTournament.is_open) {
         document.getElementById('open-division-container').classList.remove('hidden');
