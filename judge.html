@@ -470,7 +470,10 @@ function renderWodToggles() {
 }
 
 async function toggleWodPublished(id, current) {
-    const { error } = await supabase.from('workouts').update({ published: !current }).eq('id', id);
+    const { error } = await supabase.rpc('toggle_workout_published', {
+        workout_id: id,
+        new_published: !current
+    });
     if (error) return showStatus('Erreur: ' + error.message, true);
     await loadWODs();
 }
