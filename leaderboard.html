@@ -256,6 +256,7 @@ async function loadTournamentData() {
         .from('workouts')
         .select('*')
         .eq('tournament_id', currentTournamentId)
+        .eq('published', true)
         .order('wod_number');
     wods = wodsData || [];
 
