@@ -341,12 +341,8 @@ document.getElementById('judge-login-btn').addEventListener('click', async () =>
     document.getElementById('leaderboard-link').href = `leaderboard.html?tournament=${currentTournament.id}`;
     document.getElementById('display-link').href = `display.html?tournament=${currentTournament.id}`;
 
-    if (currentTournament.is_open) {
-        document.getElementById('open-division-container').classList.remove('hidden');
-        createDivisionButtons(); // Generate division buttons based on active_divisions
-    } else {
-        document.getElementById('open-division-container').classList.add('hidden');
-    }
+    document.getElementById('open-division-container').classList.remove('hidden');
+    createDivisionButtons();
 
     loadAthletes();
     loadWODs();
@@ -704,11 +700,9 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         ...(isTeamTournament ? { team_id: participantId } : { athlete_id: participantId })
     };
 
-    if (currentTournament.is_open) {
-        const division = document.getElementById('selected-division').value;
-        if (!division) return alert('⚠️ Veuillez sélectionner une division (RX, Scaled ou Found.)');
-        resultData.division = division;
-    }
+    const division = document.getElementById('selected-division').value;
+    if (!division) return alert('⚠️ Veuillez sélectionner une division (RX, Scaled ou Found.)');
+    resultData.division = division;
 
     if (isTimeWod) {
         const isCompleted = document.getElementById('result-is-completed').checked;
