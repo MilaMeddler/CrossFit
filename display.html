@@ -129,10 +129,9 @@
     .dd-mixte  { background:#1c1c2e; color:#94a3b8; }
 
     .r-wod {
-      font-family: var(--mono); font-size: clamp(.7rem, 1.3vw, .95rem);
-      font-weight: 500; text-align: center; color: #8898b8; line-height: 1.25;
+      font-family: var(--mono); font-size: clamp(1rem, 2vw, 1.6rem);
+      font-weight: 600; text-align: center; color: #8898b8; line-height: 1.25;
     }
-    .r-wod small { display: block; font-size: .75em; color: var(--muted); }
 
     .r-total {
       font-family: var(--mono); font-size: clamp(1.1rem, 2.2vw, 1.8rem);
@@ -323,7 +322,7 @@ function totalPages() { return Math.max(1, Math.ceil(rankings.length / rowsPerPa
 function colTemplate() {
     const showWods = wods.length > 0 && wods.length <= 4;
     const wodCols = showWods ? wods.map(()=>'1fr').join(' ') : '';
-    return showWods ? `56px 1fr 68px ${wodCols} 72px` : `56px 1fr 68px 72px`;
+    return showWods ? `56px 1fr ${wodCols} 72px` : `56px 1fr 72px`;
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
@@ -334,7 +333,7 @@ function renderPage() {
     // Col headers
     const ch = document.getElementById('col-head');
     ch.style.gridTemplateColumns = tmpl;
-    ch.innerHTML = `<span style="text-align:center">#</span><span>Participant</span><span>Div.</span>${showWods ? wods.map(w=>`<span style="text-align:center">W${w.wod_number}</span>`).join(''):''}  <span style="text-align:center">Pts</span>`;
+    ch.innerHTML = `<span style="text-align:center">#</span><span>Participant</span>${showWods ? wods.map(w=>`<span style="text-align:center">W${w.wod_number}</span>`).join(''):''}  <span style="text-align:center">Pts</span>`;
 
     const rowsEl = document.getElementById('rows');
     const emptyEl = document.getElementById('empty');
@@ -351,17 +350,15 @@ function renderPage() {
     slice.forEach((r, i) => {
         const rank = rankings.findIndex(rr => rr.pts === r.pts) + 1;
         const rankCls = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
-        const div = r.divProfile;
-        const divBadge = div ? `<span class="r-div ${divCls(div)}">${lvlLabel(div)}</span>` : '<span></span>';
         const wodCells = showWods ? wods.map(w => {
             const wd = r.wScores[w.id];
-            return `<div class="r-wod">${fmtScore(wd?.score,w)}<small>(${wd?.rank??'—'})</small></div>`;
+            return `<div class="r-wod">${fmtScore(wd?.score,w)}</div>`;
         }).join('') : '';
 
         const row = document.createElement('div');
         row.className = 'brow';
         row.style.cssText = `grid-template-columns:${tmpl};animation-delay:${i*60}ms`;
-        row.innerHTML = `<div class="r-rank ${rankCls}">${rank}</div><div class="r-name">${r.part.name}</div>${divBadge}${wodCells}<div class="r-total">${r.pts}</div>`;
+        row.innerHTML = `<div class="r-rank ${rankCls}">${rank}</div><div class="r-name">${r.part.name}</div>${wodCells}<div class="r-total">${r.pts}</div>`;
         rowsEl.appendChild(row);
     });
 }
