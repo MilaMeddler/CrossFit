@@ -229,6 +229,7 @@ function cmpScores(a, b, wod) {
     const da=divPri(a.division), db=divPri(b.division);
     if (da!==db) return da-db;
     if (wod.wod_type==='reps') return (b.value_int??b.value_decimal??0)-(a.value_int??a.value_decimal??0);
+    if (wod.wod_type==='weight') return (b.value_int??b.value_decimal??0)-(a.value_int??a.value_decimal??0);
     const ac=a.is_completed!==false, bc=b.is_completed!==false;
     if (ac&&bc) return (a.value_time??999999)-(b.value_time??999999);
     if (ac) return -1; if (bc) return 1;

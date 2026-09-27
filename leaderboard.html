@@ -456,6 +456,11 @@ function compareOpenScores(a, b, wod) {
         const repsA = a.value_int || a.value_decimal || 0;
         const repsB = b.value_int || b.value_decimal || 0;
         if (repsA !== repsB) return repsB - repsA; // higher is better
+    } else if (wod.wod_type === 'weight') {
+        // Max weight: heavier = better
+        const wA = a.value_int ?? a.value_decimal ?? 0;
+        const wB = b.value_int ?? b.value_decimal ?? 0;
+        if (wA !== wB) return wB - wA;
     } else {
         // For Time
         const aCompleted = a.is_completed !== false; // null/undefined treated as true
