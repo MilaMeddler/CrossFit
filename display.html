@@ -131,7 +131,7 @@
 
     .r-wod {
       font-family: var(--mono); font-size: clamp(1.6rem, 3.2vw, 2.8rem);
-      font-weight: 700; text-align: center; color: #8898b8; line-height: 1.2;
+      font-weight: 700; text-align: center; color: #c8d8f8; line-height: 1.2;
     }
 
     .r-total {
@@ -319,8 +319,8 @@ function totalPages() { return Math.max(1, Math.ceil(rankings.length / rowsPerPa
 
 function colTemplate() {
     const showWods = wods.length > 0 && wods.length <= 4;
-    const wodCols = showWods ? wods.map(()=>'1fr').join(' ') : '';
-    return showWods ? `56px 1fr ${wodCols} 72px` : `56px 1fr 72px`;
+    const wodCols = showWods ? wods.map(()=>'0.45fr').join(' ') : '';
+    return showWods ? `70px 2fr ${wodCols} 100px` : `70px 2fr 100px`;
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
