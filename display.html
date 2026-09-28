@@ -111,9 +111,10 @@
     .r-rank.bronze { color: var(--bronze); }
 
     .r-name {
-      font-size: clamp(1.1rem, 2.5vw, 2rem); font-weight: 800;
+      font-size: clamp(1.4rem, 3.2vw, 2.8rem); font-weight: 800;
       text-transform: uppercase; letter-spacing: .04em;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding-left: 1.2rem;
     }
 
     .r-div {
@@ -129,13 +130,13 @@
     .dd-mixte  { background:#1c1c2e; color:#94a3b8; }
 
     .r-wod {
-      font-family: var(--mono); font-size: clamp(1rem, 2vw, 1.6rem);
-      font-weight: 600; text-align: center; color: #8898b8; line-height: 1.25;
+      font-family: var(--mono); font-size: clamp(1.3rem, 2.6vw, 2.2rem);
+      font-weight: 700; text-align: center; color: #8898b8; line-height: 1.2;
     }
 
     .r-total {
-      font-family: var(--mono); font-size: clamp(1.1rem, 2.2vw, 1.8rem);
-      font-weight: 600; text-align: center; color: var(--text);
+      font-family: var(--mono); font-size: clamp(1.8rem, 3.5vw, 3rem);
+      font-weight: 700; text-align: center; color: var(--text);
     }
 
     /* Footer */
@@ -229,6 +230,7 @@ function cmpScores(a, b, wod) {
     const da=divPri(a.division), db=divPri(b.division);
     if (da!==db) return da-db;
     if (wod.wod_type==='reps') return (b.value_int??b.value_decimal??0)-(a.value_int??a.value_decimal??0);
+    if (wod.wod_type==='weight') return (b.value_int??b.value_decimal??0)-(a.value_int??a.value_decimal??0);
     const ac=a.is_completed!==false, bc=b.is_completed!==false;
     if (ac&&bc) return (a.value_time??999999)-(b.value_time??999999);
     if (ac) return -1; if (bc) return 1;
@@ -310,11 +312,7 @@ async function loadData() {
 
 // ── LAYOUT ───────────────────────────────────────────────────────────────
 function calcRowsPerPage() {
-    const avail = window.innerHeight
-        - document.getElementById('hdr').offsetHeight
-        - document.getElementById('col-head').offsetHeight
-        - document.getElementById('ftr').offsetHeight;
-    rowsPerPage = Math.max(4, Math.floor(avail / 100));
+    rowsPerPage = 5;
 }
 
 function totalPages() { return Math.max(1, Math.ceil(rankings.length / rowsPerPage)); }

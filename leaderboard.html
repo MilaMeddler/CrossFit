@@ -416,10 +416,16 @@ function updateCategoryFilterFromData(tournament) {
             derivedDivisions = divisionOrder.filter(d => fromScores.includes(d));
         }
     } else if (tournament.competition_type === 'team') {
-        // Non-open team: division is per team — collect unique divisions from participants
-        const fromTeams = [...new Set(participants.map(p => p.level).filter(Boolean).map(d => d.toLowerCase()))];
-        if (fromTeams.length > 0) {
-            derivedDivisions = divisionOrder.filter(d => fromTeams.includes(d));
+        // Check if scores have per-score divisions (judge selected them)
+        const fromScores = [...new Set(scores.map(s => s.division).filter(Boolean).map(d => d.toLowerCase()))];
+        if (fromScores.length > 0) {
+            derivedDivisions = divisionOrder.filter(d => fromScores.includes(d));
+        } else {
+            // Fall back: division is per team
+            const fromTeams = [...new Set(participants.map(p => p.level).filter(Boolean).map(d => d.toLowerCase()))];
+            if (fromTeams.length > 0) {
+                derivedDivisions = divisionOrder.filter(d => fromTeams.includes(d));
+            }
         }
     }
 
@@ -456,6 +462,11 @@ function compareOpenScores(a, b, wod) {
         const repsA = a.value_int || a.value_decimal || 0;
         const repsB = b.value_int || b.value_decimal || 0;
         if (repsA !== repsB) return repsB - repsA; // higher is better
+    } else if (wod.wod_type === 'weight') {
+        // Max weight: heavier = better
+        const wA = a.value_int ?? a.value_decimal ?? 0;
+        const wB = b.value_int ?? b.value_decimal ?? 0;
+        if (wA !== wB) return wB - wA;
     } else {
         // For Time
         const aCompleted = a.is_completed !== false; // null/undefined treated as true
@@ -695,6 +706,10 @@ function calculateOpenRankings() {
 // Calculate regular rankings (now using unified Open-style logic)
 function calculateRankings() {
     if (currentTournament && currentTournament.is_open) {
+        return calculateOpenRankings();
+    }
+    // Team tournament with per-score divisions (judge selected division) — use same Open algorithm
+    if (scores.some(s => s.division)) {
         return calculateOpenRankings();
     }
 
