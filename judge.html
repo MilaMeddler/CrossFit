@@ -644,10 +644,7 @@ function toggleTeamEdit() {
         const cont = document.getElementById('edit-members-container');
         cont.innerHTML = '';
         (team.member_names || []).forEach((m, i) => {
-            cont.innerHTML += `<div>
-                <label class="block text-xs text-gray-400 mb-1">Membre ${i + 1}</label>
-                <input type="text" class="edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base" value="${escapeHtml(m)}">
-            </div>`;
+            cont.innerHTML += `<input type="text" placeholder="Membre ${i + 1}" class="edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base" value="${escapeHtml(m)}">`;
         });
         panel.classList.remove('hidden');
     } else {
