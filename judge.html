@@ -80,6 +80,24 @@
                     <select id="athlete-select" class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-lg">
                         <option value="">-- Sélectionner un participant --</option>
                     </select>
+                    <!-- Edit team button (teams only) -->
+                    <div id="edit-team-btn-container" class="hidden mt-2 text-right">
+                        <button type="button" onclick="toggleTeamEdit()" class="text-sm text-gray-400 hover:text-white underline">✏️ Modifier l'équipe</button>
+                    </div>
+                </div>
+
+                <!-- Team edit panel -->
+                <div id="team-edit-panel" class="hidden bg-gray-750 border border-gray-600 rounded-lg p-4 space-y-3">
+                    <p class="text-sm font-semibold text-gray-300">Modifier l'équipe</p>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Nom de l'équipe</label>
+                        <input id="edit-team-name" type="text" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base">
+                    </div>
+                    <div id="edit-members-container" class="space-y-2"></div>
+                    <div class="flex gap-2 pt-1">
+                        <button type="button" onclick="saveTeamEdit()" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-sm">Enregistrer</button>
+                        <button type="button" onclick="toggleTeamEdit()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 rounded-lg text-sm">Annuler</button>
+                    </div>
                 </div>
 
                 <!-- OPEN Division Selection -->
@@ -224,6 +242,7 @@ var supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // STATE
 let currentTournament = null;
 let isTeamTournament = false;
+let currentTeamData = {};
 let athletes = [];
 let wods = [];
 let existingScoreId = null;
@@ -381,6 +400,7 @@ async function loadAthletes() {
         }
 
         const teams = data || [];
+        currentTeamData = {};
         select.innerHTML = '<option value="">-- Sélectionner une équipe --</option>';
 
         if (teams.length === 0) {
@@ -390,6 +410,7 @@ async function loadAthletes() {
 
         teams.forEach(t => {
             const name = t.team_name || (t.member_names || []).join(' & ') || 'Équipe';
+            currentTeamData[t.id] = { team_name: t.team_name || '', member_names: t.member_names || [] };
             select.innerHTML += `<option value="${t.id}">${escapeHtml(name)}</option>`;
         });
     } else {
@@ -600,7 +621,60 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
 // Pre-fill when athlete is selected and WOD already chosen
 document.getElementById('athlete-select').addEventListener('change', async () => {
     await preloadExistingScore();
+    // Show edit button for teams
+    const teamId = document.getElementById('athlete-select').value;
+    const btn = document.getElementById('edit-team-btn-container');
+    const panel = document.getElementById('team-edit-panel');
+    if (isTeamTournament && teamId) {
+        btn.classList.remove('hidden');
+    } else {
+        btn.classList.add('hidden');
+        panel.classList.add('hidden');
+    }
 });
+
+// Toggle team edit panel
+function toggleTeamEdit() {
+    const panel = document.getElementById('team-edit-panel');
+    const teamId = parseInt(document.getElementById('athlete-select').value);
+    if (panel.classList.contains('hidden')) {
+        const team = currentTeamData[teamId];
+        if (!team) return;
+        document.getElementById('edit-team-name').value = team.team_name;
+        const cont = document.getElementById('edit-members-container');
+        cont.innerHTML = '';
+        (team.member_names || []).forEach((m, i) => {
+            cont.innerHTML += `<div>
+                <label class="block text-xs text-gray-400 mb-1">Membre ${i + 1}</label>
+                <input type="text" class="edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base" value="${escapeHtml(m)}">
+            </div>`;
+        });
+        panel.classList.remove('hidden');
+    } else {
+        panel.classList.add('hidden');
+    }
+}
+
+// Save team edit
+async function saveTeamEdit() {
+    const teamId = parseInt(document.getElementById('athlete-select').value);
+    if (!teamId) return;
+    const newName = document.getElementById('edit-team-name').value.trim();
+    if (!newName) return alert('⚠️ Le nom de l\'équipe ne peut pas être vide');
+    const newMembers = [...document.querySelectorAll('.edit-member-input')].map(i => i.value.trim());
+    const { error } = await supabase.rpc('update_team_info', {
+        p_team_id: teamId,
+        p_team_name: newName,
+        p_member_names: newMembers
+    });
+    if (error) return showStatus('Erreur: ' + error.message, true);
+    currentTeamData[teamId] = { team_name: newName, member_names: newMembers };
+    // Update the option in the select
+    const opt = document.querySelector(`#athlete-select option[value="${teamId}"]`);
+    if (opt) opt.textContent = newName;
+    document.getElementById('team-edit-panel').classList.add('hidden');
+    showStatus('✅ Équipe modifiée');
+}
 
 // Division button selection is now handled in createDivisionButtons() function
 
