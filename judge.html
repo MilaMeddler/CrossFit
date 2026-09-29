@@ -642,17 +642,28 @@ function toggleTeamEdit() {
         if (!team) return;
         document.getElementById('edit-team-name').value = team.team_name;
         const cont = document.getElementById('edit-members-container');
-        cont.innerHTML = '';
-        (team.member_names || []).forEach((m, i) => {
-            cont.innerHTML += `<div>
-                <label class="block text-xs text-gray-400 mb-1">Membre ${i + 1}</label>
-                <input type="text" class="edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base" value="${escapeHtml(m)}">
-            </div>`;
+        cont.innerHTML = '<p class="text-xs text-gray-400">Membres</p>';
+        const members = team.member_names && team.member_names.length > 0 ? team.member_names : ['', '', ''];
+        members.forEach((m, i) => {
+            cont.innerHTML += `<input type="text" placeholder="Membre ${i + 1}" class="edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base" value="${escapeHtml(m)}">`;
         });
+        cont.innerHTML += `<button type="button" onclick="addMemberInput()" class="text-sm text-gray-400 hover:text-white underline text-left">+ Ajouter un membre</button>`;
         panel.classList.remove('hidden');
     } else {
         panel.classList.add('hidden');
     }
+}
+
+// Add a new member input field
+function addMemberInput() {
+    const cont = document.getElementById('edit-members-container');
+    const count = cont.querySelectorAll('.edit-member-input').length + 1;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = `Membre ${count}`;
+    input.className = 'edit-member-input w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-base';
+    // Insert before the "+" button (last child)
+    cont.insertBefore(input, cont.lastElementChild);
 }
 
 // Save team edit
