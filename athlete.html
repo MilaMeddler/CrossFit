@@ -82,6 +82,16 @@
                            class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl placeholder-gray-400">
                 </div>
 
+                <!-- Weight Team Result Input (team tournament + weight WOD) -->
+                <div id="result-weight-team" class="hidden">
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Poids soulevé par athlète (kg)</label>
+                    <div id="weight-inputs-container" class="space-y-3"></div>
+                    <div class="mt-4 bg-gray-700 border border-gray-500 p-3 rounded-lg flex items-center justify-between">
+                        <span class="text-gray-300 font-semibold">Total équipe:</span>
+                        <span id="weight-total" class="text-white font-bold text-xl">0 kg</span>
+                    </div>
+                </div>
+
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
                     <!-- Toggle: WOD Terminé / Pas Terminé -->
@@ -489,9 +499,11 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
     }
 
     // Show appropriate result input
+    const weightTeamBlock = document.getElementById('result-weight-team');
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
+        weightTeamBlock.classList.add('hidden');
         setWodCompleted(true);
         // Show time cap limit if set
         const timecapHint = document.getElementById('timecap-hint');
@@ -505,9 +517,16 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
             document.getElementById('result-minutes').max = 999;
             timecapHint.classList.add('hidden');
         }
+    } else if (wod && wod.wod_type === 'weight' && isTeamTournament) {
+        const team = teamsData.find(t => t.id === selectedTeamId);
+        renderWeightInputs(team ? (team.member_names || []) : []);
+        weightTeamBlock.classList.remove('hidden');
+        regularInput.classList.add('hidden');
+        timeInput.classList.add('hidden');
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
+        weightTeamBlock.classList.add('hidden');
     }
 
     // For team tournaments or Open: show submit directly; for regular individual: check division
@@ -698,6 +717,13 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             resultData.value_int = reps;
             resultData.tiebreak_time = tiebreakMinutes * 60 + tiebreakSeconds;
         }
+    } else if (wod && wod.wod_type === 'weight' && isTeamTournament) {
+        const inputs = document.querySelectorAll('.member-weight-input');
+        const memberWeights = Array.from(inputs).map(inp => parseInt(inp.value) || 0);
+        if (memberWeights.some(w => w <= 0)) return alert('Veuillez entrer le poids pour chaque athlète');
+        resultData.value_int = memberWeights.reduce((a, b) => a + b, 0);
+        resultData.member_weights = memberWeights;
+        resultData.is_completed = true;
     } else {
         resultData.is_completed = true;
         const value = document.getElementById('result-value').value.trim();
@@ -729,6 +755,28 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
         window.location.href = `leaderboard.html?tournament=${selectedTournamentId}&wod=${selectedWodId}`;
     }, 1500);
 });
+
+function renderWeightInputs(memberNames) {
+    const container = document.getElementById('weight-inputs-container');
+    container.innerHTML = memberNames.map((name, i) => `
+        <div class="flex items-center gap-3">
+            <span class="text-gray-300 font-semibold w-28 flex-shrink-0">${escapeHtml(name)}</span>
+            <input type="number" min="0" max="999" placeholder="0"
+                   class="member-weight-input flex-1 bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-4 py-3 text-xl text-center font-mono"
+                   data-index="${i}">
+            <span class="text-gray-400 text-sm">kg</span>
+        </div>`).join('');
+    container.querySelectorAll('.member-weight-input').forEach(inp => {
+        inp.addEventListener('input', updateWeightTotal);
+    });
+    document.getElementById('weight-total').textContent = '0 kg';
+}
+
+function updateWeightTotal() {
+    const inputs = document.querySelectorAll('.member-weight-input');
+    const total = Array.from(inputs).reduce((sum, inp) => sum + (parseInt(inp.value) || 0), 0);
+    document.getElementById('weight-total').textContent = total + ' kg';
+}
 
 // INIT
 loadTournaments();
