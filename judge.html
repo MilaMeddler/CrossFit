@@ -131,6 +131,16 @@
                            class="w-full bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-5 py-4 text-xl placeholder-gray-400">
                 </div>
 
+                <!-- Weight Team Result Input (team tournament + weight WOD) -->
+                <div id="result-weight-team" class="hidden">
+                    <label class="block text-base font-semibold text-gray-200 mb-3">Poids soulevé par athlète (kg)</label>
+                    <div id="weight-inputs-container" class="space-y-3"></div>
+                    <div class="mt-4 bg-gray-700 border border-gray-500 p-3 rounded-lg flex items-center justify-between">
+                        <span class="text-gray-300 font-semibold">Total équipe:</span>
+                        <span id="weight-total" class="text-white font-bold text-xl">0 kg</span>
+                    </div>
+                </div>
+
                 <!-- Time Result Input -->
                 <div id="result-time" class="hidden">
                     <!-- Toggle: WOD Terminé / Pas Terminé -->
@@ -552,6 +562,12 @@ async function preloadExistingScore() {
                 document.getElementById('tiebreak-seconds').value = existing.tiebreak_time % 60;
             }
         }
+    } else if (wod && wod.wod_type === 'weight' && isTeamTournament) {
+        const weights = existing.member_weights || [];
+        document.querySelectorAll('.member-weight-input').forEach((inp, i) => {
+            inp.value = weights[i] ?? '';
+        });
+        updateWeightTotal();
     } else {
         document.getElementById('result-value').value =
             existing.value_int ?? existing.value_decimal ?? '';
@@ -590,9 +606,11 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
     }
 
     // Show appropriate input
+    const weightTeamBlock = document.getElementById('result-weight-team');
     if (wod && wod.wod_type === 'time') {
         regularInput.classList.add('hidden');
         timeInput.classList.remove('hidden');
+        weightTeamBlock.classList.add('hidden');
         // Reset timecap state
         setWodCompleted(true);
         // Show time cap limit if set
@@ -607,9 +625,17 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
             document.getElementById('result-minutes').max = 999;
             timecapHint.classList.add('hidden');
         }
+    } else if (wod && wod.wod_type === 'weight' && isTeamTournament) {
+        const participantId = parseInt(document.getElementById('athlete-select').value);
+        const team = currentTeamData[participantId] || {};
+        renderWeightInputs(team.member_names || []);
+        weightTeamBlock.classList.remove('hidden');
+        regularInput.classList.add('hidden');
+        timeInput.classList.add('hidden');
     } else {
         regularInput.classList.remove('hidden');
         timeInput.classList.add('hidden');
+        weightTeamBlock.classList.add('hidden');
     }
 
     submitBtn.classList.remove('hidden');
@@ -620,6 +646,16 @@ document.getElementById('wod-select').addEventListener('change', async (e) => {
 
 // Pre-fill when athlete is selected and WOD already chosen
 document.getElementById('athlete-select').addEventListener('change', async () => {
+    // Re-render weight inputs if weight WOD already selected
+    const wodId = parseInt(document.getElementById('wod-select').value);
+    const wod = wods.find(w => w.id === wodId);
+    const participantId = parseInt(document.getElementById('athlete-select').value);
+    if (wod && wod.wod_type === 'weight' && isTeamTournament && participantId) {
+        const team = currentTeamData[participantId] || {};
+        renderWeightInputs(team.member_names || []);
+        document.getElementById('result-weight-team').classList.remove('hidden');
+        document.getElementById('result-regular').classList.add('hidden');
+    }
     await preloadExistingScore();
     // Show edit button for teams
     const teamId = document.getElementById('athlete-select').value;
@@ -823,6 +859,13 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
             resultData.tiebreak_time = tiebreakMinutes * 60 + tiebreakSeconds;
             resultData.value_time = null; // clear time if switching to timecap
         }
+    } else if (wod && wod.wod_type === 'weight' && isTeamTournament) {
+        const inputs = document.querySelectorAll('.member-weight-input');
+        const memberWeights = Array.from(inputs).map(inp => parseInt(inp.value) || 0);
+        if (memberWeights.some(w => w <= 0)) return alert('Veuillez entrer le poids pour chaque athlète');
+        resultData.value_int = memberWeights.reduce((a, b) => a + b, 0);
+        resultData.member_weights = memberWeights;
+        resultData.is_completed = true;
     } else {
         const value = document.getElementById('result-value').value.trim();
 
@@ -887,12 +930,15 @@ document.getElementById('submit-result-btn').addEventListener('click', async () 
     document.getElementById('result-timecap-reps').value = '';
     document.getElementById('tiebreak-minutes').value = '';
     document.getElementById('tiebreak-seconds').value = '';
+    document.querySelectorAll('.member-weight-input').forEach(inp => { inp.value = ''; });
+    document.getElementById('weight-total').textContent = '0 kg';
     setWodCompleted(true);
     resetDivisionButtons();
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
     document.getElementById('result-time').classList.add('hidden');
+    document.getElementById('result-weight-team').classList.add('hidden');
     document.getElementById('wod-description').classList.add('hidden');
     document.getElementById('submit-result-btn').classList.add('hidden');
     document.getElementById('delete-result-btn').classList.add('hidden');
@@ -922,15 +968,40 @@ document.getElementById('delete-result-btn').addEventListener('click', async () 
     document.getElementById('result-timecap-reps').value = '';
     document.getElementById('tiebreak-minutes').value = '';
     document.getElementById('tiebreak-seconds').value = '';
+    document.querySelectorAll('.member-weight-input').forEach(inp => { inp.value = ''; });
+    document.getElementById('weight-total').textContent = '0 kg';
     setWodCompleted(true);
     resetDivisionButtons();
     document.getElementById('athlete-select').value = '';
     document.getElementById('wod-select').value = '';
     document.getElementById('result-regular').classList.add('hidden');
     document.getElementById('result-time').classList.add('hidden');
+    document.getElementById('result-weight-team').classList.add('hidden');
     document.getElementById('wod-description').classList.add('hidden');
     document.getElementById('submit-result-btn').classList.add('hidden');
 });
+
+function renderWeightInputs(memberNames) {
+    const container = document.getElementById('weight-inputs-container');
+    container.innerHTML = memberNames.map((name, i) => `
+        <div class="flex items-center gap-3">
+            <span class="text-gray-300 font-semibold w-28 flex-shrink-0">${escapeHtml(name)}</span>
+            <input type="number" min="0" max="999" placeholder="0"
+                   class="member-weight-input flex-1 bg-gray-700 border-2 border-gray-600 text-white rounded-lg px-4 py-3 text-xl text-center font-mono"
+                   data-index="${i}">
+            <span class="text-gray-400 text-sm">kg</span>
+        </div>`).join('');
+    container.querySelectorAll('.member-weight-input').forEach(inp => {
+        inp.addEventListener('input', updateWeightTotal);
+    });
+    document.getElementById('weight-total').textContent = '0 kg';
+}
+
+function updateWeightTotal() {
+    const inputs = document.querySelectorAll('.member-weight-input');
+    const total = Array.from(inputs).reduce((sum, inp) => sum + (parseInt(inp.value) || 0), 0);
+    document.getElementById('weight-total').textContent = total + ' kg';
+}
 </script>
 
 </body>
